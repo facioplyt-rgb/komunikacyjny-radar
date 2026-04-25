@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RADAR SYSTEM V33</title>
+    <title>RADAR SYSTEM V35 | OMNI</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -11,25 +11,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
 
     <style>
-        :root { --main: #f59e0b; --dark: #0f172a; }
+        :root { --main: #f59e0b; --dark: #0f172a; --danger: #ef4444; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--dark); margin: 0; overflow: hidden; height: 100vh; }
-        #map { height: 100vh; width: 100%; z-index: 1; filter: grayscale(0.2) contrast(1.1); }
+        #map { height: 100vh; width: 100%; z-index: 1; filter: contrast(1.1); }
         
-        /* Ekran wyboru - surowy, uniwersalny styl */
-        #city-selector { 
-            position: fixed; inset: 0; z-index: 9999; background: #f8fafc; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
-
+        /* Ekran wyboru - Surowy/Uniwersalny */
+        #city-selector { position: fixed; inset: 0; z-index: 9999; background: #f8fafc; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
         .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); border: 1px solid rgba(0,0,0,0.05); }
         
-        .sheet { 
-            position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; 
-            transform: translateY(110%); transition: transform 0.4s cubic-bezier(0.3, 1, 0.3, 1);
-            max-width: 550px; margin: 0 auto;
-        }
+        .sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; transform: translateY(110%); transition: transform 0.4s cubic-bezier(0.3, 1, 0.3, 1); max-width: 550px; margin: 0 auto; }
         .sheet.open { transform: translateY(0); }
         
+        /* Radar Toast */
         #radar-toast { 
             position: fixed; top: 120px; left: 20px; right: 20px; z-index: 2000;
             transform: translateX(-150%); transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
@@ -37,24 +31,18 @@
         }
         #radar-toast.active { transform: translateX(0); }
 
+        /* Markery */
         .custom-marker { 
-            width: 50px; height: 50px; border-radius: 12px; border: 2px solid #fff;
+            width: 54px; height: 54px; border-radius: 15px; border: 3px solid #fff;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: white; box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            color: white; box-shadow: 0 12px 24px rgba(0,0,0,0.3); transition: all 0.3s;
         }
-        
-        .btn-press { transition: all 0.2s active; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .pulse-red { animation: pulse 1.2s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+
+        .line-badge { background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 6px; font-size: 10px; font-weight: 900; margin-top: 2px; }
+        .btn-press { transition: all 0.2s; cursor: pointer; -webkit-tap-highlight-color: transparent; }
         .btn-press:active { transform: scale(0.92); }
-
-        /* Scrollbar dla listy kierunków */
-        .dir-scroll::-webkit-scrollbar { width: 5px; }
-        .dir-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-
-        .city-btn {
-            width: 300px; padding: 25px; background: white; border-radius: 24px;
-            margin-bottom: 12px; display: flex; align-items: center; gap: 15px;
-            border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-        }
     </style>
 </head>
 <body>
@@ -63,100 +51,107 @@
 
     <div id="city-selector">
         <div class="mb-12 text-center">
-            <div class="text-5xl text-amber-500 mb-4"><i class="fa-solid fa-tower-broadcast"></i></div>
-            <h1 class="text-3xl font-black tracking-tight text-slate-900">WYBIERZ OBSZAR</h1>
+            <i class="fa-solid fa-tower-broadcast text-6xl text-amber-500 mb-6"></i>
+            <h1 class="text-4xl font-black tracking-tight text-slate-900 uppercase italic">Radar System</h1>
+            <p class="text-slate-400 font-bold text-[10px] tracking-[0.3em] uppercase">Wybierz obszar operacyjny</p>
         </div>
-
-        <button onclick="startApp('gorzow', [52.732, 15.237])" class="city-btn btn-press">
-            <div class="w-12 h-12 bg-amber-500 text-white rounded-xl flex items-center justify-center text-xl shadow-lg shadow-amber-200">
-                <i class="fa-solid fa-map-location-dot"></i>
-            </div>
-            <div class="text-left"><span class="block font-black text-slate-800 text-lg">Gorzów Wlkp.</span><span class="text-[9px] font-bold text-green-500 uppercase">System Aktywny</span></div>
-        </button>
-
-        <button class="city-btn opacity-50 cursor-not-allowed">
-            <div class="w-12 h-12 bg-slate-200 text-slate-400 rounded-xl flex items-center justify-center text-xl">
-                <i class="fa-solid fa-lock"></i>
-            </div>
-            <div class="text-left"><span class="block font-black text-slate-400 text-lg">Inne Miasta</span><span class="text-[9px] font-bold text-slate-400 uppercase">Wkrótce</span></div>
+        <button onclick="startApp('gorzow', [52.732, 15.237])" class="w-80 p-7 bg-white border-2 border-slate-100 rounded-[35px] flex items-center gap-5 btn-press shadow-2xl">
+            <div class="w-14 h-14 bg-amber-500 text-white rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-amber-100"><i class="fa-solid fa-map-location-dot"></i></div>
+            <div class="text-left"><span class="block font-black text-slate-800 text-xl">Gorzów Wlkp.</span><span class="text-[9px] font-black text-green-500 uppercase tracking-widest">System Live</span></div>
         </button>
     </div>
 
-    <div id="radar-toast" class="glass rounded-3xl p-5 flex items-center gap-4 border-l-[8px] border-amber-500 shadow-2xl">
-        <div id="toast-icon" class="w-14 h-14 rounded-xl flex items-center justify-center text-2xl bg-amber-50 text-amber-600 shadow-inner"></div>
+    <div id="radar-toast" class="glass rounded-3xl p-6 flex items-center gap-5 border-l-[10px] border-amber-500 shadow-2xl">
+        <div id="toast-icon" class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl bg-amber-50 text-amber-600 shadow-inner"></div>
         <div class="flex-1">
-            <h4 class="text-[10px] font-black text-amber-500 uppercase tracking-widest">Wykryto zagrożenie</h4>
-            <p id="toast-street" class="text-sm font-black text-slate-900"></p>
-            <p id="toast-dir" class="text-[10px] font-bold text-slate-400 uppercase italic"></p>
+            <h4 class="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Radar Aktywny</h4>
+            <p id="toast-street" class="text-base font-black text-slate-900 leading-tight"></p>
+            <p id="toast-dir" class="text-[11px] font-bold text-slate-400 uppercase italic mt-1"></p>
         </div>
-        <button onclick="hideToast()" class="text-slate-300 px-2 text-xl">✕</button>
+        <button onclick="hideToast()" class="text-slate-300 p-2 text-2xl">✕</button>
     </div>
 
     <div class="fixed top-6 left-4 right-4 z-[500] flex justify-center pointer-events-none">
-        <div class="w-full max-w-xl glass rounded-3xl p-3 flex justify-between items-center pointer-events-auto shadow-xl">
-            <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-amber-400 text-lg shadow-lg">
+        <div class="w-full max-w-xl glass rounded-[30px] p-3.5 flex justify-between items-center pointer-events-auto shadow-2xl">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center text-amber-400 text-xl shadow-lg">
                     <i class="fa-solid fa-rss animate-pulse"></i>
                 </div>
                 <div>
-                    <h2 id="city-title" class="text-xs font-black uppercase text-slate-900 tracking-tighter">Wybierz Miasto</h2>
-                    <p id="gps-info" class="text-[8px] text-slate-400 font-bold uppercase tracking-widest italic">Oczekiwanie na sygnał GPS...</p>
+                    <h2 id="city-title" class="text-sm font-black uppercase text-slate-900 tracking-tighter italic">Lokalizacja</h2>
+                    <p id="gps-info" class="text-[9px] text-slate-400 font-bold uppercase tracking-widest italic">Szukanie sygnału...</p>
                 </div>
             </div>
-            <button onclick="adminLogin()" class="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 btn-press"><i class="fa-solid fa-cog"></i></button>
+            <button onclick="adminLogin()" class="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 btn-press border border-slate-100"><i class="fa-solid fa-shield-halved"></i></button>
         </div>
     </div>
 
     <div id="map"></div>
 
     <div id="fab-container" class="fixed bottom-10 inset-x-0 z-[500] flex justify-center px-8 opacity-0 pointer-events-none transition-all duration-700">
-        <button onclick="triggerReport()" class="w-full max-w-sm bg-slate-900 text-white p-6 rounded-3xl font-black text-xs tracking-[0.2em] shadow-2xl flex items-center justify-center gap-4 btn-press border-b-4 border-amber-500">
-            <i class="fa-solid fa-plus-circle text-lg text-amber-400"></i>
-            NOWY ALERT
+        <button onclick="triggerReport()" class="w-full max-w-sm bg-slate-900 text-white p-7 rounded-[35px] font-black text-sm tracking-[0.15em] shadow-3xl flex items-center justify-center gap-4 btn-press border-b-8 border-amber-500 uppercase">
+            <i class="fa-solid fa-plus-circle text-xl text-amber-500"></i> DODAJ ALERT
         </button>
     </div>
 
-    <div id="modal-type" class="sheet glass rounded-t-[45px] p-10 shadow-2xl">
-        <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-10"></div>
-        <div class="grid grid-cols-3 gap-4">
-            <button onclick="selectType('KONTROLA', '<i class=\'fa-solid fa-shield-halved\'></i>')" class="flex flex-col items-center gap-4 p-6 bg-red-50 rounded-3xl text-red-600 btn-press border border-red-100">
-                <i class="fa-solid fa-shield-halved text-3xl"></i><span class="text-[8px] font-black uppercase">Kontrola</span>
+    <div id="modal-type" class="sheet glass rounded-t-[50px] p-12 shadow-2xl">
+        <div class="w-16 h-1.5 bg-slate-200 rounded-full mx-auto mb-10"></div>
+        <div class="grid grid-cols-3 gap-5">
+            <button onclick="selectType('KONTROLA', '<i class=\'fa-solid fa-user-ninja\'></i>')" class="flex flex-col items-center gap-5 p-8 bg-red-50 rounded-[40px] text-red-600 btn-press border border-red-100">
+                <i class="fa-solid fa-user-ninja text-4xl"></i><span class="text-[9px] font-black uppercase">Kontrola</span>
             </button>
-            <button onclick="selectType('AWARIA', '<i class=\'fa-solid fa-triangle-exclamation\'></i>')" class="flex flex-col items-center gap-4 p-6 bg-orange-50 rounded-3xl text-orange-600 btn-press border border-orange-100">
-                <i class="fa-solid fa-triangle-exclamation text-3xl"></i><span class="text-[8px] font-black uppercase">Awaria</span>
+            <button onclick="selectType('AWARIA', '<i class=\'fa-solid fa-hand-dots\'></i>')" class="flex flex-col items-center gap-5 p-8 bg-orange-50 rounded-[40px] text-orange-600 btn-press border border-orange-100">
+                <i class="fa-solid fa-triangle-exclamation text-4xl"></i><span class="text-[9px] font-black uppercase">Awaria</span>
             </button>
-            <button onclick="selectType('KOREK', '<i class=\'fa-solid fa-bolt-lightning\'></i>')" class="flex flex-col items-center gap-4 p-6 bg-blue-50 rounded-3xl text-blue-600 btn-press border border-blue-100">
-                <i class="fa-solid fa-bolt-lightning text-3xl"></i><span class="text-[8px] font-black uppercase">Korek</span>
+            <button onclick="selectType('KOREK', '<i class=\'fa-solid fa-clock\'></i>')" class="flex flex-col items-center gap-5 p-8 bg-blue-50 rounded-[40px] text-blue-600 btn-press border border-blue-100">
+                <i class="fa-solid fa-clock text-4xl"></i><span class="text-[9px] font-black uppercase">Korek</span>
             </button>
         </div>
     </div>
 
-    <div id="modal-dirs" class="sheet glass rounded-t-[45px] p-10 shadow-2xl">
-        <h2 class="text-2xl font-black mb-6 text-slate-900 uppercase italic">Kierunek</h2>
-        <input type="text" id="search-dir" placeholder="Wyszukaj trasę..." class="w-full bg-slate-100 p-5 rounded-2xl mb-5 font-bold outline-none focus:bg-white border-2 border-transparent focus:border-amber-500 transition-all" oninput="runSearch()">
-        <div id="list-dirs" class="grid gap-3 max-h-[40vh] overflow-y-auto dir-scroll mb-6"></div>
-        <button onclick="closeModals()" class="w-full text-[10px] font-black text-slate-300 uppercase tracking-widest">Anuluj</button>
-    </div>
-
-    <div id="modal-vote" class="sheet glass rounded-t-[45px] p-10 text-center shadow-2xl">
-        <div id="v-icon" class="text-6xl mb-6 text-slate-900"></div>
-        <h3 id="v-title" class="text-3xl font-black italic text-slate-900 mb-2"></h3>
-        <p id="v-dir" class="text-amber-500 font-black text-xs uppercase mb-10 tracking-widest"></p>
-        <div class="grid grid-cols-2 gap-4">
-            <button id="v-ok" class="bg-slate-900 text-white p-6 rounded-3xl font-black text-xs uppercase btn-press shadow-xl">Potwierdzam</button>
-            <button onclick="closeModals()" class="bg-slate-100 text-slate-600 p-6 rounded-3xl font-black text-xs uppercase btn-press">Nieprawda</button>
-        </div>
-        <button id="v-del" class="hidden w-full p-4 text-red-500 font-black text-[9px] uppercase mt-4 tracking-widest">Usuń własny wpis</button>
-    </div>
-
-    <div id="admin-view" class="hidden fixed inset-0 z-[10000] bg-white p-8 overflow-y-auto">
-        <div class="max-w-lg mx-auto">
-            <div class="flex justify-between items-center mb-10">
-                <h2 class="text-3xl font-black italic">DATABASE MGMT</h2>
-                <button onclick="toggleAdminView(false)" class="text-3xl text-slate-300">✕</button>
+    <div id="modal-dirs" class="sheet glass rounded-t-[50px] p-12 shadow-2xl">
+        <h2 class="text-3xl font-black mb-8 text-slate-900 uppercase italic">Szczegóły</h2>
+        <div class="flex gap-3 mb-6">
+            <input type="text" id="input-line" placeholder="LINIA" class="w-1/3 bg-slate-100 p-6 rounded-3xl font-black outline-none border-2 border-transparent focus:border-amber-500 text-center">
+            <div class="w-2/3 relative">
+                <input type="text" id="search-dir" placeholder="KIERUNEK..." class="w-full bg-slate-100 p-6 rounded-3xl font-bold outline-none border-2 border-transparent focus:border-amber-500" oninput="runSearch()">
             </div>
-            <textarea id="admin-input" rows="15" class="w-full bg-slate-50 border-2 border-slate-200 rounded-3xl p-6 text-sm font-bold mb-6 outline-none focus:border-amber-500"></textarea>
-            <button onclick="pushConfig()" class="w-full bg-slate-900 text-white p-6 rounded-2xl font-black btn-press shadow-2xl">SYNCHRONIZUJ RTDB</button>
+        </div>
+        <div id="list-dirs" class="grid gap-3 max-h-[35vh] overflow-y-auto pr-2 mb-8"></div>
+        <button onclick="closeModals()" class="w-full text-[11px] font-black text-slate-300 uppercase tracking-widest">Anuluj</button>
+    </div>
+
+    <div id="modal-vote" class="sheet glass rounded-t-[50px] p-12 text-center shadow-2xl">
+        <div id="v-icon" class="text-7xl mb-6 text-slate-900"></div>
+        <h3 id="v-title" class="text-4xl font-black italic text-slate-900 mb-2"></h3>
+        <p id="v-line" class="text-amber-500 font-black text-2xl mb-6"></p>
+        
+        <div class="bg-slate-50 rounded-[30px] p-6 mb-8 grid grid-cols-2 gap-6 border border-slate-100">
+            <div>
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Dodano:</p>
+                <p id="v-created" class="text-sm font-black text-slate-700"></p>
+            </div>
+            <div>
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Ostatnie Potw.:</p>
+                <p id="v-last" class="text-sm font-black text-slate-700">-</p>
+            </div>
+        </div>
+
+        <p id="v-dir" class="text-slate-400 font-bold text-xs uppercase mb-10 tracking-[0.2em] italic"></p>
+        
+        <div class="grid grid-cols-2 gap-5 mb-6">
+            <button id="v-ok" class="bg-slate-900 text-white p-7 rounded-[30px] font-black text-xs uppercase btn-press shadow-2xl">To prawda</button>
+            <button onclick="closeModals()" class="bg-slate-100 text-slate-600 p-7 rounded-[30px] font-black text-xs uppercase btn-press">Nie ma</button>
+        </div>
+        <button id="v-del" class="hidden w-full p-4 text-red-500 font-black text-[10px] uppercase tracking-widest">Usuń mój wpis</button>
+    </div>
+
+    <div id="admin-view" class="hidden fixed inset-0 z-[10000] bg-white p-10 overflow-y-auto">
+        <div class="max-w-xl mx-auto">
+            <h2 class="text-4xl font-black italic mb-12 uppercase">Database Config</h2>
+            <textarea id="admin-input" rows="15" class="w-full bg-slate-50 border-4 border-slate-100 rounded-[40px] p-8 text-base font-bold mb-8 outline-none focus:border-amber-500 shadow-inner"></textarea>
+            <button onclick="pushConfig()" class="w-full bg-slate-900 text-white p-8 rounded-[30px] font-black btn-press shadow-3xl">SYNCHRONIZUJ RTDB</button>
+            <button onclick="toggleAdminView(false)" class="w-full p-6 text-slate-300 font-bold">WRÓĆ DO MAPY</button>
         </div>
     </div>
 
@@ -177,7 +172,6 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        
         const map = L.map('map', { zoomControl: false, attributionControl: false, tap: false });
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
 
@@ -192,69 +186,74 @@
         const uid = localStorage.getItem('mzk_uid') || Math.random().toString(36).substr(2, 9);
         localStorage.setItem('mzk_uid', uid);
 
-        // --- GEOLOCATION HELPER ---
-        async function getRoadName(la, ln) {
+        // --- HELPERS ---
+        function timeAgo(ts) {
+            if(!ts) return "-";
+            const diff = Math.floor((Date.now() - ts) / 60000);
+            return diff < 1 ? "Przed chwilą" : (diff < 60 ? `${diff}m temu` : `${Math.floor(diff/60)}h temu`);
+        }
+
+        async function getSt(la, ln) {
             try {
                 const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${la}&lon=${ln}&zoom=18`);
                 const d = await r.json();
-                return d.address.road || d.address.pedestrian || "Główna Droga";
-            } catch { return "Nieznana Ulica"; }
+                return d.address.road || d.address.pedestrian || "Ulica MZK";
+            } catch { return "Lokalizacja"; }
         }
 
-        // --- CORE APP ---
+        // --- START ---
         window.startApp = (key, coords) => {
             cityKey = key;
-            document.getElementById('city-selector').style.display = 'none';
+            document.getElementById('city-selector').style.opacity = '0';
+            setTimeout(() => document.getElementById('city-selector').style.display = 'none', 500);
             document.getElementById('fab-container').style.opacity = '1';
             document.getElementById('fab-container').style.pointerEvents = 'auto';
-            document.getElementById('city-title').innerText = "SYSTEM: " + key.toUpperCase();
-            
+            document.getElementById('city-title').innerText = key.toUpperCase();
             map.setView(coords, 14);
             map.locate({ setView: true, maxZoom: 16, watch: true });
 
-            onValue(ref(db, `v33/${cityKey}/alerts`), (snap) => {
+            onValue(ref(db, `v35/${cityKey}/alerts`), (snap) => {
                 const data = snap.val();
                 const ids = data ? Object.keys(data) : [];
                 Object.keys(mCache).forEach(id => { if(!ids.includes(id)) { map.removeLayer(mCache[id]); delete mCache[id]; }});
-
                 if (data) {
                     Object.entries(data).forEach(([id, val]) => {
                         if (!mCache[id]) {
                             const color = val.type === 'KONTROLA' ? '#ef4444' : (val.type === 'AWARIA' ? '#f97316' : '#2563eb');
-                            const html = `<div class="custom-marker" style="background:${color}">
-                                <div class="text-lg">${val.icon}</div>
-                                <div style="font-size:7px; font-weight:900">${val.dir.split(' ')[0]}</div>
+                            const html = `<div class="custom-marker ${val.type === 'KONTROLA' ? 'pulse-red' : ''}" style="background:${color}">
+                                <div class="text-xl">${val.icon}</div>
+                                <div class="line-badge">${val.line || '??'}</div>
                             </div>`;
                             mCache[id] = L.marker([val.lat, val.lng], {
-                                icon: L.divIcon({ className: '', html: html, iconAnchor: [25, 25] })
+                                icon: L.divIcon({ className: '', html: html, iconAnchor: [27, 27] })
                             }).addTo(map).on('click', () => openVote(id, val));
                         }
                     });
-                    checkProximity(data);
+                    checkProx(data);
                 }
             });
 
-            onValue(ref(db, `v33/${cityKey}/config`), (snap) => {
-                masterDirs = snap.val() || ["Baza Pusta"];
+            onValue(ref(db, `v35/${cityKey}/config`), (snap) => {
+                masterDirs = snap.val() || [];
                 refreshList(masterDirs);
             });
         };
 
         map.on('locationfound', (e) => {
             uPos = e.latlng;
-            document.getElementById('gps-info').innerText = "GPS AKTYWNY (LIVE)";
-            document.getElementById('gps-info').classList.replace('text-slate-400', 'text-green-500');
+            document.getElementById('gps-info').innerText = "POŁĄCZONO GPS";
+            document.getElementById('gps-info').style.color = "#10b981";
             if(!window.dot) window.dot = L.circleMarker(e.latlng, { radius: 10, color: '#fff', weight: 4, fillColor: '#f59e0b', fillOpacity: 1 }).addTo(map);
             else window.dot.setLatLng(e.latlng);
         });
 
-        function checkProximity(alerts) {
+        function checkProx(alerts) {
             if(!uPos || !alerts) return;
             Object.values(alerts).forEach(r => {
                 if(uPos.distanceTo(L.latLng(r.lat, r.lng)) < 400) {
                     document.getElementById('toast-icon').innerHTML = r.icon;
-                    document.getElementById('toast-street').innerText = r.street || "Blisko Ciebie";
-                    document.getElementById('toast-dir').innerText = "KIERUNEK: " + r.dir;
+                    document.getElementById('toast-street').innerText = r.street || "Pobliże";
+                    document.getElementById('toast-dir').innerText = "W STRONĘ: " + r.dir;
                     document.getElementById('radar-toast').classList.add('active');
                     document.getElementById('alert-sound').play().catch(()=>{});
                 }
@@ -262,18 +261,17 @@
         }
         window.hideToast = () => document.getElementById('radar-toast').classList.remove('active');
 
-        // --- LOGIKA ZGŁASZANIA ---
+        // --- ACTIONS ---
         window.triggerReport = () => {
             const h = document.createElement('div');
-            h.id = "tap-hint"; h.className = "fixed top-1/3 inset-x-10 z-[2000] text-center pointer-events-none";
-            h.innerHTML = `<span class="glass px-8 py-5 rounded-3xl font-black text-xs uppercase border-2 border-amber-500 shadow-2xl animate-pulse">Dotknij punktu na mapie</span>`;
+            h.id = "h-t"; h.className = "fixed top-1/3 inset-x-10 z-[2000] text-center pointer-events-none";
+            h.innerHTML = `<span class="glass px-8 py-5 rounded-3xl font-black text-[10px] uppercase border-2 border-amber-500 animate-pulse shadow-2xl">Wskaż punkt na mapie</span>`;
             document.body.appendChild(h);
-            
             map.once('click', (e) => {
                 tCoords = e.latlng;
-                document.getElementById('tap-hint').remove();
+                document.getElementById('h-t').remove();
                 if(tMarker) map.removeLayer(tMarker);
-                tMarker = L.circle(e.latlng, { radius: 25, color: '#f59e0b', fillOpacity: 0.5 }).addTo(map);
+                tMarker = L.circle(e.latlng, { radius: 30, color: '#f59e0b', fillOpacity: 0.5 }).addTo(map);
                 openSheet('modal-type');
             });
         };
@@ -281,46 +279,45 @@
         window.selectType = (t, i) => { sType = t; sIcon = i; openSheet('modal-dirs'); };
 
         window.finalSubmit = async (dir) => {
+            const line = document.getElementById('input-line').value || "??";
             closeModals();
-            const street = await getRoadName(tCoords.lat, tCoords.lng);
-            const refPush = push(ref(db, `v33/${cityKey}/alerts`));
+            const street = await getSt(tCoords.lat, tCoords.lng);
+            const refPush = push(ref(db, `v35/${cityKey}/alerts`));
             set(refPush, {
-                type: sType, icon: sIcon, dir, street,
+                type: sType, icon: sIcon, dir, line, street,
                 lat: tCoords.lat, lng: tCoords.lng,
-                author: uid, ts: Date.now()
+                author: uid, createdAt: Date.now(), lastVote: Date.now()
             });
         };
 
-        // --- GŁOSOWANIE ---
         window.openVote = (id, data) => {
             openSheet('modal-vote');
             document.getElementById('v-icon').innerHTML = data.icon;
             document.getElementById('v-title').innerText = data.type;
+            document.getElementById('v-line').innerText = "LINIA: " + data.line;
             document.getElementById('v-dir').innerText = data.dir;
+            document.getElementById('v-created').innerText = timeAgo(data.createdAt);
+            document.getElementById('v-last').innerText = timeAgo(data.lastVote);
             
             document.getElementById('v-ok').onclick = () => {
                 closeModals();
-                update(ref(db, `v33/${cityKey}/alerts/${id}`), { v: (data.v || 0) + 1 });
+                update(ref(db, `v35/${cityKey}/alerts/${id}`), { lastVote: Date.now() });
             };
             const d = document.getElementById('v-del');
             d.classList.toggle('hidden', data.author !== uid);
-            d.onclick = () => { closeModals(); remove(ref(db, `v33/${cityKey}/alerts/${id}`)); };
+            d.onclick = () => { closeModals(); remove(ref(db, `v35/${cityKey}/alerts/${id}`)); };
         };
 
-        // --- ADMIN ---
-        window.adminLogin = () => { if(prompt("Klucz Sys:") === "mzk2026") toggleAdminView(true); };
+        // --- SYSTEM UI ---
+        window.adminLogin = () => { if(prompt("Klucz:") === "mzk2026") toggleAdminView(true); };
         window.toggleAdminView = (s) => {
             document.getElementById('admin-view').classList.toggle('hidden', !s);
             if(s) document.getElementById('admin-input').value = masterDirs.join('\n');
         };
         window.pushConfig = () => {
             const lines = document.getElementById('admin-input').value.split('\n').filter(l => l.trim() !== "");
-            set(ref(db, `v33/${cityKey}/config`), lines).then(() => {
-                alert("Baza Zsynchronizowana!"); toggleAdminView(false);
-            });
+            set(ref(db, `v35/${cityKey}/config`), lines).then(() => { alert("Baza Zapisana!"); toggleAdminView(false); });
         };
-
-        // --- UI UTILS ---
         window.openSheet = (id) => {
             document.querySelectorAll('.sheet').forEach(s => s.classList.remove('open'));
             document.getElementById(id).classList.add('open');
@@ -329,12 +326,12 @@
         window.closeModals = () => {
             document.querySelectorAll('.sheet').forEach(s => s.classList.remove('open'));
             document.getElementById('fab-container').style.opacity = '1';
-            if(tMarker) map.removeLayer(tMarker);
+            if(tMarker) { map.removeLayer(tMarker); tMarker = null; }
         };
         function refreshList(l) {
             document.getElementById('list-dirs').innerHTML = l.map(d => `
-                <button onclick="finalSubmit('${d}')" class="w-full bg-white border border-slate-100 p-5 rounded-2xl text-left font-black text-sm text-slate-700 btn-press flex items-center justify-between">
-                    <span>${d}</span><i class="fa-solid fa-chevron-right text-slate-200"></i>
+                <button onclick="finalSubmit('${d}')" class="w-full bg-white border-2 border-slate-50 p-6 rounded-[30px] text-left font-black text-sm text-slate-700 btn-press">
+                    <i class="fa-solid fa-arrow-right-long mr-4 text-amber-500"></i>${d}
                 </button>
             `).join('');
         }
