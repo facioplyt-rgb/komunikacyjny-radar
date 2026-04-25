@@ -406,25 +406,33 @@
             } catch { return "Lokalizacja w trasie"; }
         };
 
-        // --- POWIADOMIENIA RADAROWE (500M) ---
-        window.toggleSmartRadar = () => {
-            if (!radarActive) {
-                if ("Notification" in window) {
-                    Notification.requestPermission().then(permission => {
-                        if (permission === "granted") {
-                            radarActive = true;
-                            document.getElementById('notif-btn').classList.add('notif-active');
-                            alert("📡 RADAR WŁĄCZONY: Otrzymasz powiadomienie, gdy będziesz 500m od kontroli.");
-                        } else {
-                            alert("Brak uprawnień do powiadomień.");
-                        }
-                    });
-                }
-            } else {
-                radarActive = false;
-                document.getElementById('notif-btn').classList.remove('notif-active');
-            }
-        };
+       <style>
+    /* Usunąłem stary kod toastów, o który prosiłeś */
+    .notif-active {
+        background: #f59e0b !important;
+        color: white !important;
+        border-color: #f59e0b !important;
+        box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+    }
+    /* ... reszta stylów z V48 ... */
+</style>
+
+<div class="top-bar">
+    <div class="glass p-4 rounded-[35px] flex justify-between items-center shadow-2xl">
+        <div class="flex items-center gap-4">
+            <div class="w-14 h-14 bg-slate-900 rounded-[22px] flex items-center justify-center text-amber-400">
+                <i class="fa-solid fa-satellite-dish animate-pulse"></i>
+            </div>
+            <div>
+                <h2 id="city-title" class="text-xs font-black uppercase text-slate-900">Gorzów</h2>
+                <p id="gps-info" class="text-[9px] text-slate-400 font-bold uppercase italic tracking-widest">Czekam na lokalizację...</p>
+            </div>
+        </div>
+        <button id="notif-btn" onclick="toggleSmartRadar()" class="w-14 h-14 bg-white border border-slate-100 rounded-[22px] flex items-center justify-center text-slate-400 btn-press text-xl">
+            <i class="fa-solid fa-bell"></i>
+        </button>
+    </div>
+</div>
 
         const runRadarCheck = (alerts) => {
             if (!radarActive || !userLatLng) return;
