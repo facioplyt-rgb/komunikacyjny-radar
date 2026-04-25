@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MZK RADAR PRO</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0f172a; margin: 0; overflow: hidden; }
+        #map { height: 100vh; width: 100%; z-index: 1; filter: grayscale(0.2) contrast(1.1); }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
+        .sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; transform: translateY(110%); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .sheet.open { transform: translateY(0); }
+        
+        #proximity-alert { 
+            position: fixed; top: 110px; left: 20px; right: 20px; z-index: 2000;
+            transform: scale(0.9) translateY(-200px); opacity: 0; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #proximity-alert.show { transform: scale(1) translateY(0); opacity: 1; }
+
+        .mzk-marker { width: 48px; height: 48px; border-radius: 18px; border: 3px solid white; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(0,0,0,0.3); color: white; }
+        .pulse-red { animation: pulse 1.5s infinite; background: #dc2626; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(220, 38, 38, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); } }
+        .btn-action { transition: all 0.2s; cursor: pointer; }
+        .btn-action:active { transform: scale(0.9); }
+        #city-overlay { position: fixed; inset: 0; z-index: 9999; background: #f8fafc; display: flex; flex-direction: column; items-center; justify-content: center; }
+    </style>
+</head>
+<body>
+
+    <audio id="snd-alert" src="https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3"></audio>
+
+    <div id="city-overlay">
+        <div class="text-center p-8 max-w-sm w-full">
+            <div class="w-24 h-24 bg-blue-600 rounded-[30px] flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-blue-200">
+                <span class="text-4xl">📡</span>
+            </div>
+            <h1 class="text-4xl font-black italic tracking-tighter mb-2 text-slate-900">MZK RADAR</h1>
+            <p class="text-slate-400 text-[10px] font-bold uppercase tracking-[0.4em] mb-12 text-center">System Monitorowania Kontroli</p>
+            <button onclick="startApp('gorzow', [52.732, 15.237])" class="w-full p-6 bg-white border-2 border-slate-100 rounded-3xl shadow-xl flex justify-between items-center btn-action">
+                <span class="font-black text-slate-700 tracking-widest">GORZÓW WLKP.</span>
+                <span class="text-blue-600 font-bold">START</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="proximity-alert" class="glass rounded-[32px] p-5 flex items-center gap-5 border-l-[12px] border-red-600 shadow-2xl">
+        <div id="alert-icon-ui" class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-inner"></div>
+        <div class="flex-1">
+            <h4 class="text-[10px] font-black text-red-600 uppercase tracking-widest mb-1">Alert Bliskości!</h4>
+            <p id="alert-street" class="text-sm font-black text-slate-900 leading-tight mb-1">Szukanie ulicy...</p>
+            <p id="alert-meta" class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter"></p>
+        </div>
+        <button onclick="closeProximity()" class="w-10 h-10 flex items-center justify-center text-slate-300">✕</button>
+    </div>
+
+    <div class="fixed top-6 left-4 right-4 z-[500] flex justify-center pointer-events-none">
+        <div class="w-full max-w-xl glass rounded-[28px] p-4 flex justify-between items-center pointer-events-auto shadow-xl">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-xl shadow-lg">🚍</div>
+                <div>
+                    <h2 id="display-city" class="text-sm font-black uppercase text-slate-900 tracking-tighter leading-none">Miasto</h2>
+                    <p id="status-gps" class="text-[9px] text-slate-400 font-bold uppercase mt-1 tracking-widest">Szukam sygnału GPS...</p>
+                </div>
+            </div>
+            <button onclick="authAdmin()" class="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100">⚙️</button>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <div id="fab" class="fixed bottom-10 inset-x-0 z-[500] flex justify-center px-8 opacity-0 pointer-events-none transition-all">
+        <button onclick="initReport()" class="w-full max-w-sm bg-blue-600 text-white p-7 rounded-[30px] font-black text-sm tracking-widest shadow-2xl flex items-center justify-center gap-4 btn-action uppercase">
+            <span>➕ Dodaj Alert</span>
+        </button>
+    </div>
+
+    <div id="sheet-type" class="sheet glass rounded-t-[45px] p-10 max-w-2xl mx-auto shadow-2xl">
+        <div class="w-16 h-1.5 bg-slate-200 rounded-full mx-auto mb-10"></div>
+        <div class="grid grid-cols-3 gap-4">
+            <button onclick="setType('KONTROLA', '🔍')" class="flex flex-col items-center gap-4 p-6 bg-red-50 rounded-[35px] border border-red-100 text-red-600 btn-action">
+                <span class="text-3xl">🔍</span><span class="text-[10px] font-black uppercase">Kontrola</span>
+            </button>
+            <button onclick="setType('AWARIA', '⚠️')" class="flex flex-col items-center gap-4 p-6 bg-orange-50 rounded-[35px] border border-orange-100 text-orange-600 btn-action">
+                <span class="text-3xl">⚠️</span><span class="text-[10px] font-black uppercase">Awaria</span>
+            </button>
+            <button onclick="setType('OPOZNIENIE', '🕒')" class="flex flex-col items-center gap-4 p-6 bg-blue-50 rounded-[35px] border border-blue-100 text-blue-600 btn-action">
+                <span class="text-3xl">🕒</span><span class="text-[10px] font-black uppercase">Opóźnienie</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="sheet-details" class="sheet glass rounded-t-[45px] p-10 max-w-2xl mx-auto">
+        <h2 class="text-2xl font-black mb-8 text-center uppercase tracking-tighter italic">Gdzie to jest?</h2>
+        <div id="dir-list" class="space-y-3 max-h-[40vh] overflow-y-auto mb-8 pr-2"></div>
+        <button onclick="closeSheets()" class="w-full text-[10px] font-black text-slate-300 uppercase tracking-widest">Anuluj</button>
+    </div>
+
+    <div id="sheet-vote" class="sheet glass rounded-t-[45px] p-10 max-w-2xl mx-auto text-center">
+        <div id="vote-icon" class="text-5xl mb-4"></div>
+        <h3 id="vote-title" class="text-3xl font-black italic uppercase text-slate-900 mb-2"></h3>
+        <p id="vote-street" class="text-blue-600 font-bold text-xs uppercase mb-8"></p>
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <button id="btn-confirm" class="bg-blue-600 text-white p-6 rounded-[25px] font-black text-xs uppercase btn-action shadow-lg shadow-blue-200">Potwierdzam</button>
+            <button id="btn-deny" class="bg-slate-100 text-slate-700 p-6 rounded-[25px] font-black text-xs uppercase btn-action">Już nie ma</button>
+        </div>
+        <button id="btn-delete" class="hidden w-full p-4 text-red-500 font-bold text-[10px] uppercase">Usuń moje zgłoszenie</button>
+    </div>
+
+    <div id="admin-panel" class="hidden fixed inset-0 z-[10000] bg-slate-50 p-6 overflow-y-auto">
+        <div class="max-w-xl mx-auto pt-10">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-4xl font-black italic tracking-tighter">ADMIN</h2>
+                <button onclick="toggleAdmin(false)" class="text-3xl">✕</button>
+            </div>
+            <div class="bg-white p-8 rounded-[40px] shadow-sm">
+                <p class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest italic">Kierunki dla Gorzowa (linia po linii):</p>
+                <textarea id="admin-dirs-input" rows="10" class="w-full bg-slate-50 border-2 border-slate-100 rounded-[30px] p-6 text-sm font-bold mb-6 outline-none focus:border-blue-500"></textarea>
+                <button onclick="saveDirs()" class="w-full bg-slate-900 text-white p-6 rounded-[25px] font-black text-xs uppercase btn-action">Zaktualizuj Bazę</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, deleteDoc, doc, updateDoc, increment, setDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCb5QmZdwWwa9LafqqGZvGW-6vblkab32M",
+            authDomain: "mzk-by-facio.firebaseapp.com",
+            projectId: "mzk-by-facio",
+            storageBucket: "mzk-by-facio.firebasestorage.app",
+            messagingSenderId: "676970411647",
+            appId: "1:676970411647:web:5703d5fb5fb499ff83714a"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const MAIN_COL = "mzk_data_v12";
+
+        const map = L.map('map', { zoomControl: false, attributionControl: false });
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
+
+        let currentCity = ''; let userPos = null; let selectedType = ''; let selectedIcon = ''; let tempMarker = null; let tempLatlng = null; let reports = []; const markerMap = {};
+
+        // --- GEOKODOWANIE (ULICA) ---
+        async function getStreetName(lat, lng) {
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+                const data = await res.json();
+                return data.address.road || data.address.suburb || "Nieznana ulica";
+            } catch { return "Lokalizacja MZK"; }
+        }
+
+        window.startApp = (city, coords) => {
+            currentCity = city;
+            document.getElementById('city-overlay').style.display = 'none';
+            document.getElementById('display-city').innerText = city.toUpperCase() + " SYSTEM";
+            document.getElementById('fab').style.opacity = '1';
+            document.getElementById('fab').style.pointerEvents = 'auto';
+            map.setView(coords, 15);
+            map.locate({ setView: true, maxZoom: 16, watch: true });
+            
+            onSnapshot(collection(db, MAIN_COL), (snap) => {
+                const validIds = [];
+                snap.forEach(s => {
+                    const data = s.data();
+                    const id = s.id;
+                    validIds.push(id);
+                    if(!markerMap[id]) {
+                        const iconHtml = `<div class="mzk-marker ${data.type === 'KONTROLA' ? 'pulse-red' : ''}" style="background:${data.type==='KONTROLA'?'#dc2626':data.type==='AWARIA'?'#f97316':'#2563eb'}">${data.icon}</div>`;
+                        markerMap[id] = L.marker([data.lat, data.lng], {
+                            icon: L.divIcon({ className: '', html: iconHtml, iconAnchor: [24, 24] })
+                        }).addTo(map).on('click', () => showVote(id, data));
+                    }
+                    reports.push({id, ...data});
+                });
+                Object.keys(markerMap).forEach(mid => { if(!validIds.includes(mid)) { map.removeLayer(markerMap[mid]); delete markerMap[mid]; }});
+            });
+        };
+
+        map.on('locationfound', (e) => {
+            userPos = e.latlng;
+            document.getElementById('status-gps').innerText = "GPS POŁĄCZONY";
+            checkRadar();
+            if(!window.uM) window.uM = L.circleMarker(e.latlng, { radius: 10, color: '#fff', weight: 4, fillColor: '#2563eb', fillOpacity: 1 }).addTo(map);
+            else window.uM.setLatLng(e.latlng);
+        });
+
+        async function checkRadar() {
+            if(!userPos) return;
+            for(const r of reports) {
+                const dist = userPos.distanceTo(L.latLng(r.lat, r.lng));
+                if(dist < 500) {
+                    const banner = document.getElementById('proximity-alert');
+                    document.getElementById('alert-icon-ui').innerText = r.icon;
+                    document.getElementById('alert-icon-ui').style.background = r.type==='KONTROLA'?'#fee2e2':r.type==='AWARIA'?'#ffedd5':'#dbeafe';
+                    document.getElementById('alert-street').innerText = r.street || "W Twojej okolicy";
+                    document.getElementById('alert-meta').innerText = `${Math.round(dist)}m od Ciebie • Kierunek: ${r.dir}`;
+                    banner.classList.add('show');
+                    document.getElementById('snd-alert').play();
+                }
+            }
+        }
+        window.closeProximity = () => document.getElementById('proximity-alert').classList.remove('show');
+
+        window.initReport = () => {
+            const h = document.createElement('div');
+            h.id = "hint"; h.className = "fixed top-32 inset-x-4 z-[2000] text-center";
+            h.innerHTML = `<span class="bg-black text-white px-8 py-4 rounded-3xl font-black text-xs tracking-widest">KLIKNIJ MIEJSCE NA MAPIE</span>`;
+            document.body.appendChild(h);
+            map.once('click', (e) => {
+                tempLatlng = e.latlng;
+                document.getElementById('hint').remove();
+                if(tempMarker) map.removeLayer(tempMarker);
+                tempMarker = L.circle(e.latlng, { radius: 20, color: '#2563eb' }).addTo(map);
+                openSheet('sheet-type');
+            });
+        };
+
+        window.setType = (t, icon) => {
+            selectedType = t; selectedIcon = icon;
+            onSnapshot(doc(db, "config", `dirs_${currentCity}`), (snap) => {
+                const list = snap.exists() ? snap.data().list : ["Dodaj kierunki w adminie"];
+                document.getElementById('dir-list').innerHTML = list.map(d => `
+                    <button onclick="saveReport('${d}')" class="w-full bg-slate-50 p-6 rounded-[25px] text-left font-black text-sm text-slate-700 btn-action">${d}</button>
+                `).join('');
+            });
+            openSheet('sheet-details');
+        };
+
+        window.saveReport = async (dir) => {
+            const street = await getStreetName(tempLatlng.lat, tempLatlng.lng);
+            const myId = Date.now().toString();
+            await addDoc(collection(db, MAIN_COL), {
+                type: selectedType, icon: selectedIcon, dir, street,
+                lat: tempLatlng.lat, lng: tempLatlng.lng,
+                v_up: 1, author: myId, time: serverTimestamp()
+            });
+            localStorage.setItem('mzk_author', myId);
+            closeSheets();
+        };
+
+        window.showVote = (id, data) => {
+            openSheet('sheet-vote');
+            document.getElementById('vote-icon').innerText = data.icon;
+            document.getElementById('vote-title').innerText = data.type;
+            document.getElementById('vote-street').innerText = data.street || data.dir;
+            
+            const btn = document.getElementById('btn-confirm');
+            const hasVoted = localStorage.getItem(`voted_${id}`);
+            
+            if(hasVoted) {
+                btn.innerText = "JUŻ POTWIERDZONO";
+                btn.classList.replace('bg-blue-600', 'bg-slate-300');
+                btn.disabled = true;
+            } else {
+                btn.innerText = "POTWIERDZAM";
+                btn.classList.replace('bg-slate-300', 'bg-blue-600');
+                btn.disabled = false;
+                btn.onclick = async () => {
+                    await updateDoc(doc(db, MAIN_COL, id), { v_up: increment(1) });
+                    localStorage.setItem(`voted_${id}`, "true");
+                    closeSheets();
+                };
+            }
+
+            document.getElementById('btn-deny').onclick = () => closeSheets();
+            const del = document.getElementById('btn-delete');
+            del.classList.toggle('hidden', data.author !== localStorage.getItem('mzk_author'));
+            del.onclick = () => deleteDoc(doc(db, MAIN_COL, id)).then(closeSheets);
+        };
+
+        window.authAdmin = () => { if(prompt("Hasło:") === "mzk2026") toggleAdmin(true); };
+        window.toggleAdmin = (s) => {
+            document.getElementById('admin-panel').classList.toggle('hidden', !s);
+            if(s) onSnapshot(doc(db, "config", `dirs_${currentCity}`), (snap) => {
+                if(snap.exists()) document.getElementById('admin-dirs-input').value = snap.data().list.join('\n');
+            }, {once: true});
+        };
+
+        window.saveDirs = async () => {
+            const list = document.getElementById('admin-dirs-input').value.split('\n').filter(l => l.trim() !== "");
+            await setDoc(doc(db, "config", `dirs_${currentCity}`), { list });
+            alert("Zsynchronizowano!"); toggleAdmin(false);
+        };
+
+        window.openSheet = (id) => { 
+            document.querySelectorAll('.sheet').forEach(s => s.classList.remove('open'));
+            document.getElementById(id).classList.add('open');
+            document.getElementById('fab').style.opacity = '0';
+        };
+        window.closeSheets = () => {
+            document.querySelectorAll('.sheet').forEach(s => s.classList.remove('open'));
+            document.getElementById('fab').style.opacity = '1';
+            if(tempMarker) { map.removeLayer(tempMarker); tempMarker = null; }
+        };
+    </script>
+</body>
+</html>
