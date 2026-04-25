@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>RADAR SYSTEM V48 | FULL ARCHITECTURE</title>
+    <title>RADAR SYSTEM V48 | AUTO-CLEANUP</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -11,7 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        /* 1. CORE VARIABLES & THEME */
         :root { 
             --main: #f59e0b; 
             --dark: #0f172a; 
@@ -22,7 +21,6 @@
             --safe-bottom: env(safe-area-inset-bottom);
         }
 
-        /* 2. RESET & BASE STYLES */
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         body { 
@@ -42,7 +40,6 @@
             filter: contrast(1.05) saturate(1.1); 
         }
 
-        /* 3. WELCOME SCREEN */
         #city-selector { 
             position: fixed; 
             inset: 0; 
@@ -65,7 +62,6 @@
             max-width: 400px;
         }
 
-        /* 4. UI COMPONENTS (GLASSMORPHISM) */
         .glass { 
             background: var(--glass-bg); 
             backdrop-filter: blur(20px); 
@@ -83,7 +79,6 @@
             margin: 0 auto;
         }
 
-        /* 5. BOTTOM SHEETS & MODALS */
         .sheet { 
             position: fixed; 
             bottom: 0; 
@@ -109,7 +104,6 @@
             margin: -16px auto 24px;
         }
 
-        /* 6. MARKER STYLES */
         .custom-marker { 
             width: 60px; 
             height: 60px; 
@@ -141,7 +135,6 @@
             text-transform: uppercase;
         }
 
-        /* 7. ANIMATIONS & BUTTONS */
         .btn-press { transition: transform 0.2s; cursor: pointer; }
         .btn-press:active { transform: scale(0.94); }
 
@@ -179,7 +172,6 @@
             50% { transform: translate(-50%, -70%); }
         }
 
-        /* 8. LIST SCROLLING */
         .dir-list {
             display: grid;
             gap: 12px;
@@ -216,7 +208,7 @@
         <div class="welcome-card">
             <i class="fa-solid fa-tower-broadcast text-7xl text-amber-500 mb-6 block"></i>
             <h1 class="text-5xl font-black italic text-slate-900 uppercase tracking-tighter mb-2">System<br>Radar</h1>
-            <p class="text-slate-400 font-bold text-[10px] tracking-[0.4em] uppercase mb-10">Database Engine v38</p>
+            <p class="text-slate-400 font-bold text-[10px] tracking-[0.4em] uppercase mb-10">Database Engine v48</p>
             
             <button onclick="startApp('gorzow', [52.732, 15.237])" class="w-full p-6 bg-slate-900 text-white rounded-[30px] flex items-center justify-between btn-press shadow-2xl">
                 <div class="flex items-center gap-4">
@@ -271,16 +263,13 @@
         <h3 class="text-center font-black uppercase text-[10px] tracking-widest text-slate-400 mb-8">Kategoria zgłoszenia</h3>
         <div class="grid grid-cols-3 gap-4">
             <button onclick="selectType('KONTROLA', 'fa-user-secret', 'red')" class="flex flex-col items-center gap-4 p-8 bg-red-50 rounded-[35px] text-red-600 btn-press border-2 border-red-100 shadow-sm">
-                <i class="fa-solid fa-user-secret text-4xl"></i>
-                <span class="text-[9px] font-black uppercase">Bilety</span>
+                <i class="fa-solid fa-user-secret text-4xl"></i><span class="text-[9px] font-black uppercase">Bilety</span>
             </button>
             <button onclick="selectType('AWARIA', 'fa-triangle-exclamation', 'orange')" class="flex flex-col items-center gap-4 p-8 bg-orange-50 rounded-[35px] text-orange-600 btn-press border-2 border-orange-100 shadow-sm">
-                <i class="fa-solid fa-triangle-exclamation text-4xl"></i>
-                <span class="text-[9px] font-black uppercase">Awaria</span>
+                <i class="fa-solid fa-triangle-exclamation text-4xl"></i><span class="text-[9px] font-black uppercase">Awaria</span>
             </button>
             <button onclick="selectType('KOREK', 'fa-clock', 'blue')" class="flex flex-col items-center gap-4 p-8 bg-blue-50 rounded-[35px] text-blue-600 btn-press border-2 border-blue-100 shadow-sm">
-                <i class="fa-solid fa-clock text-4xl"></i>
-                <span class="text-[9px] font-black uppercase">Korek</span>
+                <i class="fa-solid fa-clock text-4xl"></i><span class="text-[9px] font-black uppercase">Korek</span>
             </button>
         </div>
         <button onclick="closeAllSheets()" class="w-full mt-8 py-2 text-[10px] font-black text-slate-300 uppercase tracking-widest">Anuluj Operację</button>
@@ -295,7 +284,6 @@
             <h2 class="text-2xl font-black italic text-slate-900 uppercase">Szczegóły</h2>
             <div class="w-14"></div>
         </div>
-
         <div class="flex gap-4 mb-6">
             <div class="w-1/3">
                 <label class="block text-[8px] font-black text-slate-400 uppercase mb-2 ml-4">Numer</label>
@@ -306,12 +294,9 @@
                 <input type="text" id="search-dir" placeholder="Szukaj..." class="search-input" oninput="filterDirections()">
             </div>
         </div>
-
-        <div id="dir-list" class="dir-list">
-        </div>
-
+        <div id="dir-list" class="dir-list"></div>
         <button id="btn-submit" onclick="submitToFirebase()" class="w-full bg-amber-500 text-white p-7 rounded-[30px] font-black text-sm tracking-widest uppercase btn-press shadow-xl border-b-8 border-amber-600">
-            Wyślij do bazy v38
+            Wyślij do bazy
         </button>
     </div>
 
@@ -341,7 +326,7 @@
 
     <div id="admin-panel" class="hidden fixed inset-0 z-[10000] bg-white p-8 overflow-y-auto">
         <div class="max-w-xl mx-auto">
-            <h2 class="text-4xl font-black italic uppercase text-slate-900 mb-8">Konfiguracja v38</h2>
+            <h2 class="text-4xl font-black italic uppercase text-slate-900 mb-8">Konfiguracja</h2>
             <p class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Lista Kierunków (linia po linii):</p>
             <textarea id="admin-data" rows="15" class="w-full bg-slate-50 border-4 border-slate-100 rounded-[35px] p-8 font-bold text-slate-700 mb-6 outline-none focus:border-amber-500 shadow-inner"></textarea>
             <button onclick="saveAdminData()" class="w-full bg-slate-900 text-white p-8 rounded-[35px] font-black btn-press shadow-2xl mb-4 border-b-8 border-slate-700 italic uppercase">Synchronizuj Bazę</button>
@@ -354,7 +339,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
         import { getDatabase, ref, set, push, onValue, update, remove, increment } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
 
-        // CONFIG BAZY
         const firebaseConfig = {
             apiKey: "AIzaSyCb5QmZdwWwa9LafqqGZvGW-6vblkab32M",
             authDomain: "mzk-by-facio.firebaseapp.com",
@@ -378,20 +362,13 @@
         let radarActive = false;
         let processedAlerts = new Set();
         let markerMap = {};
+        let currentAlerts = {}; // Przechowuje aktualny zrzut z bazy do celów GC
         const deviceID = localStorage.getItem('radar_uid_v48') || Math.random().toString(36).substr(2, 15);
         localStorage.setItem('radar_uid_v48', deviceID);
 
-        // MAPA
-        const map = L.map('map', { 
-            zoomControl: false, 
-            attributionControl: false, 
-            tap: false,
-            bounceAtZoomLimits: false 
-        });
-        
+        const map = L.map('map', { zoomControl: false, attributionControl: false, tap: false, bounceAtZoomLimits: false });
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
 
-        // --- FUNKCJE POMOCNICZE ---
         const getRelativeTime = (ts) => {
             const diff = Math.floor((Date.now() - ts) / 60000);
             if (diff < 1) return "Teraz";
@@ -407,53 +384,36 @@
             } catch { return "Lokalizacja w trasie"; }
         };
 
-        // --- KONIEC BŁĘDU (skrypt jest kontynuowany) ---
-
         const runRadarCheck = (alerts) => {
             if (!radarActive || !userLatLng) return;
-            
             Object.entries(alerts).forEach(([id, alert]) => {
                 const distance = userLatLng.distanceTo(L.latLng(alert.lat, alert.lng));
-                
                 if (distance < 500 && !processedAlerts.has(id)) {
                     processedAlerts.add(id);
-                    
                     if ("Notification" in window && Notification.permission === "granted") {
-                        new Notification(`🚨 RADAR: ${alert.type}`, {
-                            body: `Linia ${alert.line}, ok. ${Math.round(distance)}m od Ciebie. Kierunek: ${alert.dir}`,
-                            icon: 'https://cdn-icons-png.flaticon.com/512/821/821326.png'
-                        });
+                        new Notification(`🚨 RADAR: ${alert.type}`, { body: `Linia ${alert.line}, ok. ${Math.round(distance)}m od Ciebie. Kierunek: ${alert.dir}` });
                     }
-                    
                     document.getElementById('alert-sound').play().catch(()=>{});
-                    
-                    // Resetuj możliwość powiadomienia o tym samym punkcie po 10 min
                     setTimeout(() => processedAlerts.delete(id), 600000);
                 }
             });
         };
 
         window.toggleSmartRadar = async () => {
-            if ("Notification" in window && Notification.permission !== "granted") {
-                await Notification.requestPermission();
-            }
+            if ("Notification" in window && Notification.permission !== "granted") await Notification.requestPermission();
             radarActive = !radarActive;
             const btn = document.getElementById('notif-btn');
             if (radarActive) {
                 btn.classList.add('notif-active');
                 alert("Smart Radar uruchomiony. Powiadomimy Cię, jeśli w promieniu 500m pojawi się kontrola biletów.");
-            } else {
-                btn.classList.remove('notif-active');
-            }
+            } else btn.classList.remove('notif-active');
         };
 
-        // --- CORE LOGIC: START ---
         window.startApp = (city, coords) => {
             currentCity = city;
             document.getElementById('city-selector').style.opacity = '0';
             setTimeout(() => document.getElementById('city-selector').style.visibility = 'hidden', 800);
             
-            // UI Init
             document.getElementById('fab-container').style.opacity = '1';
             document.getElementById('fab-container').style.pointerEvents = 'auto';
             document.getElementById('fab-container').style.transform = 'translateY(0)';
@@ -462,63 +422,63 @@
             map.setView(coords, 14);
             map.locate({ watch: true, setView: false, maxZoom: 16 });
 
-            // Nasłuch bazy: Alerty
             onValue(ref(db, `v38/${currentCity}/alerts`), (snapshot) => {
                 const data = snapshot.val() || {};
+                currentAlerts = data; // Kopia dla interwału
                 
-                // Czyść usunięte
                 Object.keys(markerMap).forEach(id => {
-                    if (!data[id]) {
-                        map.removeLayer(markerMap[id]);
-                        delete markerMap[id];
-                    }
+                    if (!data[id]) { map.removeLayer(markerMap[id]); delete markerMap[id]; }
                 });
 
-                // Dodaj/Aktualizuj
                 Object.entries(data).forEach(([id, val]) => {
+                    // Weryfikacja przy starcie - jak minęło 30 minut, to usuwamy z Firebase i przerywamy renderowanie
+                    if (Date.now() - val.createdAt > 30 * 60 * 1000) {
+                        remove(ref(db, `v38/${currentCity}/alerts/${id}`));
+                        return;
+                    }
+
                     if (!markerMap[id]) {
                         const colorCode = val.type === 'KONTROLA' ? '#ef4444' : (val.type === 'AWARIA' ? '#f59e0b' : '#3b82f6');
                         const iconHtml = `<div class="custom-marker ${val.type === 'KONTROLA' ? 'pulse-red' : ''}" style="background:${colorCode}">
-                            <i class="fa-solid ${val.icon} text-2xl"></i>
-                            <div class="line-badge">${val.line}</div>
-                        </div>`;
+                            <i class="fa-solid ${val.icon} text-2xl"></i><div class="line-badge">${val.line}</div></div>`;
                         
                         markerMap[id] = L.marker([val.lat, val.lng], {
                             icon: L.divIcon({ className: '', html: iconHtml, iconAnchor: [30, 30] })
                         }).addTo(map).on('click', () => openVoteSheet(id, val));
                     }
                 });
-
                 runRadarCheck(data);
             });
 
-            // Nasłuch bazy: Kierunki
             onValue(ref(db, `v38/${currentCity}/config`), (snapshot) => {
                 cityConfig = snapshot.val() || [];
                 renderDirections(cityConfig);
             });
+
+            // GARBAGE COLLECTOR: Sprząta bazę co minutę z rzeczy starszych niż 30 min (1800000 ms)
+            setInterval(() => {
+                const now = Date.now();
+                Object.entries(currentAlerts).forEach(([id, val]) => {
+                    if (now - val.createdAt > 1800000) {
+                        console.log("Garbage Collector usunął przedawniony alert:", id);
+                        remove(ref(db, `v38/${currentCity}/alerts/${id}`));
+                    }
+                });
+            }, 60000);
         };
 
-        // GPS
         map.on('locationfound', (e) => {
             userLatLng = e.latlng;
             document.getElementById('gps-info').innerText = "Sygnał GPS aktywny";
             document.getElementById('gps-info').style.color = "#10b981";
             document.getElementById('gps-dot').className = "w-2.5 h-2.5 bg-green-500 rounded-full shadow-[0_0_10px_#10b981]";
-            
-            if (!window.userCircle) {
-                window.userCircle = L.circleMarker(e.latlng, { radius: 12, color: '#fff', weight: 4, fillColor: '#3b82f6', fillOpacity: 1 }).addTo(map);
-            } else {
-                window.userCircle.setLatLng(e.latlng);
-            }
+            if (!window.userCircle) window.userCircle = L.circleMarker(e.latlng, { radius: 12, color: '#fff', weight: 4, fillColor: '#3b82f6', fillOpacity: 1 }).addTo(map);
+            else window.userCircle.setLatLng(e.latlng);
         });
 
-        // --- ZGŁASZANIE ---
         window.initReportFlow = () => {
             const hint = document.createElement('div');
-            hint.className = "tap-hint-box";
-            hint.id = "tap-hint";
-            hint.innerText = "Wskaż punkt na mapie";
+            hint.className = "tap-hint-box"; hint.id = "tap-hint"; hint.innerText = "Wskaż punkt na mapie";
             document.body.appendChild(hint);
             
             map.once('click', (e) => {
@@ -530,10 +490,7 @@
             });
         };
 
-        window.selectType = (type, icon, color) => {
-            selectedType = { type, icon, color };
-            openSheet('sheet-details');
-        };
+        window.selectType = (type, icon, color) => { selectedType = { type, icon, color }; openSheet('sheet-details'); };
 
         window.submitToFirebase = async () => {
             const line = document.getElementById('in-line').value.trim() || "??";
@@ -541,18 +498,8 @@
             const street = await reverseGeocode(tempCoords.lat, tempCoords.lng);
             
             const newAlertRef = push(ref(db, `v38/${currentCity}/alerts`));
-            set(newAlertRef, {
-                ...selectedType,
-                line: line,
-                dir: dir,
-                street: street,
-                lat: tempCoords.lat,
-                lng: tempCoords.lng,
-                author: deviceID,
-                createdAt: Date.now(),
-                lastVote: Date.now(),
-                votes: 1
-            }).then(() => {
+            set(newAlertRef, { ...selectedType, line: line, dir: dir, street: street, lat: tempCoords.lat, lng: tempCoords.lng, author: deviceID, createdAt: Date.now(), lastVote: Date.now(), votes: 1 })
+            .then(() => {
                 closeAllSheets();
                 if(tempMarker) map.removeLayer(tempMarker);
                 document.getElementById('in-line').value = '';
@@ -560,7 +507,6 @@
             });
         };
 
-        // --- GŁOSOWANIE ---
         window.openVoteSheet = (id, data) => {
             openSheet('sheet-vote');
             const color = data.type === 'KONTROLA' ? 'text-red-500' : (data.type === 'AWARIA' ? 'text-orange-500' : 'text-blue-500');
@@ -572,60 +518,19 @@
             document.getElementById('v-votes').innerText = data.votes;
             document.getElementById('v-time').innerText = getRelativeTime(data.createdAt);
             
-            document.getElementById('btn-vote-up').onclick = () => {
-                update(ref(db, `v38/${currentCity}/alerts/${id}`), {
-                    votes: increment(1),
-                    lastVote: Date.now()
-                });
-                closeAllSheets();
-            };
-
+            document.getElementById('btn-vote-up').onclick = () => { update(ref(db, `v38/${currentCity}/alerts/${id}`), { votes: increment(1), lastVote: Date.now() }); closeAllSheets(); };
             const delBtn = document.getElementById('btn-delete');
-            if (data.author === deviceID) {
-                delBtn.classList.remove('hidden');
-                delBtn.onclick = () => { remove(ref(db, `v38/${currentCity}/alerts/${id}`)); closeAllSheets(); };
-            } else {
-                delBtn.classList.add('hidden');
-            }
+            if (data.author === deviceID) { delBtn.classList.remove('hidden'); delBtn.onclick = () => { remove(ref(db, `v38/${currentCity}/alerts/${id}`)); closeAllSheets(); }; } 
+            else delBtn.classList.add('hidden');
         };
 
-        // --- UI HELPERS ---
-        window.openSheet = (id) => {
-            document.querySelectorAll('.sheet').forEach(s => s.classList.remove('open'));
-            document.getElementById(id).classList.add('open');
-            document.getElementById('fab-container').style.opacity = '0';
-        };
-
-        window.closeAllSheets = () => {
-            document.querySelectorAll('.sheet').forEach(s => s.classList.remove('open'));
-            document.getElementById('fab-container').style.opacity = '1';
-        };
-
-        const renderDirections = (list) => {
-            const container = document.getElementById('dir-list');
-            container.innerHTML = list.map(d => `
-                <button onclick="document.getElementById('search-dir').value='${d}'" class="w-full bg-white p-6 rounded-[25px] text-left font-bold text-slate-700 btn-press border border-slate-50 shadow-sm flex justify-between items-center">
-                    <span>${d}</span>
-                    <i class="fa-solid fa-chevron-right text-slate-200"></i>
-                </button>
-            `).join('');
-        };
-
-        window.filterDirections = () => {
-            const q = document.getElementById('search-dir').value.toLowerCase();
-            renderDirections(cityConfig.filter(d => d.toLowerCase().includes(q)));
-        };
-
-        // --- ADMIN ---
+        window.openSheet = (id) => { document.querySelectorAll('.sheet').forEach(s => s.classList.remove('open')); document.getElementById(id).classList.add('open'); document.getElementById('fab-container').style.opacity = '0'; };
+        window.closeAllSheets = () => { document.querySelectorAll('.sheet').forEach(s => s.classList.remove('open')); document.getElementById('fab-container').style.opacity = '1'; };
+        const renderDirections = (list) => { document.getElementById('dir-list').innerHTML = list.map(d => `<button onclick="document.getElementById('search-dir').value='${d}'" class="w-full bg-white p-6 rounded-[25px] text-left font-bold text-slate-700 btn-press border border-slate-50 shadow-sm flex justify-between items-center"><span>${d}</span><i class="fa-solid fa-chevron-right text-slate-200"></i></button>`).join(''); };
+        window.filterDirections = () => { const q = document.getElementById('search-dir').value.toLowerCase(); renderDirections(cityConfig.filter(d => d.toLowerCase().includes(q))); };
         window.adminLogin = () => { if(prompt("Hasło operatora:") === "mzk2026") toggleAdmin(true); };
-        window.toggleAdmin = (s) => {
-            document.getElementById('admin-panel').classList.toggle('hidden', !s);
-            if(s) document.getElementById('admin-data').value = cityConfig.join('\n');
-        };
-        window.saveAdminData = () => {
-            const lines = document.getElementById('admin-data').value.split('\n').filter(l => l.trim() !== "");
-            set(ref(db, `v38/${currentCity}/config`), lines).then(() => { alert("Zapisano!"); toggleAdmin(false); });
-        };
+        window.toggleAdmin = (s) => { document.getElementById('admin-panel').classList.toggle('hidden', !s); if(s) document.getElementById('admin-data').value = cityConfig.join('\n'); };
+        window.saveAdminData = () => { const lines = document.getElementById('admin-data').value.split('\n').filter(l => l.trim() !== ""); set(ref(db, `v38/${currentCity}/config`), lines).then(() => { alert("Zapisano!"); toggleAdmin(false); }); };
     </script>
 </body>
 </html>
