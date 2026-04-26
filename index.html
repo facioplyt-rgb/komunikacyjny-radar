@@ -1,282 +1,399 @@
-
 <!DOCTYPE html>
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ełk Nasze Eventy | Wszystko o eventach</title>
+    <title>Ełk Nasze Eventy | Portal Korporacyjny</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary: #003366;
             --accent: #ffcc00;
+            --dark: #1a1a1a;
+            --light: #f4f7f6;
             --success: #27ae60;
-            --danger: #c0392b;
-            --bg: #f0f2f5;
-            --white: #ffffff;
-            --text: #1c1e21;
+            --danger: #e74c3c;
+            --glass: rgba(255, 255, 255, 0.95);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-        body { background-color: var(--bg); color: var(--text); line-height: 1.6; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, sans-serif; }
+        body { background-color: var(--light); color: var(--dark); overflow-x: hidden; }
 
-        /* POWIADOMIENIA (TOAST) */
-        #toast {
-            visibility: hidden; min-width: 250px; background-color: var(--success); color: #fff;
-            text-align: center; border-radius: 8px; padding: 16px; position: fixed;
-            z-index: 2000; left: 50%; top: 30px; transform: translateX(-50%);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-weight: bold;
-        }
-        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
-        @keyframes fadein { from {top: 0; opacity: 0;} to {top: 30px; opacity: 1;} }
-        @keyframes fadeout { from {top: 30px; opacity: 1;} to {top: 0; opacity: 0;} }
+        /* --- LOADING SPINNER --- */
+        #loader { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); z-index: 9999; justify-content: center; align-items: center; color: white; flex-direction: column; }
+        .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* NAWIGACJA */
-        nav { background: var(--primary); color: white; padding: 15px 20px; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-        .nav-inner { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
-        .logo { font-size: 22px; font-weight: 900; text-transform: uppercase; cursor: pointer; letter-spacing: -1px; }
+        /* --- NAVIGATION --- */
+        nav { background: var(--primary); color: white; padding: 15px 0; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .nav-container { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; }
+        .logo { font-size: 26px; font-weight: 900; text-transform: uppercase; letter-spacing: -1.5px; cursor: pointer; color: white; text-decoration: none; }
         .logo span { color: var(--accent); }
-        .btn-panel { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-panel:hover { background: var(--accent); color: var(--primary); border-color: var(--accent); }
+        .nav-links button { background: var(--accent); color: var(--primary); border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-left: 10px; }
+        .nav-links button:hover { background: white; transform: translateY(-2px); }
 
-        /* CONTENT */
-        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
-        .section-header { margin-bottom: 25px; border-bottom: 3px solid var(--accent); display: inline-block; padding-bottom: 5px; }
+        /* --- HERO SECTION --- */
+        .hero { background: linear-gradient(rgba(0,51,102,0.8), rgba(0,51,102,0.8)), url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80'); background-size: cover; background-position: center; height: 300px; display: flex; align-items: center; justify-content: center; color: white; text-align: center; margin-bottom: 40px; }
+        .hero h1 { font-size: 48px; text-shadow: 2px 2px 10px rgba(0,0,0,0.5); }
 
-        /* CARDS */
-        .news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
-        .news-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; flex-direction: column; transition: 0.3s; }
-        .news-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+        /* --- GRID --- */
+        .main-container { max-width: 1400px; margin: 0 auto; padding: 0 20px; }
+        .news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 30px; margin-bottom: 50px; }
+
+        /* --- NEWS CARDS --- */
+        .card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: 0.4s; position: relative; display: flex; flex-direction: column; }
+        .card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
         
-        .gallery-preview { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; height: 220px; background: #eee; }
-        .gallery-preview img { width: 100%; height: 100%; object-fit: cover; }
-        .single-img { grid-column: span 2; }
-
-        .card-content { padding: 20px; flex-grow: 1; }
-        .card-author { font-size: 12px; color: var(--primary); font-weight: bold; text-transform: uppercase; margin-bottom: 8px; display: block; }
-        .card-title { font-size: 19px; font-weight: 800; margin-bottom: 12px; color: #000; line-height: 1.3; }
-        .card-footer { padding: 15px 20px; background: #f9f9f9; font-size: 13px; color: #777; display: flex; justify-content: space-between; border-top: 1px solid #eee; }
-
-        /* ADMIN FORM */
-        .admin-box { background: white; padding: 35px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: var(--primary); }
-        .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; }
-        .form-group input:focus { border-color: var(--primary); }
-
-        .upload-zone { border: 3px dashed #ccc; padding: 30px; text-align: center; border-radius: 10px; cursor: pointer; transition: 0.3s; background: #fcfcfc; }
-        .upload-zone:hover { border-color: var(--primary); background: #f0f7ff; }
-        .img-previews { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
-        .img-previews img { width: 70px; height: 70px; object-fit: cover; border-radius: 5px; border: 2px solid var(--primary); }
-
-        .btn-pub { background: var(--primary); color: white; border: none; width: 100%; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        .btn-pub:active { transform: scale(0.98); }
-
-        /* LOGIN */
-        .login-wrap { max-width: 400px; margin: 100px auto; background: white; padding: 40px; border-radius: 15px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        .card-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(50%, 1fr)); gap: 2px; background: #000; height: 280px; cursor: pointer; overflow: hidden; }
+        .card-gallery img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
+        .card-gallery img:hover { transform: scale(1.05); filter: brightness(1.1); }
         
+        .card-body { padding: 30px; flex-grow: 1; }
+        .card-category { color: var(--primary); font-weight: 800; font-size: 12px; text-transform: uppercase; margin-bottom: 10px; display: block; }
+        .card-title { font-size: 24px; font-weight: 900; margin-bottom: 15px; color: var(--dark); line-height: 1.2; }
+        .card-content { color: #555; font-size: 16px; margin-bottom: 20px; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        .card-meta { display: flex; align-items: center; gap: 15px; padding: 20px 30px; background: #fafafa; border-top: 1px solid #eee; font-size: 14px; color: #888; }
+        .card-meta i { color: var(--primary); }
+
+        /* --- ADMIN PANEL --- */
+        .admin-panel { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); max-width: 900px; margin: 0 auto; }
+        .form-group { margin-bottom: 25px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 10px; color: var(--primary); }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 15px; border: 2px solid #e1e1e1; border-radius: 12px; font-size: 16px; transition: 0.3s; }
+        .form-group input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(0,51,102,0.1); }
+
+        .drop-zone { border: 3px dashed #cbd5e0; padding: 40px; text-align: center; border-radius: 15px; cursor: pointer; background: #f8fafc; transition: 0.3s; }
+        .drop-zone:hover { border-color: var(--primary); background: #ebf4ff; }
+        .preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 20px; }
+        .preview-item { width: 100%; height: 100px; object-fit: cover; border-radius: 10px; border: 2px solid var(--primary); }
+
+        .btn-submit { background: var(--primary); color: white; border: none; padding: 20px; width: 100%; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 10px 20px rgba(0,51,102,0.2); }
+        .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(0,51,102,0.3); }
+
+        /* --- LIGHTBOX --- */
+        #lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10000; justify-content: center; align-items: center; cursor: pointer; }
+        #lightbox img { max-width: 90%; max-height: 90%; border-radius: 5px; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
+
+        /* --- TOAST --- */
+        #toast { visibility: hidden; min-width: 300px; background-color: var(--dark); color: #fff; text-align: center; border-radius: 50px; padding: 16px; position: fixed; z-index: 10001; left: 50%; bottom: 30px; transform: translateX(-50%); font-weight: bold; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+
         .hidden { display: none !important; }
-        .admin-list-item { display: flex; justify-content: space-between; padding: 15px; background: #f8f9fa; margin-top: 10px; border-radius: 8px; align-items: center; }
+        .admin-list-card { display: flex; justify-content: space-between; align-items: center; padding: 20px; background: #f8fafc; border-radius: 12px; margin-top: 15px; border: 1px solid #e1e1e1; }
+
+        @media (max-width: 768px) {
+            .news-grid { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 32px; }
+        }
     </style>
 </head>
 <body>
 
-    <div id="toast">Sukces! Post został opublikowany.</div>
+<div id="loader"><div class="spinner"></div><h2 id="loader-text">Przetwarzanie dużych plików...</h2></div>
+<div id="lightbox" onclick="this.style.display='none'"><img src="" id="lightbox-img"></div>
+<div id="toast"></div>
 
-    <nav>
-        <div class="nav-inner">
-            <div class="logo" onclick="showView('home')">Ełk <span>Nasze Eventy</span></div>
-            <div>
-                <button class="btn-panel" onclick="showView('home')"><i class="fas fa-home"></i> Newsy</button>
-                <button class="btn-panel" onclick="checkAuth()"><i class="fas fa-user-cog"></i> Panel Admina</button>
+<nav>
+    <div class="nav-container">
+        <a href="#" class="logo" onclick="showView('home')">Ełk <span>Nasze Eventy</span></a>
+        <div class="nav-links">
+            <button onclick="showView('home')"><i class="fas fa-newspaper"></i> Newsy</button>
+            <button onclick="handleAuth()"><i class="fas fa-lock"></i> Panel Admina</button>
+        </div>
+    </div>
+</nav>
+
+<div id="view-home">
+    <div class="hero">
+        <div>
+            <h1>Serce Mazur, Twoje Wydarzenia</h1>
+            <p>Najszybsze informacje z regionu Ełku</p>
+        </div>
+    </div>
+    <div class="main-container">
+        <h2 style="margin-bottom: 30px; font-size: 32px; font-weight: 900;">Ostatnie Artykuły</h2>
+        <div class="news-grid" id="public-feed"></div>
+    </div>
+</div>
+
+<div id="view-login" class="hidden">
+    <div style="max-width: 450px; margin: 100px auto; background: white; padding: 50px; border-radius: 25px; box-shadow: 0 20px 60px rgba(0,0,0,0.1); text-align: center;">
+        <i class="fas fa-fingerprint fa-4x" style="color: var(--primary); margin-bottom: 20px;"></i>
+        <h2>Weryfikacja</h2>
+        <p style="color: #666; margin-bottom: 30px;">Podaj kod dostępu do redakcji</p>
+        <input type="password" id="admin-pass" style="width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #eee; text-align: center; font-size: 20px; margin-bottom: 20px;" placeholder="Hasło...">
+        <button class="btn-submit" onclick="login()">Zaloguj do Systemu</button>
+    </div>
+</div>
+
+<div id="view-admin" class="hidden">
+    <div class="main-container" style="margin-top: 50px;">
+        <div class="admin-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
+                <h2>Nowy Artykuł Premium</h2>
+                <button onclick="logout()" style="background: var(--danger); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer;">Wyloguj</button>
             </div>
-        </div>
-    </nav>
 
-    <div class="container">
-        <div id="view-home">
-            <h2 class="section-header">Najnowsze wiadomości z Ełku</h2>
-            <div class="news-grid" id="news-feed"></div>
-        </div>
-
-        <div id="view-login" class="hidden">
-            <div class="login-wrap">
-                <i class="fas fa-shield-alt fa-3x" style="color:var(--primary); margin-bottom:15px"></i>
-                <h2>Strefa Redakcyjna</h2>
-                <p style="color:#666; margin-bottom:20px">Wpisz hasło dostępu</p>
-                <input type="password" id="pass-field" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #ccc; text-align:center;" placeholder="Hasło...">
-                <button class="btn-pub" onclick="doLogin()">Zaloguj</button>
+            <div class="form-group">
+                <label>Tytuł (Brak limitu znaków)</label>
+                <input type="text" id="p-title" placeholder="Wpisz nagłówek...">
             </div>
-        </div>
 
-        <div id="view-admin" class="hidden">
-            <div class="admin-box">
-                <div style="display:flex; justify-content:space-between; margin-bottom:25px">
-                    <h2>Panel Autorski</h2>
-                    <button onclick="doLogout()" style="padding:5px 10px; cursor:pointer">Wyloguj</button>
-                </div>
-
-                <div class="form-group">
-                    <label>Tytuł Eventu</label>
-                    <input type="text" id="post-title" placeholder="Wpisz chwytliwy tytuł...">
-                </div>
-
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                 <div class="form-group">
                     <label>Autor / Redaktor</label>
-                    <input type="text" id="post-author" placeholder="Twoje imię i nazwisko...">
+                    <input type="text" id="p-author" placeholder="Twoje nazwisko...">
                 </div>
-
                 <div class="form-group">
-                    <label>Treść Artykułu</label>
-                    <textarea id="post-content" rows="6" placeholder="Co się wydarzyło w Ełku?"></textarea>
+                    <label>Kategoria</label>
+                    <select id="p-cat">
+                        <option>Wiadomości</option>
+                        <option>Inwestycje</option>
+                        <option>Kultura</option>
+                        <option>Sport</option>
+                        <option>Kryminalne</option>
+                    </select>
                 </div>
+            </div>
 
-                <div class="form-group">
-                    <label>Galeria Zdjęć</label>
-                    <div class="upload-zone" onclick="document.getElementById('img-input').click()">
-                        <i class="fas fa-images fa-2x" style="color:var(--primary)"></i>
-                        <p>Kliknij, aby dodać zdjęcia (wybierz wiele)</p>
-                        <input type="file" id="img-input" multiple accept="image/*" class="hidden" onchange="previewImages(this.files)">
-                    </div>
-                    <div class="img-previews" id="preview-area"></div>
+            <div class="form-group">
+                <label>Treść Artykułu</label>
+                <textarea id="p-content" rows="10" placeholder="Pełna treść wiadomości..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Galeria Multi-Media (Duże pliki dozwolone)</label>
+                <div class="drop-zone" onclick="document.getElementById('p-files').click()">
+                    <i class="fas fa-cloud-upload-alt fa-3x" style="color: var(--primary); margin-bottom: 10px;"></i>
+                    <p>Przeciągnij zdjęcia tutaj lub kliknij, aby wybrać z dysku</p>
+                    <input type="file" id="p-files" multiple accept="image/*" class="hidden" onchange="handleFileSelect(this.files)">
                 </div>
+                <div class="preview-grid" id="p-previews"></div>
+            </div>
 
-                <button class="btn-pub" id="save-btn" onclick="publishPost()">Opublikuj na Stronie</button>
+            <button class="btn-submit" onclick="publish()">OPUBLIKUJ NA PORTALU</button>
 
-                <h3 style="margin-top:40px; border-top:1px solid #eee; padding-top:20px">Twoje posty:</h3>
+            <div style="margin-top: 60px;">
+                <h3>Zarządzanie treścią</h3>
                 <div id="admin-list"></div>
             </div>
         </div>
     </div>
+</div>
 
-    <script>
-        let db = JSON.parse(localStorage.getItem('elk_v4_db')) || [];
-        let currentFiles = [];
+<script>
+    // --- INDEXED DB ENGINE ---
+    const DB_NAME = "ElkEventyDB";
+    const DB_VERSION = 1;
+    let db;
 
-        function showView(v) {
-            ['home', 'login', 'admin'].forEach(view => document.getElementById('view-'+view).classList.add('hidden'));
-            document.getElementById('view-'+v).classList.remove('hidden');
-            if(v === 'home') renderHome();
-            if(v === 'admin') renderAdminList();
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = (e) => {
+        const dbInstance = e.target.result;
+        if (!dbInstance.objectStoreNames.contains("posts")) {
+            dbInstance.createObjectStore("posts", { keyPath: "id", autoIncrement: true });
+        }
+    };
+    request.onsuccess = (e) => { db = e.target.result; renderHome(); };
+
+    let tempImages = [];
+
+    // --- NAVIGATION & AUTH ---
+    function showView(v) {
+        ['home', 'login', 'admin'].forEach(x => document.getElementById('view-'+x).classList.add('hidden'));
+        document.getElementById('view-'+v).classList.remove('hidden');
+        if(v === 'home') renderHome();
+        if(v === 'admin') renderAdmin();
+    }
+
+    function handleAuth() {
+        if(sessionStorage.getItem('elk_logged') === 'true') showView('admin');
+        else showView('login');
+    }
+
+    function login() {
+        if(document.getElementById('admin-pass').value === 'diax67') {
+            sessionStorage.setItem('elk_logged', 'true');
+            showView('admin');
+            notify("Zalogowano pomyślnie");
+        } else { notify("Błędne hasło!", true); }
+    }
+
+    function logout() {
+        sessionStorage.removeItem('elk_logged');
+        showView('home');
+    }
+
+    // --- FILE HANDLING ---
+    async function handleFileSelect(files) {
+        tempImages = [];
+        const previewArea = document.getElementById('p-previews');
+        previewArea.innerHTML = '';
+        
+        showLoader("Przetwarzanie plików...");
+        
+        for (let file of files) {
+            const base64 = await toBase64(file);
+            tempImages.push(base64);
+            const img = document.createElement('img');
+            img.src = base64;
+            img.className = 'preview-item';
+            previewArea.appendChild(img);
+        }
+        
+        hideLoader();
+    }
+
+    const toBase64 = file => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+
+    // --- CRUD OPERATIONS ---
+    async function publish() {
+        const title = document.getElementById('p-title').value;
+        const author = document.getElementById('p-author').value;
+        const content = document.getElementById('p-content').value;
+        const cat = document.getElementById('p-cat').value;
+
+        if(!title || !content || tempImages.length === 0) {
+            return notify("Wypełnij tytuł, treść i dodaj zdjęcia!", true);
         }
 
-        function checkAuth() {
-            if(sessionStorage.getItem('isLogged') === 'true') showView('admin');
-            else showView('login');
-        }
+        showLoader("Zapisywanie w bazie danych...");
 
-        function doLogin() {
-            if(document.getElementById('pass-field').value === 'diax67') {
-                sessionStorage.setItem('isLogged', 'true');
-                showView('admin');
-            } else { alert("Hasło niepoprawne!"); }
-        }
+        const newPost = {
+            title, author, content, category: cat,
+            images: tempImages,
+            date: new Date().toLocaleDateString('pl-PL'),
+            time: new Date().toLocaleTimeString('pl-PL', {hour: '2-digit', minute:'2-digit'}),
+            timestamp: Date.now()
+        };
 
-        function doLogout() {
-            sessionStorage.removeItem('isLogged');
-            showView('home');
-        }
+        const transaction = db.transaction(["posts"], "readwrite");
+        const store = transaction.objectStore("posts");
+        store.add(newPost);
 
-        function previewImages(files) {
-            currentFiles = [];
-            const area = document.getElementById('preview-area');
-            area.innerHTML = '';
-            
-            Array.from(files).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    currentFiles.push(e.target.result);
-                    area.innerHTML += `<img src="${e.target.result}">`;
-                };
-                reader.readAsDataURL(file);
-            });
-        }
+        transaction.oncomplete = () => {
+            hideLoader();
+            notify("Artykuł opublikowany!");
+            resetForm();
+            renderAdmin();
+        };
+        transaction.onerror = () => {
+            hideLoader();
+            notify("Błąd zapisu! Możliwy brak miejsca w pamięci przeglądarki.", true);
+        };
+    }
 
-        function showToast(msg, isError = false) {
-            const t = document.getElementById('toast');
-            t.innerText = msg;
-            t.style.backgroundColor = isError ? "#c0392b" : "#27ae60";
-            t.className = "show";
-            setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
-        }
+    function resetForm() {
+        document.getElementById('p-title').value = '';
+        document.getElementById('p-content').value = '';
+        document.getElementById('p-previews').innerHTML = '';
+        tempImages = [];
+    }
 
-        function publishPost() {
-            const title = document.getElementById('post-title').value;
-            const author = document.getElementById('post-author').value;
-            const content = document.getElementById('post-content').value;
+    async function deletePost(id) {
+        if(!confirm("Usunąć ten post bezpowrotnie?")) return;
+        const transaction = db.transaction(["posts"], "readwrite");
+        transaction.objectStore("posts").delete(id);
+        transaction.oncomplete = () => {
+            notify("Usunięto pomyślnie");
+            renderAdmin();
+        };
+    }
 
-            if(!title || !author || !content || currentFiles.length === 0) {
-                showToast("Wypełnij wszystkie pola i dodaj zdjęcia!", true);
+    // --- RENDERING ---
+    async function renderHome() {
+        const feed = document.getElementById('public-feed');
+        feed.innerHTML = '';
+        
+        const transaction = db.transaction(["posts"], "readonly");
+        const store = transaction.objectStore("posts");
+        const request = store.getAll();
+
+        request.onsuccess = () => {
+            const allPosts = request.result.sort((a,b) => b.timestamp - a.timestamp);
+            if(allPosts.length === 0) {
+                feed.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 100px; color: #999;">
+                    <i class="fas fa-inbox fa-4x" style="margin-bottom:20px"></i>
+                    <p>Brak wiadomości. Dodaj pierwszy post w panelu admina.</p>
+                </div>`;
                 return;
             }
 
-            const post = {
-                id: Date.now(),
-                title, author, content,
-                images: currentFiles,
-                date: new Date().toLocaleDateString('pl-PL'),
-                time: new Date().toLocaleTimeString('pl-PL', {hour: '2-digit', minute:'2-digit'})
-            };
-
-            try {
-                db.unshift(post);
-                localStorage.setItem('elk_v4_db', JSON.stringify(db));
-                
-                // RESET
-                document.getElementById('post-title').value = '';
-                document.getElementById('post-author').value = '';
-                document.getElementById('post-content').value = '';
-                document.getElementById('preview-area').innerHTML = '';
-                currentFiles = [];
-                
-                showToast("Artykuł opublikowany pomyślnie!");
-                renderAdminList();
-            } catch(e) {
-                showToast("Błąd: Zdjęcia są za duże! Spróbuj dodać mniejsze pliki.", true);
-                db.shift(); // usuwamy niedodany post z tablicy
-            }
-        }
-
-        function deletePost(id) {
-            if(confirm("Usunąć ten post?")) {
-                db = db.filter(p => p.id !== id);
-                localStorage.setItem('elk_v4_db', JSON.stringify(db));
-                renderAdminList();
-            }
-        }
-
-        function renderHome() {
-            const feed = document.getElementById('news-feed');
-            feed.innerHTML = db.length ? db.map(p => `
-                <div class="news-card">
-                    <div class="gallery-preview">
-                        <img src="${p.images[0]}" class="${p.images.length === 1 ? 'single-img' : ''}">
-                        ${p.images[1] ? `<img src="${p.images[1]}">` : ''}
+            allPosts.forEach(p => {
+                const gallery = p.images.slice(0, 4).map(img => `<img src="${img}" onclick="openLightbox('${img}')">`).join('');
+                feed.innerHTML += `
+                    <div class="card">
+                        <div class="card-gallery">
+                            ${gallery}
+                        </div>
+                        <div class="card-body">
+                            <span class="card-category">${p.category}</span>
+                            <h2 class="card-title">${p.title}</h2>
+                            <p class="card-content">${p.content}</p>
+                        </div>
+                        <div class="card-meta">
+                            <span><i class="fas fa-user-circle"></i> ${p.author || 'Redakcja'}</span>
+                            <span><i class="far fa-calendar-alt"></i> ${p.date}</span>
+                            <span><i class="far fa-clock"></i> ${p.time}</span>
+                        </div>
                     </div>
-                    <div class="card-content">
-                        <span class="card-author"><i class="fas fa-user-edit"></i> ${p.author}</span>
-                        <h3 class="card-title">${p.title}</h3>
-                        <p style="color:#555; font-size:14px">${p.content.substring(0, 160)}...</p>
-                    </div>
-                    <div class="card-footer">
-                        <span><i class="far fa-calendar-alt"></i> ${p.date}</span>
-                        <span><i class="far fa-clock"></i> ${p.time}</span>
-                    </div>
-                </div>
-            `).join('') : '<p style="text-align:center; grid-column:1/-1; padding:50px; color:#999;">Brak postów do wyświetlenia.</p>';
-        }
+                `;
+            });
+        };
+    }
 
-        function renderAdminList() {
-            const list = document.getElementById('admin-list');
-            list.innerHTML = db.map(p => `
-                <div class="admin-list-item">
-                    <span><strong>${p.title}</strong></span>
-                    <button onclick="deletePost(${p.id})" class="btn-panel" style="background:var(--danger); border:none">Usuń</button>
-                </div>
-            `).join('');
-        }
+    async function renderAdmin() {
+        const list = document.getElementById('admin-list');
+        list.innerHTML = '';
+        const store = db.transaction(["posts"], "readonly").objectStore("posts");
+        store.getAll().onsuccess = (e) => {
+            e.target.result.forEach(p => {
+                list.innerHTML += `
+                    <div class="admin-list-card">
+                        <div>
+                            <strong>${p.title}</strong><br>
+                            <small>${p.date} | Zdjęć: ${p.images.length}</small>
+                        </div>
+                        <button onclick="deletePost(${p.id})" style="background:var(--danger); color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer;">Usuń</button>
+                    </div>
+                `;
+            });
+        };
+    }
 
-        renderHome();
-    </script>
+    // --- UTILS ---
+    function openLightbox(src) {
+        document.getElementById('lightbox-img').src = src;
+        document.getElementById('lightbox').style.display = 'flex';
+    }
+
+    function notify(msg, err = false) {
+        const t = document.getElementById('toast');
+        t.innerText = msg;
+        t.style.background = err ? "var(--danger)" : "var(--dark)";
+        t.className = "show";
+        setTimeout(() => { t.className = ""; }, 3000);
+    }
+
+    function showLoader(txt) {
+        document.getElementById('loader-text').innerText = txt;
+        document.getElementById('loader').style.display = 'flex';
+    }
+
+    function hideLoader() {
+        document.getElementById('loader').style.display = 'none';
+    }
+
+</script>
+
 </body>
 </html>
