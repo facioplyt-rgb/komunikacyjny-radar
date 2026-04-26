@@ -3,534 +3,353 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>RADAR SYSTEM V48 | AUTO-CLEANUP</title>
+    <title>RADAR SYSTEM v55.0 | SUPREME EDITION</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <style>
-        :root { 
-            --main: #f59e0b; 
-            --dark: #0f172a; 
-            --danger: #ef4444;
-            --success: #10b981;
-            --bg-light: #f8fafc;
-            --glass-bg: rgba(255, 255, 255, 0.92);
-            --safe-bottom: env(safe-area-inset-bottom);
+        :root {
+            --primary: #f59e0b;
+            --secondary: #0f172a;
+            --glass: rgba(255, 255, 255, 0.98);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
+        html, body { height: 100%; width: 100%; background-color: var(--secondary); overflow: hidden; position: fixed; }
+
+        #map { position: absolute; inset: 0; z-index: 10; background: #cbd5e1; }
+
+        /* Splash Screen */
+        #splash-screen { position: fixed; inset: 0; z-index: 9999; background: #f8fafc; display: flex; align-items: center; justify-content: center; transition: transform 0.6s ease-in-out; overflow-y: auto; }
+        .city-card { background: white; padding: 25px; border-radius: 35px; border: 2px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.3s; }
+        .city-card.locked { opacity: 0.6; cursor: not-allowed; background: #f1f5f9; }
         
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background: var(--dark); 
-            height: 100vh; 
-            width: 100vw; 
-            overflow: hidden;
-            position: fixed;
-        }
+        /* HUD */
+        .hud-top { position: fixed; top: env(safe-area-inset-top, 20px); left: 15px; right: 15px; z-index: 1000; }
+        .hud-glass { background: var(--glass); backdrop-filter: blur(20px); border-radius: 30px; padding: 15px 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
 
-        #map { 
-            height: 100%; 
-            width: 100%; 
-            z-index: 1; 
-            background: #e5e7eb;
-            filter: contrast(1.05) saturate(1.1); 
-        }
+        /* Bottom Menu */
+        .dock-area { position: fixed; bottom: calc(30px + env(safe-area-inset-bottom, 20px)); left: 0; right: 0; z-index: 1000; display: flex; justify-content: center; pointer-events: none; gap: 10px; }
+        .btn-add { pointer-events: auto; background: var(--secondary); color: white; padding: 20px 40px; border-radius: 40px; font-weight: 900; font-style: italic; border-bottom: 5px solid var(--primary); box-shadow: 0 20px 40px rgba(0,0,0,0.3); transition: 0.3s; display: flex; align-items: center; gap: 15px; }
+        .btn-add:active { transform: translateY(3px); border-bottom-width: 0px; }
 
-        #city-selector { 
-            position: fixed; 
-            inset: 0; 
-            z-index: 9999; 
-            background: var(--bg-light); 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s; 
-        }
-
-        .welcome-card {
-            background: white;
-            padding: 40px;
-            border-radius: 50px;
-            box-shadow: 0 40px 100px -20px rgba(0,0,0,0.15);
-            text-align: center;
-            width: 90%;
-            max-width: 400px;
-        }
-
-        .glass { 
-            background: var(--glass-bg); 
-            backdrop-filter: blur(20px); 
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.5); 
-        }
-
-        .top-bar {
-            position: fixed;
-            top: 24px;
-            left: 16px;
-            right: 16px;
-            z-index: 500;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
+        /* Omega Sheets */
         .sheet { 
-            position: fixed; 
-            bottom: 0; 
-            left: 0; 
-            right: 0; 
-            z-index: 1000; 
-            transform: translateY(110%); 
-            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); 
-            max-width: 550px; 
-            margin: 0 auto; 
-            border-radius: 40px 40px 0 0;
-            padding: 32px;
-            padding-bottom: calc(32px + var(--safe-bottom));
-            box-shadow: 0 -20px 50px rgba(0,0,0,0.15);
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 2000; 
+            background: var(--glass); border-radius: 45px 45px 0 0; 
+            padding: 40px 30px; transform: translateY(110%); 
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
+            max-width: 600px; margin: 0 auto; box-shadow: 0 -20px 60px rgba(0,0,0,0.2);
+            max-height: 90vh; overflow-y: auto;
         }
-        .sheet.open { transform: translateY(0); }
+        .sheet.active { transform: translateY(0); }
+        .btn-x { position: absolute; top: 25px; right: 25px; width: 45px; height: 45px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 20px; cursor: pointer; z-index: 2010; }
 
-        .sheet-handle {
-            width: 40px;
-            height: 5px;
-            background: #e2e8f0;
-            border-radius: 10px;
-            margin: -16px auto 24px;
-        }
+        /* Markers */
+        .m-radar { width: 60px; height: 60px; border: 4px solid white; border-radius: 22px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .m-pulse { position: absolute; inset: -4px; border-radius: 22px; background: inherit; opacity: 0.4; animation: m-pulse 2s infinite; }
+        @keyframes m-pulse { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(1.6); opacity: 0; } }
 
-        .custom-marker { 
-            width: 60px; 
-            height: 60px; 
-            border-radius: 22px; 
-            border: 4px solid #fff;
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center;
-            color: white; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
+        /* UI elements */
+        .in-heavy { width: 100%; background: #f1f5f9; border: none; padding: 22px; border-radius: 25px; font-weight: 800; font-size: 16px; outline: none; margin-bottom: 12px; }
+        .hint { position: fixed; top: 120px; left: 50%; transform: translateX(-50%); z-index: 3000; background: var(--secondary); color: white; padding: 15px 30px; border-radius: 30px; font-weight: 900; border: 2px solid var(--primary); pointer-events: none; }
         
-        .pulse-red { animation: pulse-red 2s infinite; }
-        @keyframes pulse-red { 
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 
-            70% { box-shadow: 0 0 0 25px rgba(239, 68, 68, 0); } 
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } 
-        }
+        .admin-view { position: fixed; inset: 0; z-index: 10000; background: #0f172a; display: flex; flex-direction: column; }
+        .tab-btn { flex: 1; padding: 20px; color: #64748b; font-weight: 900; text-align: center; border-bottom: 3px solid transparent; }
+        .tab-btn.active { color: white; border-bottom-color: var(--primary); }
 
-        .line-badge { 
-            background: rgba(0,0,0,0.3); 
-            padding: 1px 8px; 
-            border-radius: 8px; 
-            font-size: 11px; 
-            font-weight: 900; 
-            margin-top: 2px;
-            text-transform: uppercase;
-        }
-
-        .btn-press { transition: transform 0.2s; cursor: pointer; }
-        .btn-press:active { transform: scale(0.94); }
-
-        .notif-active {
-            background: #f59e0b !important;
-            color: white !important;
-            border-color: #f59e0b !important;
-            box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
-            animation: bell-shake 0.5s ease-in-out;
-        }
-        @keyframes bell-shake {
-            0%, 100% { transform: rotate(0); }
-            25% { transform: rotate(10deg); }
-            75% { transform: rotate(-10deg); }
-        }
-
-        .tap-hint-box {
-            position: fixed;
-            top: 30%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 2000;
-            background: var(--dark);
-            color: white;
-            padding: 20px 40px;
-            border-radius: 100px;
-            font-weight: 800;
-            border: 3px solid var(--main);
-            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
-            pointer-events: none;
-            animation: hint-bounce 2s infinite;
-        }
-        @keyframes hint-bounce {
-            0%, 100% { transform: translate(-50%, -50%); }
-            50% { transform: translate(-50%, -70%); }
-        }
-
-        .dir-list {
-            display: grid;
-            gap: 12px;
-            max-height: 35vh;
-            overflow-y: auto;
-            padding-right: 8px;
-            margin-bottom: 20px;
-        }
-        .dir-list::-webkit-scrollbar { width: 4px; }
-        .dir-list::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-
-        .search-input {
-            width: 100%;
-            background: #f1f5f9;
-            border: 3px solid transparent;
-            padding: 18px 24px;
-            border-radius: 25px;
-            font-weight: 600;
-            outline: none;
-            transition: all 0.3s;
-        }
-        .search-input:focus {
-            background: white;
-            border-color: var(--main);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        }
+        /* Guide */
+        .guide-step { padding: 20px; background: #f8fafc; border-radius: 30px; margin-bottom: 15px; border: 1px solid #e2e8f0; }
     </style>
 </head>
 <body>
 
-    <audio id="alert-sound" src="https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3" preload="auto"></audio>
+    <audio id="snd-click" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"></audio>
 
-    <div id="city-selector">
-        <div class="welcome-card">
-            <i class="fa-solid fa-tower-broadcast text-7xl text-amber-500 mb-6 block"></i>
-            <h1 class="text-5xl font-black italic text-slate-900 uppercase tracking-tighter mb-2">System<br>Radar</h1>
-            <p class="text-slate-400 font-bold text-[10px] tracking-[0.4em] uppercase mb-10">Database Engine v48</p>
+    <div id="splash-screen">
+        <div class="w-full max-w-md px-6 py-10">
             
-            <button onclick="startApp('gorzow', [52.732, 15.237])" class="w-full p-6 bg-slate-900 text-white rounded-[30px] flex items-center justify-between btn-press shadow-2xl">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-2xl">
-                        <i class="fa-solid fa-location-dot"></i>
+            <div id="auth-section">
+                <h1 id="welcome-text" class="text-3xl font-black uppercase italic mb-2 text-center text-slate-900">Ładowanie...</h1>
+                <p id="sub-welcome" class="text-slate-400 text-center font-bold text-xs uppercase mb-8">System Radarowy v55.0</p>
+                
+                <input type="email" id="auth-email" placeholder="E-mail" class="in-heavy">
+                <input type="password" id="auth-pass" placeholder="Hasło" class="in-heavy">
+                <input type="text" id="auth-nick" placeholder="Twój Nick" class="in-heavy">
+                
+                <div class="flex gap-3 mb-6">
+                    <button onclick="handleAuth('login')" class="flex-1 bg-slate-200 p-5 rounded-3xl font-black uppercase text-xs">Logowanie</button>
+                    <button onclick="handleAuth('register')" class="flex-1 bg-amber-500 p-5 rounded-3xl font-black uppercase text-xs text-white">Rejestracja</button>
+                </div>
+                <p id="auth-error" class="text-red-500 text-[10px] font-bold text-center uppercase"></p>
+            </div>
+
+            <div id="city-section" class="hidden">
+                <h1 class="text-3xl font-black uppercase text-center mb-8 italic">Gdzie jedziemy?</h1>
+                <div id="city-list" class="space-y-4">
+                    <div onclick="initCity('gorzow',[52.73, 15.23],'Gorzów Wlkp.')" class="city-card">
+                        <span class="font-black text-slate-800 uppercase italic">Gorzów Wlkp.</span>
+                        <i class="fa-solid fa-chevron-right text-amber-500"></i>
                     </div>
-                    <div class="text-left">
-                        <span class="block font-extrabold text-xl">Gorzów</span>
-                        <span class="text-[9px] font-bold text-amber-500 uppercase">Chmura aktywna</span>
+                    <div class="city-card locked">
+                        <div>
+                            <span class="font-black text-slate-400 uppercase italic">Poznań</span>
+                            <p class="text-[9px] font-black text-amber-600">WKRÓTCE DOSTĘPNE</p>
+                        </div>
+                        <i class="fa-solid fa-lock text-slate-300"></i>
                     </div>
                 </div>
-                <i class="fa-solid fa-chevron-right mr-2 opacity-30"></i>
-            </button>
+                <button onclick="logout()" class="w-full mt-10 text-[10px] font-black text-slate-400 uppercase">Wyloguj mnie</button>
+            </div>
         </div>
     </div>
 
-    <div class="top-bar">
-        <div class="glass p-4 rounded-[35px] flex justify-between items-center shadow-2xl">
+    <div id="s-guide" class="sheet">
+        <div onclick="closeSheets()" class="btn-x"><i class="fa-solid fa-xmark"></i></div>
+        <h2 class="text-3xl font-black uppercase italic mb-8 text-slate-900">Twój Poradnik</h2>
+        <div class="guide-step flex gap-4 items-start">
+            <div class="w-10 h-10 bg-amber-500 text-white rounded-xl flex items-center justify-center shrink-0"><i class="fa-solid fa-plus"></i></div>
+            <p class="text-sm font-bold text-slate-600">Kliknij DODAJ, a potem dotknij mapy tam, gdzie jest kontrola.</p>
+        </div>
+        <div class="guide-step flex gap-4 items-start">
+            <div class="w-10 h-10 bg-blue-500 text-white rounded-xl flex items-center justify-center shrink-0"><i class="fa-solid fa-check-double"></i></div>
+            <p class="text-sm font-bold text-slate-600">Potwierdzaj zgłoszenia innych, by budować zaufanie społeczności.</p>
+        </div>
+        <button onclick="closeSheets()" class="w-full bg-amber-500 p-6 rounded-3xl text-white font-black uppercase mt-4">ZROZUMIAŁEM</button>
+    </div>
+
+    <div class="hud-top">
+        <div class="hud-glass">
             <div class="flex items-center gap-4">
-                <div class="w-14 h-14 bg-slate-900 rounded-[22px] flex items-center justify-center text-amber-400">
-                    <i class="fa-solid fa-satellite-dish animate-pulse"></i>
-                </div>
-                <div>
-                    <h2 id="city-title" class="text-xs font-black uppercase text-slate-900">Gorzów</h2>
-                    <div class="flex items-center gap-2 mt-0.5">
-                        <div id="gps-dot" class="w-2.5 h-2.5 bg-slate-300 rounded-full"></div>
-                        <p id="gps-info" class="text-[9px] text-slate-400 font-bold uppercase italic tracking-widest">Czekam na lokalizację...</p>
-                    </div>
-                </div>
+                <div class="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-amber-500 text-xl"><i class="fa-solid fa-satellite-dish"></i></div>
+                <div><h2 id="city-name" class="text-sm font-black uppercase italic">Wybierz miasto</h2><p id="user-display" class="text-[9px] text-amber-600 font-bold uppercase">Gość</p></div>
             </div>
-            <div class="flex gap-2">
-                <button id="notif-btn" onclick="toggleSmartRadar()" class="w-14 h-14 bg-white border border-slate-100 rounded-[22px] flex items-center justify-center text-slate-400 btn-press text-xl">
-                    <i class="fa-solid fa-bell"></i>
-                </button>
-                <button onclick="adminLogin()" class="w-14 h-14 bg-white border border-slate-100 rounded-[22px] flex items-center justify-center text-slate-400 btn-press text-xl">
-                    <i class="fa-solid fa-fingerprint"></i>
-                </button>
-            </div>
+            <button onclick="openAdmin()" class="w-12 h-12 bg-slate-50 rounded-2xl text-slate-300"><i class="fa-solid fa-lock"></i></button>
         </div>
     </div>
 
     <div id="map"></div>
 
-    <div id="fab-container" class="fixed bottom-10 inset-x-0 z-[500] flex justify-center px-6 opacity-0 pointer-events-none transition-all duration-1000">
-        <button onclick="initReportFlow()" class="w-full max-w-md bg-slate-900 text-white py-8 rounded-[35px] font-black text-sm tracking-[0.2em] shadow-[0_25px_60px_rgba(0,0,0,0.4)] flex items-center justify-center gap-4 btn-press border-b-8 border-amber-600 uppercase italic">
-            <i class="fa-solid fa-plus-circle text-2xl text-amber-500"></i> Dodaj do Radaru
+    <div class="dock-area">
+        <button id="main-add-btn" onclick="triggerReport()" class="btn-add">
+            <i class="fa-solid fa-plus-circle text-2xl text-amber-500"></i> DODAJ
+        </button>
+        <button onclick="openSheet('s-guide')" class="btn-add bg-blue-600 border-blue-800">
+            <i class="fa-solid fa-circle-question text-2xl text-white"></i>
         </button>
     </div>
 
-    <div id="sheet-type" class="sheet glass">
-        <div class="sheet-handle"></div>
-        <h3 class="text-center font-black uppercase text-[10px] tracking-widest text-slate-400 mb-8">Kategoria zgłoszenia</h3>
+    <div id="s-info" class="sheet">
+        <div onclick="closeSheets()" class="btn-x"><i class="fa-solid fa-xmark"></i></div>
+        <div class="text-center">
+            <div id="v-icon" class="text-8xl mb-4"></div>
+            <p id="v-sub" class="text-slate-400 font-black uppercase text-xs mb-1"></p>
+            <h2 id="v-title" class="text-6xl font-black text-slate-900 mb-6"></h2>
+            <div class="bg-slate-50 rounded-3xl p-6 mb-6 grid grid-cols-2 gap-4 text-left">
+                <div><p class="text-[10px] font-black text-slate-400 uppercase">Dodane przez</p><p id="v-author" class="text-sm font-black text-amber-600 uppercase"></p></div>
+                <div><p class="text-[10px] font-black text-slate-400 uppercase">Czas</p><p id="v-time" class="text-sm font-black text-slate-700"></p></div>
+            </div>
+            <div class="bg-slate-900 text-white p-6 rounded-3xl mb-8">
+                <p id="v-desc" class="text-xl font-bold italic uppercase"></p>
+            </div>
+            <button id="v-confirm" class="w-full bg-green-500 text-white p-6 rounded-3xl font-black uppercase italic">Nadal stoi</button>
+        </div>
+    </div>
+
+    <div id="s-type" class="sheet">
+        <div onclick="closeSheets()" class="btn-x"><i class="fa-solid fa-xmark"></i></div>
+        <h3 class="text-center font-black uppercase text-slate-400 mb-8 tracking-widest text-xs">Co widziałeś?</h3>
         <div class="grid grid-cols-3 gap-4">
-            <button onclick="selectType('KONTROLA', 'fa-user-secret', 'red')" class="flex flex-col items-center gap-4 p-8 bg-red-50 rounded-[35px] text-red-600 btn-press border-2 border-red-100 shadow-sm">
-                <i class="fa-solid fa-user-secret text-4xl"></i><span class="text-[9px] font-black uppercase">Bilety</span>
-            </button>
-            <button onclick="selectType('AWARIA', 'fa-triangle-exclamation', 'orange')" class="flex flex-col items-center gap-4 p-8 bg-orange-50 rounded-[35px] text-orange-600 btn-press border-2 border-orange-100 shadow-sm">
-                <i class="fa-solid fa-triangle-exclamation text-4xl"></i><span class="text-[9px] font-black uppercase">Awaria</span>
-            </button>
-            <button onclick="selectType('KOREK', 'fa-clock', 'blue')" class="flex flex-col items-center gap-4 p-8 bg-blue-50 rounded-[35px] text-blue-600 btn-press border-2 border-blue-100 shadow-sm">
-                <i class="fa-solid fa-clock text-4xl"></i><span class="text-[9px] font-black uppercase">Korek</span>
-            </button>
+            <button onclick="pickType('KONTROLA','fa-user-secret','#ef4444')" class="flex flex-col items-center gap-4 p-6 bg-red-50 rounded-[35px] text-red-600 border-2 border-red-100"><i class="fa-solid fa-user-secret text-3xl"></i><span class="text-[10px] font-black uppercase">Bilety</span></button>
+            <button onclick="pickType('AWARIA','fa-triangle-exclamation','#f59e0b')" class="flex flex-col items-center gap-4 p-6 bg-amber-50 rounded-[35px] text-amber-600 border-2 border-amber-100"><i class="fa-solid fa-triangle-exclamation text-3xl"></i><span class="text-[10px] font-black uppercase">Awaria</span></button>
+            <button onclick="pickType('KOREK','fa-clock','#3b82f6')" class="flex flex-col items-center gap-4 p-6 bg-blue-50 rounded-[35px] text-blue-600 border-2 border-blue-100"><i class="fa-solid fa-clock text-3xl"></i><span class="text-[10px] font-black uppercase">Korek</span></button>
         </div>
-        <button onclick="closeAllSheets()" class="w-full mt-8 py-2 text-[10px] font-black text-slate-300 uppercase tracking-widest">Anuluj Operację</button>
     </div>
 
-    <div id="sheet-details" class="sheet glass">
-        <div class="sheet-handle"></div>
-        <div class="flex justify-between items-center mb-8">
-            <button onclick="openSheet('sheet-type')" class="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-900 btn-press shadow-sm">
-                <i class="fa-solid fa-arrow-left text-xl"></i>
-            </button>
-            <h2 class="text-2xl font-black italic text-slate-900 uppercase">Szczegóły</h2>
-            <div class="w-14"></div>
-        </div>
-        <div class="flex gap-4 mb-6">
-            <div class="w-1/3">
-                <label class="block text-[8px] font-black text-slate-400 uppercase mb-2 ml-4">Numer</label>
-                <input type="text" id="in-line" placeholder="00" class="w-full bg-slate-100 p-6 rounded-[25px] font-black text-2xl text-center outline-none border-4 border-transparent focus:border-amber-500 shadow-inner">
-            </div>
-            <div class="w-2/3">
-                <label class="block text-[8px] font-black text-slate-400 uppercase mb-2 ml-4">Wybierz Kierunek</label>
-                <input type="text" id="search-dir" placeholder="Szukaj..." class="search-input" oninput="filterDirections()">
-            </div>
-        </div>
-        <div id="dir-list" class="dir-list"></div>
-        <button id="btn-submit" onclick="submitToFirebase()" class="w-full bg-amber-500 text-white p-7 rounded-[30px] font-black text-sm tracking-widest uppercase btn-press shadow-xl border-b-8 border-amber-600">
-            Wyślij do bazy
-        </button>
-    </div>
-
-    <div id="sheet-vote" class="sheet glass text-center">
-        <div class="sheet-handle"></div>
-        <div id="v-icon-box" class="text-8xl mb-4 drop-shadow-2xl"></div>
-        <h3 id="v-title" class="text-3xl font-black italic text-slate-900 mb-1 uppercase tracking-tight"></h3>
-        <p id="v-line" class="text-amber-500 font-black text-4xl mb-8 drop-shadow-sm"></p>
-        
-        <div class="bg-slate-50 rounded-[35px] p-8 mb-8 grid grid-cols-3 gap-2 border-2 border-slate-100">
-            <div><p class="text-[8px] font-black text-slate-400 uppercase mb-1">Status</p><p id="v-status" class="text-[10px] font-black text-green-500">Aktywny</p></div>
-            <div class="border-x border-slate-200"><p class="text-[8px] font-black text-slate-400 uppercase mb-1">Głosy</p><p id="v-votes" class="text-xl font-black text-slate-900">0</p></div>
-            <div><p class="text-[8px] font-black text-slate-400 uppercase mb-1">Czas</p><p id="v-time" class="text-[10px] font-black text-slate-600">-</p></div>
-        </div>
-        
-        <div class="mb-10">
-            <p id="v-dir" class="text-slate-800 font-extrabold text-lg leading-tight uppercase italic"></p>
-            <p id="v-street" class="text-slate-400 font-bold text-[10px] mt-2 uppercase tracking-widest"></p>
-        </div>
-        
-        <div class="grid grid-cols-2 gap-4">
-            <button id="btn-vote-up" class="bg-slate-900 text-white p-7 rounded-[30px] font-black text-xs uppercase btn-press shadow-xl border-b-8 border-slate-700 italic">Potwierdzam</button>
-            <button onclick="closeAllSheets()" class="bg-white text-slate-400 p-7 rounded-[30px] font-black text-xs uppercase btn-press border-2 border-slate-100">Błąd / Brak</button>
-        </div>
-        <button id="btn-delete" class="hidden w-full mt-6 p-2 text-red-400 font-bold text-[10px] uppercase tracking-widest hover:text-red-600 transition-colors">Usuń moje zgłoszenie</button>
-    </div>
-
-    <div id="admin-panel" class="hidden fixed inset-0 z-[10000] bg-white p-8 overflow-y-auto">
-        <div class="max-w-xl mx-auto">
-            <h2 class="text-4xl font-black italic uppercase text-slate-900 mb-8">Konfiguracja</h2>
-            <p class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Lista Kierunków (linia po linii):</p>
-            <textarea id="admin-data" rows="15" class="w-full bg-slate-50 border-4 border-slate-100 rounded-[35px] p-8 font-bold text-slate-700 mb-6 outline-none focus:border-amber-500 shadow-inner"></textarea>
-            <button onclick="saveAdminData()" class="w-full bg-slate-900 text-white p-8 rounded-[35px] font-black btn-press shadow-2xl mb-4 border-b-8 border-slate-700 italic uppercase">Synchronizuj Bazę</button>
-            <button onclick="toggleAdmin(false)" class="w-full p-4 text-slate-400 font-bold text-[10px] uppercase">Zamknij</button>
-        </div>
+    <div id="s-form" class="sheet">
+        <div onclick="closeSheets()" class="btn-x"><i class="fa-solid fa-xmark"></i></div>
+        <h2 class="text-2xl font-black uppercase italic mb-8">Szczegóły</h2>
+        <input type="text" id="in-line" placeholder="LINIA" class="in-heavy uppercase text-center text-3xl" maxlength="4">
+        <input type="text" id="in-dir" oninput="doSearch()" placeholder="KIERUNEK..." class="in-heavy">
+        <div id="search-list" class="space-y-2 mb-8 max-h-40 overflow-y-auto"></div>
+        <button onclick="submitReport()" class="w-full bg-amber-500 text-white p-6 rounded-3xl font-black uppercase shadow-xl">PUBLIKUJ ZGŁOSZENIE</button>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+        import { getAuth, setPersistence, browserLocalPersistence, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, onAuthStateChanged, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
         import { getDatabase, ref, set, push, onValue, update, remove, increment } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCb5QmZdwWwa9LafqqGZvGW-6vblkab32M",
-            authDomain: "mzk-by-facio.firebaseapp.com",
-            databaseURL: "https://mzk-by-facio-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "mzk-by-facio",
-            storageBucket: "mzk-by-facio.appspot.com",
-            messagingSenderId: "676970411647",
-            appId: "1:676970411647:web:5703d5fb5fb499ff83714a"
+        const fbConfig = { 
+            databaseURL: "https://mzk-by-facio-default-rtdb.europe-west1.firebasedatabase.app"
         };
-
-        const app = initializeApp(firebaseConfig);
+        
+        const app = initializeApp(fbConfig);
+        const auth = getAuth(app);
         const db = getDatabase(app);
 
-        // INITIAL STATE
-        let currentCity = '';
-        let userLatLng = null;
-        let selectedType = { type: '', icon: '', color: '' };
-        let tempMarker = null;
-        let tempCoords = null;
-        let cityConfig = [];
-        let radarActive = false;
-        let processedAlerts = new Set();
-        let markerMap = {};
-        let currentAlerts = {}; // Przechowuje aktualny zrzut z bazy do celów GC
-        const deviceID = localStorage.getItem('radar_uid_v48') || Math.random().toString(36).substr(2, 15);
-        localStorage.setItem('radar_uid_v48', deviceID);
+        // Zapamiętywanie sesji na stałe
+        setPersistence(auth, browserLocalPersistence);
 
-        const map = L.map('map', { zoomControl: false, attributionControl: false, tap: false, bounceAtZoomLimits: false });
+        const State = { city: '', user: null, tPos: null, tMark: null, sel: null, dirs: [], markers: { n:{}, s:{} }, admin: false, spawn: false };
+        const map = L.map('map', { zoomControl:false, attributionControl:false }).setView([52.23, 21.01], 6);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
 
-        const getRelativeTime = (ts) => {
-            const diff = Math.floor((Date.now() - ts) / 60000);
-            if (diff < 1) return "Teraz";
-            if (diff < 60) return `${diff} min temu`;
-            return `${Math.floor(diff/60)} godz temu`;
-        };
+        // Logika powitalna i sprawdzanie "czy już był"
+        function checkFirstVisit() {
+            const hasBeenBefore = localStorage.getItem('radar_visited');
+            const welcomeTitle = document.getElementById('welcome-text');
+            
+            if (hasBeenBefore) {
+                welcomeTitle.innerText = "Witaj ponownie!";
+            } else {
+                welcomeTitle.innerText = "Witaj w Radarze!";
+                // Pokaż poradnik przy pierwszym wejściu po rejestracji (uruchamiane w handleAuth)
+            }
+        }
+        checkFirstVisit();
 
-        const reverseGeocode = async (lat, lon) => {
+        // OBSŁUGA LOGOWANIA / REJESTRACJI
+        window.handleAuth = async (mode) => {
+            const email = document.getElementById('auth-email').value;
+            const pass = document.getElementById('auth-pass').value;
+            const nick = document.getElementById('auth-nick').value;
+            const err = document.getElementById('auth-error');
+
             try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18`);
-                const data = await res.json();
-                return data.address.road || data.address.suburb || "Trasa przejazdu";
-            } catch { return "Lokalizacja w trasie"; }
-        };
-
-        const runRadarCheck = (alerts) => {
-            if (!radarActive || !userLatLng) return;
-            Object.entries(alerts).forEach(([id, alert]) => {
-                const distance = userLatLng.distanceTo(L.latLng(alert.lat, alert.lng));
-                if (distance < 500 && !processedAlerts.has(id)) {
-                    processedAlerts.add(id);
-                    if ("Notification" in window && Notification.permission === "granted") {
-                        new Notification(`🚨 RADAR: ${alert.type}`, { body: `Linia ${alert.line}, ok. ${Math.round(distance)}m od Ciebie. Kierunek: ${alert.dir}` });
-                    }
-                    document.getElementById('alert-sound').play().catch(()=>{});
-                    setTimeout(() => processedAlerts.delete(id), 600000);
-                }
-            });
-        };
-
-        window.toggleSmartRadar = async () => {
-            if ("Notification" in window && Notification.permission !== "granted") await Notification.requestPermission();
-            radarActive = !radarActive;
-            const btn = document.getElementById('notif-btn');
-            if (radarActive) {
-                btn.classList.add('notif-active');
-                alert("Smart Radar uruchomiony. Powiadomimy Cię, jeśli w promieniu 500m pojawi się kontrola biletów.");
-            } else btn.classList.remove('notif-active');
-        };
-
-        window.startApp = (city, coords) => {
-            currentCity = city;
-            document.getElementById('city-selector').style.opacity = '0';
-            setTimeout(() => document.getElementById('city-selector').style.visibility = 'hidden', 800);
-            
-            document.getElementById('fab-container').style.opacity = '1';
-            document.getElementById('fab-container').style.pointerEvents = 'auto';
-            document.getElementById('fab-container').style.transform = 'translateY(0)';
-            document.getElementById('city-title').innerText = city.toUpperCase();
-            
-            map.setView(coords, 14);
-            map.locate({ watch: true, setView: false, maxZoom: 16 });
-
-            onValue(ref(db, `v38/${currentCity}/alerts`), (snapshot) => {
-                const data = snapshot.val() || {};
-                currentAlerts = data; // Kopia dla interwału
-                
-                Object.keys(markerMap).forEach(id => {
-                    if (!data[id]) { map.removeLayer(markerMap[id]); delete markerMap[id]; }
-                });
-
-                Object.entries(data).forEach(([id, val]) => {
-                    // Weryfikacja przy starcie - jak minęło 30 minut, to usuwamy z Firebase i przerywamy renderowanie
-                    if (Date.now() - val.createdAt > 30 * 60 * 1000) {
-                        remove(ref(db, `v38/${currentCity}/alerts/${id}`));
+                if(mode === 'register') {
+                    if(!nick) throw new Error("Musisz podać nick!");
+                    const res = await createUserWithEmailAndPassword(auth, email, pass);
+                    await updateProfile(res.user, { displayName: nick });
+                    await sendEmailVerification(res.user);
+                    alert("Wysłaliśmy link weryfikacyjny! Sprawdź pocztę i kliknij go, aby móc się zalogować.");
+                } else {
+                    const res = await signInWithEmailAndPassword(auth, email, pass);
+                    if(!res.user.emailVerified) {
+                        alert("Twój e-mail nie jest zweryfikowany!");
+                        await signOut(auth);
                         return;
                     }
-
-                    if (!markerMap[id]) {
-                        const colorCode = val.type === 'KONTROLA' ? '#ef4444' : (val.type === 'AWARIA' ? '#f59e0b' : '#3b82f6');
-                        const iconHtml = `<div class="custom-marker ${val.type === 'KONTROLA' ? 'pulse-red' : ''}" style="background:${colorCode}">
-                            <i class="fa-solid ${val.icon} text-2xl"></i><div class="line-badge">${val.line}</div></div>`;
-                        
-                        markerMap[id] = L.marker([val.lat, val.lng], {
-                            icon: L.divIcon({ className: '', html: iconHtml, iconAnchor: [30, 30] })
-                        }).addTo(map).on('click', () => openVoteSheet(id, val));
-                    }
-                });
-                runRadarCheck(data);
-            });
-
-            onValue(ref(db, `v38/${currentCity}/config`), (snapshot) => {
-                cityConfig = snapshot.val() || [];
-                renderDirections(cityConfig);
-            });
-
-            // GARBAGE COLLECTOR: Sprząta bazę co minutę z rzeczy starszych niż 30 min (1800000 ms)
-            setInterval(() => {
-                const now = Date.now();
-                Object.entries(currentAlerts).forEach(([id, val]) => {
-                    if (now - val.createdAt > 1800000) {
-                        console.log("Garbage Collector usunął przedawniony alert:", id);
-                        remove(ref(db, `v38/${currentCity}/alerts/${id}`));
-                    }
-                });
-            }, 60000);
+                    // Oznacz, że użytkownik już był
+                    localStorage.setItem('radar_visited', 'true');
+                    showCitySelect();
+                }
+            } catch (e) { err.innerText = e.message; }
         };
 
-        map.on('locationfound', (e) => {
-            userLatLng = e.latlng;
-            document.getElementById('gps-info').innerText = "Sygnał GPS aktywny";
-            document.getElementById('gps-info').style.color = "#10b981";
-            document.getElementById('gps-dot').className = "w-2.5 h-2.5 bg-green-500 rounded-full shadow-[0_0_10px_#10b981]";
-            if (!window.userCircle) window.userCircle = L.circleMarker(e.latlng, { radius: 12, color: '#fff', weight: 4, fillColor: '#3b82f6', fillOpacity: 1 }).addTo(map);
-            else window.userCircle.setLatLng(e.latlng);
+        window.logout = () => {
+            signOut(auth).then(() => {
+                location.reload();
+            });
+        };
+
+        onAuthStateChanged(auth, (u) => {
+            if(u && u.emailVerified) {
+                State.user = u;
+                document.getElementById('user-display').innerText = u.displayName ? u.displayName.toUpperCase() : "UŻYTKOWNIK";
+                localStorage.setItem('radar_visited', 'true');
+                showCitySelect();
+            } else {
+                document.getElementById('welcome-text').innerText = localStorage.getItem('radar_visited') ? "Witaj ponownie!" : "Witaj w Radarze!";
+            }
         });
 
-        window.initReportFlow = () => {
-            const hint = document.createElement('div');
-            hint.className = "tap-hint-box"; hint.id = "tap-hint"; hint.innerText = "Wskaż punkt na mapie";
-            document.body.appendChild(hint);
+        function showCitySelect() {
+            document.getElementById('auth-section').classList.add('hidden');
+            document.getElementById('city-section').classList.remove('hidden');
+            // Jeśli to pierwszy raz, pokaż poradnik
+            if(!localStorage.getItem('guide_shown')) {
+                setTimeout(() => { openSheet('s-guide'); localStorage.setItem('guide_shown', 'true'); }, 1000);
+            }
+        }
+
+        window.initCity = (id, pos, name) => {
+            State.city = id;
+            document.getElementById('splash-screen').style.transform = 'translateY(-100%)';
+            document.getElementById('city-name').innerText = name.toUpperCase();
+            map.setView(pos, 14);
             
-            map.once('click', (e) => {
-                tempCoords = e.latlng;
-                document.getElementById('tap-hint').remove();
-                if(tempMarker) map.removeLayer(tempMarker);
-                tempMarker = L.circle(e.latlng, { radius: 30, color: '#f59e0b', weight: 4, fillOpacity: 0.3 }).addTo(map);
-                openSheet('sheet-type');
+            // Subskrypcja zgłoszeń
+            onValue(ref(db, `v38/${id}/alerts`), (s) => {
+                const data = s.val() || {};
+                Object.keys(State.markers.n).forEach(k => { if(!data[k]) { map.removeLayer(State.markers.n[k]); delete State.markers.n[k]; }});
+                Object.entries(data).forEach(([k, v]) => {
+                    if(!State.markers.n[k]) {
+                        const icon = `<div class="m-radar" style="background:${v.color}"><div class="m-pulse" style="background:${v.color}"></div><i class="fa-solid ${v.icon} text-2xl"></i><div class="bg-black/40 px-2 py-0.5 rounded text-[10px] font-black mt-1">${v.line}</div></div>`;
+                        State.markers.n[k] = L.marker([v.lat, v.lng], { icon: L.divIcon({ className:'', html:icon, iconAnchor:[30,30] }) }).addTo(map).on('click', () => showInfo(k,v,false));
+                    }
+                });
             });
+
+            onValue(ref(db, `v38/${id}/config`), (s) => State.dirs = s.val() || []);
         };
 
-        window.selectType = (type, icon, color) => { selectedType = { type, icon, color }; openSheet('sheet-details'); };
+        window.triggerReport = () => {
+            const h = document.createElement('div'); h.className = "hint"; h.id = "h-tap"; h.innerText = "KLIKNIJ NA MAPIE";
+            document.body.appendChild(h);
+        };
 
-        window.submitToFirebase = async () => {
-            const line = document.getElementById('in-line').value.trim() || "??";
-            const dir = document.getElementById('search-dir').value.trim() || "Nieznany";
-            const street = await reverseGeocode(tempCoords.lat, tempCoords.lng);
+        map.on('click', (e) => {
+            if(document.getElementById('h-tap')) {
+                State.tPos = e.latlng;
+                document.getElementById('h-tap').remove();
+                openSheet('s-type');
+            }
+        });
+
+        window.pickType = (t, i, c) => { State.sel = { type:t, icon:i, color:c }; closeSheets(); openSheet('s-form'); };
+
+        window.submitReport = () => {
+            const l = document.getElementById('in-line').value.trim().toUpperCase();
+            const d = document.getElementById('in-dir').value.trim() || "Brak";
+            if(!l) return alert("Podaj numer linii!");
             
-            const newAlertRef = push(ref(db, `v38/${currentCity}/alerts`));
-            set(newAlertRef, { ...selectedType, line: line, dir: dir, street: street, lat: tempCoords.lat, lng: tempCoords.lng, author: deviceID, createdAt: Date.now(), lastVote: Date.now(), votes: 1 })
-            .then(() => {
-                closeAllSheets();
-                if(tempMarker) map.removeLayer(tempMarker);
-                document.getElementById('in-line').value = '';
-                document.getElementById('search-dir').value = '';
+            push(ref(db, `v38/${State.city}/alerts`), { 
+                ...State.sel, line:l, dir:d, lat:State.tPos.lat, lng:State.tPos.lng, 
+                createdAt:Date.now(), lastActive:Date.now(), votes:1, author: State.user.displayName || "Kierowca"
             });
-        };
-
-        window.openVoteSheet = (id, data) => {
-            openSheet('sheet-vote');
-            const color = data.type === 'KONTROLA' ? 'text-red-500' : (data.type === 'AWARIA' ? 'text-orange-500' : 'text-blue-500');
-            document.getElementById('v-icon-box').innerHTML = `<i class="fa-solid ${data.icon} ${color}"></i>`;
-            document.getElementById('v-title').innerText = data.type;
-            document.getElementById('v-line').innerText = data.line;
-            document.getElementById('v-dir').innerText = data.dir;
-            document.getElementById('v-street').innerText = data.street;
-            document.getElementById('v-votes').innerText = data.votes;
-            document.getElementById('v-time').innerText = getRelativeTime(data.createdAt);
             
-            document.getElementById('btn-vote-up').onclick = () => { update(ref(db, `v38/${currentCity}/alerts/${id}`), { votes: increment(1), lastVote: Date.now() }); closeAllSheets(); };
-            const delBtn = document.getElementById('btn-delete');
-            if (data.author === deviceID) { delBtn.classList.remove('hidden'); delBtn.onclick = () => { remove(ref(db, `v38/${currentCity}/alerts/${id}`)); closeAllSheets(); }; } 
-            else delBtn.classList.add('hidden');
+            document.getElementById('snd-click').play();
+            closeSheets();
+            document.getElementById('in-line').value = '';
+            document.getElementById('in-dir').value = '';
         };
 
-        window.openSheet = (id) => { document.querySelectorAll('.sheet').forEach(s => s.classList.remove('open')); document.getElementById(id).classList.add('open'); document.getElementById('fab-container').style.opacity = '0'; };
-        window.closeAllSheets = () => { document.querySelectorAll('.sheet').forEach(s => s.classList.remove('open')); document.getElementById('fab-container').style.opacity = '1'; };
-        const renderDirections = (list) => { document.getElementById('dir-list').innerHTML = list.map(d => `<button onclick="document.getElementById('search-dir').value='${d}'" class="w-full bg-white p-6 rounded-[25px] text-left font-bold text-slate-700 btn-press border border-slate-50 shadow-sm flex justify-between items-center"><span>${d}</span><i class="fa-solid fa-chevron-right text-slate-200"></i></button>`).join(''); };
-        window.filterDirections = () => { const q = document.getElementById('search-dir').value.toLowerCase(); renderDirections(cityConfig.filter(d => d.toLowerCase().includes(q))); };
-        window.adminLogin = () => { if(prompt("Hasło operatora:") === "mzk2026") toggleAdmin(true); };
-        window.toggleAdmin = (s) => { document.getElementById('admin-panel').classList.toggle('hidden', !s); if(s) document.getElementById('admin-data').value = cityConfig.join('\n'); };
-        window.saveAdminData = () => { const lines = document.getElementById('admin-data').value.split('\n').filter(l => l.trim() !== ""); set(ref(db, `v38/${currentCity}/config`), lines).then(() => { alert("Zapisano!"); toggleAdmin(false); }); };
+        window.showInfo = (id, data, isAdminEv) => {
+            openSheet('s-info');
+            document.getElementById('v-icon').style.color = data.color;
+            document.getElementById('v-icon').innerHTML = `<i class="fa-solid ${data.icon}"></i>`;
+            document.getElementById('v-sub').innerText = data.type;
+            document.getElementById('v-title').innerText = data.line;
+            document.getElementById('v-desc').innerText = data.dir;
+            document.getElementById('v-author').innerText = data.author;
+            document.getElementById('v-time').innerText = `${Math.floor((Date.now() - data.lastActive)/60000)}m temu`;
+
+            const btn = document.getElementById('v-confirm');
+            btn.onclick = () => { 
+                update(ref(db, `v38/${State.city}/alerts/${id}`), { votes:increment(1), lastActive:Date.now() }); 
+                closeSheets(); 
+            };
+        };
+
+        window.openSheet = (id) => document.getElementById(id).classList.add('active');
+        window.closeSheets = () => document.querySelectorAll('.sheet').forEach(s => s.classList.remove('active'));
+
+        window.doSearch = () => {
+            const q = document.getElementById('in-dir').value.toLowerCase();
+            document.getElementById('search-list').innerHTML = q ? State.dirs.filter(d => d.toLowerCase().includes(q)).map(d => `<div onclick="setDir('${d}')" class="p-4 bg-white/50 rounded-xl font-bold mb-1 shadow-sm">${d}</div>`).join('') : '';
+        };
+        window.setDir = (d) => { document.getElementById('in-dir').value = d; document.getElementById('search-list').innerHTML = ''; };
+
+        map.locate({ watch:true, enableHighAccuracy:true });
+        map.on('locationfound', (e) => {
+            if(!window.uM) window.uM = L.circleMarker(e.latlng, { radius:8, color:'#fff', weight:4, fillColor:'#3b82f6', fillOpacity:1 }).addTo(map);
+            else window.uM.setLatLng(e.latlng);
+        });
     </script>
 </body>
 </html>
