@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>RADAR SYSTEM v57.0 | ELITE</title>
+    <title>RADAR SYSTEM v59.0 | FINAL CORE</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -16,26 +16,23 @@
         html, body { height: 100%; width: 100%; background-color: var(--secondary); overflow: hidden; position: fixed; }
         #map { position: absolute; inset: 0; z-index: 10; background: #cbd5e1; }
 
-        /* Splash & Auth UI */
+        /* Splash */
         #splash-screen { position: fixed; inset: 0; z-index: 9999; background: #f8fafc; display: flex; align-items: center; justify-content: center; transition: 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
         .auth-container { width: 100%; max-width: 400px; padding: 30px; }
-        .auth-tab { padding: 12px 20px; font-weight: 800; font-size: 13px; text-transform: uppercase; border-radius: 15px; cursor: pointer; transition: 0.3s; }
-        .auth-tab.active { background: var(--secondary); color: white; }
         
-        .city-card { background: white; padding: 25px; border-radius: 35px; border: 2px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.3s; }
-        .city-card.locked { opacity: 0.6; cursor: not-allowed; background: #f1f5f9; }
-
-        /* Forms */
-        .in-heavy { width: 100%; background: #f1f5f9; border: 2px solid transparent; padding: 20px; border-radius: 25px; font-weight: 700; outline: none; transition: 0.3s; }
+        .in-heavy { width: 100%; background: #f1f5f9; border: 2px solid transparent; padding: 18px; border-radius: 22px; font-weight: 700; outline: none; margin-bottom: 10px; transition: 0.3s; }
         .in-heavy:focus { border-color: var(--primary); background: white; }
 
-        /* Sheets & HUD */
-        .hud-glass { background: var(--glass); backdrop-filter: blur(20px); border-radius: 30px; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 2000; background: var(--glass); border-radius: 45px 45px 0 0; padding: 40px 30px; transform: translateY(110%); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); max-width: 600px; margin: 0 auto; max-height: 90vh; overflow-y: auto; }
+        .btn-action { width: 100%; background: var(--secondary); color: white; padding: 22px; border-radius: 25px; font-weight: 900; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; transition: 0.3s; }
+        .btn-action:active { transform: scale(0.96); }
+        
+        .tab { flex: 1; text-align: center; padding: 12px; font-weight: 800; font-size: 12px; text-transform: uppercase; cursor: pointer; border-radius: 14px; transition: 0.3s; }
+        .tab.active { background: white; shadow: 0 4px 10px rgba(0,0,0,0.05); color: var(--secondary); }
+
+        .sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 2000; background: var(--glass); border-radius: 40px 40px 0 0; padding: 30px; transform: translateY(110%); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.1); }
         .sheet.active { transform: translateY(0); }
         
-        /* Markers */
-        .m-radar { width: 60px; height: 60px; border: 4px solid white; border-radius: 22px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .m-radar { width: 50px; height: 50px; border: 3px solid white; border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
@@ -43,226 +40,193 @@
     <div id="splash-screen">
         <div class="auth-container">
             <div id="auth-box">
-                <h1 id="welcome-title" class="text-4xl font-black italic text-center mb-2">Ładowanie...</h1>
-                <p id="welcome-sub" class="text-center text-slate-400 font-bold text-[10px] uppercase mb-8 tracking-widest">Radar System Elite</p>
+                <h1 id="welcome-title" class="text-4xl font-black italic text-center mb-1">RADAR</h1>
+                <p id="welcome-sub" class="text-center text-slate-400 font-bold text-[10px] uppercase mb-8 tracking-[0.3em]">System v59.0 Elite</p>
 
                 <div class="flex bg-slate-100 p-1.5 rounded-2xl mb-6">
-                    <div id="tab-login" onclick="setAuthMode('login')" class="auth-tab active flex-1 text-center">Logowanie</div>
-                    <div id="tab-register" onclick="setAuthMode('register')" class="auth-tab flex-1 text-center">Rejestracja</div>
+                    <div id="tab-login" class="tab active">Logowanie</div>
+                    <div id="tab-register" class="tab text-slate-400">Rejestracja</div>
                 </div>
 
-                <div class="space-y-3">
-                    <input type="email" id="auth-email" placeholder="E-mail" class="in-heavy">
-                    <input type="password" id="auth-pass" placeholder="Hasło" class="in-heavy">
-                    <input type="text" id="auth-nick" placeholder="Twój Nickname" class="in-heavy hidden">
+                <div class="space-y-2">
+                    <input type="email" id="email" placeholder="E-mail" class="in-heavy">
+                    <input type="password" id="pass" placeholder="Hasło" class="in-heavy">
+                    <input type="text" id="nick" placeholder="Twój Nick" class="in-heavy hidden">
                     
-                    <button id="btn-auth-submit" onclick="handleAuthAction()" class="w-full bg-amber-500 text-white p-6 rounded-[30px] font-black uppercase italic shadow-lg shadow-amber-200 mt-4 flex justify-between items-center group">
-                        <span id="btn-text">Zaloguj się</span>
+                    <button id="main-auth-btn" class="btn-action mt-4 bg-amber-500 shadow-lg shadow-amber-100">
+                        <span id="btn-label">Zaloguj się</span>
                         <i class="fa-solid fa-arrow-right"></i>
                     </button>
                 </div>
-                <p id="auth-error" class="text-red-500 text-[10px] font-bold text-center uppercase mt-4"></p>
+                <p id="auth-err" class="text-red-500 text-[10px] font-black text-center mt-4 uppercase"></p>
             </div>
 
-            <div id="city-section" class="hidden">
-                <h1 class="text-3xl font-black italic mb-8">Wybierz miasto</h1>
-                <div class="space-y-4">
-                    <div onclick="initCity('gorzow',[52.73, 15.23],'Gorzów Wlkp.')" class="city-card">
-                        <span class="font-black text-slate-800 uppercase">Gorzów Wlkp.</span>
-                        <i class="fa-solid fa-circle-play text-amber-500 text-2xl"></i>
-                    </div>
-                    <div class="city-card locked">
-                        <div>
-                            <span class="font-black text-slate-400 uppercase">Poznań</span>
-                            <p class="text-[9px] font-black text-amber-600">WKRÓTCE DOSTĘPNE</p>
-                        </div>
-                        <i class="fa-solid fa-lock text-slate-300"></i>
-                    </div>
+            <div id="city-box" class="hidden">
+                <h2 class="text-2xl font-black italic mb-6">Wybierz Miasto:</h2>
+                <div id="select-gorzow" class="bg-white p-6 rounded-[30px] border-2 border-slate-100 flex justify-between items-center cursor-pointer hover:border-amber-500 transition-all">
+                    <span class="font-black italic uppercase text-slate-800">Gorzów Wlkp.</span>
+                    <i class="fa-solid fa-chevron-right text-amber-500"></i>
                 </div>
-                <button onclick="logout()" class="w-full mt-10 text-[10px] font-black text-slate-300 uppercase underline">Zmień konto</button>
+                <button id="btn-logout" class="w-full mt-12 text-[10px] font-black text-slate-300 uppercase underline">Wyloguj i zmień konto</button>
             </div>
         </div>
     </div>
 
-    <div class="hud-top fixed top-8 left-4 right-4 z-[1000]">
-        <div class="hud-glass">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-amber-500 text-xl"><i class="fa-solid fa-satellite-dish"></i></div>
-                <div><h2 id="city-name" class="text-sm font-black uppercase italic">Radar</h2><p id="user-display" class="text-[9px] text-amber-600 font-bold uppercase">Gość</p></div>
+    <div class="fixed top-8 left-4 right-4 z-[1000] flex justify-between items-center bg-white/95 backdrop-blur-md p-4 rounded-[28px] shadow-xl border border-white">
+        <div class="flex items-center gap-4">
+            <div class="w-11 h-11 bg-slate-900 rounded-2xl flex items-center justify-center text-amber-500 shadow-lg"><i class="fa-solid fa-satellite-dish"></i></div>
+            <div>
+                <h2 id="hud-city" class="text-xs font-black uppercase italic">Radar Offline</h2>
+                <p id="hud-user" class="text-[9px] font-bold text-amber-600 uppercase">Gość</p>
             </div>
-            <button onclick="logout()" class="w-10 h-10 bg-slate-100 rounded-xl text-slate-400"><i class="fa-solid fa-right-from-bracket"></i></button>
         </div>
     </div>
 
     <div id="map"></div>
 
-    <div class="dock-area fixed bottom-10 left-0 right-0 z-[1000] flex justify-center pointer-events-none gap-4">
-        <button onclick="triggerReport()" class="pointer-events-auto bg-slate-900 text-white px-10 py-5 rounded-[35px] font-black italic border-b-4 border-amber-500 shadow-2xl flex items-center gap-3">
-            <i class="fa-solid fa-plus-circle text-amber-500"></i> DODAJ
+    <div class="fixed bottom-10 left-0 right-0 z-[1000] flex justify-center px-6 pointer-events-none gap-4">
+        <button id="btn-trigger-add" class="pointer-events-auto bg-slate-900 text-white flex-1 max-w-[180px] py-5 rounded-[30px] font-black italic shadow-2xl border-b-4 border-amber-500 flex items-center justify-center gap-3">
+            <i class="fa-solid fa-plus-circle text-amber-500 text-xl"></i> DODAJ
         </button>
-        <button onclick="openSheet('s-guide')" class="pointer-events-auto bg-blue-600 text-white w-16 h-16 rounded-[25px] shadow-2xl flex items-center justify-center">
+        <button id="btn-open-guide" class="pointer-events-auto bg-blue-600 text-white w-16 h-16 rounded-[25px] shadow-2xl flex items-center justify-center">
             <i class="fa-solid fa-question text-xl"></i>
         </button>
     </div>
 
-    <div id="s-guide" class="sheet">
-        <h2 class="text-2xl font-black italic mb-6">Szybki Start</h2>
-        <p class="text-slate-500 font-medium mb-6">Witaj w społeczności Radaru. Kliknij "Dodaj", a potem wskaż punkt na mapie. Twój Nick będzie widoczny przy zgłoszeniu.</p>
-        <button onclick="closeSheets()" class="w-full bg-slate-900 text-white p-5 rounded-3xl font-black uppercase">Zaczynamy!</button>
+    <div id="sheet-guide" class="sheet">
+        <h2 class="text-2xl font-black italic mb-4 text-slate-900">Poradnik</h2>
+        <p class="text-slate-500 font-bold text-sm mb-6 uppercase tracking-tight">1. Kliknij dodaj.<br>2. Wskaż miejsce na mapie.<br>3. Wybierz typ i linię.</p>
+        <button class="close-sheet-btn w-full bg-slate-900 text-white p-5 rounded-2xl font-black">ROZUMIEM</button>
     </div>
 
-    <div id="s-type" class="sheet">
+    <div id="sheet-type" class="sheet">
         <div class="grid grid-cols-3 gap-4">
-            <button onclick="pickType('KONTROLA','fa-user-secret','#ef4444')" class="flex flex-col items-center gap-4 p-6 bg-red-50 rounded-[35px] text-red-600 border-2 border-red-100"><i class="fa-solid fa-user-secret text-3xl"></i></button>
-            <button onclick="pickType('AWARIA','fa-triangle-exclamation','#f59e0b')" class="flex flex-col items-center gap-4 p-6 bg-amber-50 rounded-[35px] text-amber-600 border-2 border-amber-100"><i class="fa-solid fa-triangle-exclamation text-3xl"></i></button>
-            <button onclick="pickType('KOREK','fa-clock','#3b82f6')" class="flex flex-col items-center gap-4 p-6 bg-blue-50 rounded-[35px] text-blue-600 border-2 border-blue-100"><i class="fa-solid fa-clock text-3xl"></i></button>
+            <div onclick="finalizeType('KONTROLA','fa-user-secret','#ef4444')" class="flex flex-col items-center p-6 bg-red-50 rounded-[30px] text-red-500 border-2 border-red-100 cursor-pointer"><i class="fa-solid fa-user-secret text-3xl"></i></div>
+            <div onclick="finalizeType('AWARIA','fa-triangle-exclamation','#f59e0b')" class="flex flex-col items-center p-6 bg-amber-50 rounded-[30px] text-amber-500 border-2 border-amber-100 cursor-pointer"><i class="fa-solid fa-triangle-exclamation text-3xl"></i></div>
+            <div onclick="finalizeType('KOREK','fa-clock','#3b82f6')" class="flex flex-col items-center p-6 bg-blue-50 rounded-[30px] text-blue-500 border-2 border-blue-100 cursor-pointer"><i class="fa-solid fa-clock text-3xl"></i></div>
         </div>
     </div>
 
-    <div id="s-form" class="sheet">
-        <input type="text" id="in-line" placeholder="NUMER LINII" class="in-heavy uppercase text-center text-2xl mb-4" maxlength="4">
-        <input type="text" id="in-dir" oninput="doSearch()" placeholder="KIERUNEK (OPCJONALNIE)" class="in-heavy mb-6">
-        <div id="search-list" class="max-h-40 overflow-y-auto mb-6"></div>
-        <button onclick="submitReport()" class="w-full bg-amber-500 text-white p-6 rounded-[30px] font-black uppercase italic">Opublikuj na mapie</button>
-    </div>
-
-    <div id="s-info" class="sheet">
-        <div class="text-center">
-            <div id="v-icon" class="text-7xl mb-4"></div>
-            <h2 id="v-title" class="text-5xl font-black mb-4"></h2>
-            <p id="v-desc" class="bg-slate-100 p-4 rounded-2xl font-bold uppercase mb-4"></p>
-            <p class="text-[10px] font-black text-slate-400">DODANE PRZEZ: <span id="v-author" class="text-amber-600"></span></p>
-            <button id="v-confirm" class="w-full bg-green-500 text-white p-5 rounded-3xl font-black uppercase mt-8 italic">Potwierdzam</button>
-        </div>
+    <div id="sheet-form" class="sheet">
+        <input type="text" id="input-line" placeholder="NUMER LINII" class="in-heavy text-center text-3xl uppercase mb-4" maxlength="4">
+        <button id="btn-final-publish" class="btn-action bg-amber-500 shadow-lg shadow-amber-100">
+            <span>OPUBLIKUJ</span> <i class="fa-solid fa-check"></i>
+        </button>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
         import { getAuth, setPersistence, browserLocalPersistence, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, onAuthStateChanged, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
-        import { getDatabase, ref, set, push, onValue, update, remove, increment } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+        import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
 
         const fbConfig = { databaseURL: "https://mzk-by-facio-default-rtdb.europe-west1.firebasedatabase.app" };
         const app = initializeApp(fbConfig);
         const auth = getAuth(app);
         const db = getDatabase(app);
-
         setPersistence(auth, browserLocalPersistence);
 
-        let currentAuthMode = 'login';
-        const State = { city: '', user: null, tPos: null, sel: null, dirs: [], markers: {} };
+        let authMode = 'login';
+        let state = { city: '', user: null, pos: null, type: null, icon: null, color: null, markers: {} };
 
-        const map = L.map('map', { zoomControl:false, attributionControl:false }).setView([52.23, 21.01], 6);
+        const map = L.map('map', { zoomControl:false, attributionControl:false }).setView([52.73, 15.23], 13);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
 
-        // UI AUTH LOGIC
-        window.setAuthMode = (mode) => {
-            currentAuthMode = mode;
-            document.getElementById('tab-login').className = `auth-tab flex-1 text-center ${mode==='login'?'active':''}`;
-            document.getElementById('tab-register').className = `auth-tab flex-1 text-center ${mode==='register'?'active':''}`;
-            document.getElementById('auth-nick').classList.toggle('hidden', mode === 'login');
-            document.getElementById('btn-text').innerText = mode === 'login' ? 'Zaloguj się' : 'Stwórz konto i dalej';
-        };
+        // --- AUTH UI HANDLERS ---
+        const tabL = document.getElementById('tab-login');
+        const tabR = document.getElementById('tab-register');
+        const fieldNick = document.getElementById('nick');
+        const btnAuth = document.getElementById('main-auth-btn');
 
-        window.handleAuthAction = async () => {
-            const email = document.getElementById('auth-email').value;
-            const pass = document.getElementById('auth-pass').value;
-            const nick = document.getElementById('auth-nick').value;
-            const err = document.getElementById('auth-error');
-            const btnText = document.getElementById('btn-text');
+        tabL.onclick = () => { authMode = 'login'; tabL.classList.add('active'); tabR.classList.remove('active'); tabR.classList.add('text-slate-400'); fieldNick.classList.add('hidden'); document.getElementById('btn-label').innerText = "Zaloguj się"; };
+        tabR.onclick = () => { authMode = 'register'; tabR.classList.add('active'); tabL.classList.remove('active'); tabL.classList.add('text-slate-400'); fieldNick.classList.remove('hidden'); document.getElementById('btn-label').innerText = "Stwórz konto"; };
 
+        btnAuth.onclick = async () => {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('pass').value;
+            const nick = document.getElementById('nick').value;
+            const err = document.getElementById('auth-err');
             err.innerText = "";
-            btnText.innerText = "Chwileczkę...";
 
             try {
-                if(currentAuthMode === 'register') {
-                    if(!nick) throw new Error("Wpisz swój nick!");
+                if(authMode === 'register') {
+                    if(!nick) throw new Error("Wpisz Nick!");
                     const res = await createUserWithEmailAndPassword(auth, email, pass);
                     await updateProfile(res.user, { displayName: nick });
                     await sendEmailVerification(res.user);
-                    alert("Wysłaliśmy maila! Zweryfikuj go i wróć tutaj.");
-                    setAuthMode('login');
+                    alert("Wysłaliśmy maila! Zweryfikuj go i zaloguj się.");
+                    location.reload();
                 } else {
                     const res = await signInWithEmailAndPassword(auth, email, pass);
-                    if(!res.user.emailVerified) {
-                        alert("Najpierw zweryfikuj maila!");
-                        await signOut(auth);
-                    }
+                    if(!res.user.emailVerified) { alert("Potwierdź e-mail!"); await signOut(auth); }
                 }
-            } catch (e) { 
-                err.innerText = "Błąd: " + e.message; 
-            } finally {
-                btnText.innerText = currentAuthMode === 'login' ? 'Zaloguj się' : 'Stwórz konto i dalej';
-            }
+            } catch(e) { err.innerText = e.message; }
         };
 
         onAuthStateChanged(auth, (u) => {
-            const visited = localStorage.getItem('radar_elite_v1');
-            document.getElementById('welcome-title').innerText = visited ? "Witaj ponownie!" : "Cześć!";
-            
             if(u && u.emailVerified) {
-                State.user = u;
-                localStorage.setItem('radar_elite_v1', 'true');
-                document.getElementById('user-display').innerText = u.displayName.toUpperCase();
+                state.user = u;
+                document.getElementById('hud-user').innerText = u.displayName.toUpperCase();
                 document.getElementById('auth-box').classList.add('hidden');
-                document.getElementById('city-section').classList.remove('hidden');
+                document.getElementById('city-box').classList.remove('hidden');
+                document.getElementById('welcome-title').innerText = "Witaj ponownie!";
+            } else {
+                document.getElementById('welcome-title').innerText = "Witaj!";
             }
         });
 
-        window.logout = () => signOut(auth).then(() => location.reload());
+        document.getElementById('btn-logout').onclick = () => signOut(auth).then(() => location.reload());
 
-        // MAP & REPORTING LOGIC (ZACHOWANA)
-        window.initCity = (id, pos, name) => {
-            State.city = id;
+        // --- CITY SELECT ---
+        document.getElementById('select-gorzow').onclick = () => {
+            state.city = 'gorzow';
             document.getElementById('splash-screen').style.transform = 'translateY(-100%)';
-            document.getElementById('city-name').innerText = name.toUpperCase();
-            map.setView(pos, 14);
-            onValue(ref(db, `v38/${id}/alerts`), (s) => {
+            document.getElementById('hud-city').innerText = "Gorzów Wlkp.";
+            
+            onValue(ref(db, `v38/gorzow/alerts`), (s) => {
                 const data = s.val() || {};
-                Object.entries(data).forEach(([k, v]) => {
-                    if(!State.markers[k]) {
-                        const icon = `<div class="m-radar" style="background:${v.color}"><i class="fa-solid ${v.icon} text-2xl"></i><div class="bg-black/40 px-2 py-0.5 rounded text-[10px] font-black mt-1">${v.line}</div></div>`;
-                        State.markers[k] = L.marker([v.lat, v.lng], { icon: L.divIcon({ className:'', html:icon, iconAnchor:[30,30] }) }).addTo(map).on('click', () => showInfo(k,v));
+                Object.values(data).forEach(v => {
+                    if(!state.markers[v.lat+v.lng]) {
+                        const icon = `<div class="m-radar" style="background:${v.color}"><i class="fa-solid ${v.icon} text-xl"></i><div class="text-[9px] font-black mt-1">${v.line}</div></div>`;
+                        state.markers[v.lat+v.lng] = L.marker([v.lat, v.lng], { icon: L.divIcon({ className:'', html:icon, iconAnchor:[25,25] }) }).addTo(map);
                     }
                 });
             });
         };
 
-        window.triggerReport = () => {
-            const h = document.createElement('div'); h.className = "fixed top-32 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full font-black z-[3000]"; h.id = "h-tap"; h.innerText = "DOTKNIJ MIEJSCA NA MAPIE";
+        // --- REPORTING SYSTEM ---
+        document.getElementById('btn-trigger-add').onclick = () => {
+            const h = document.createElement('div'); h.id = "tap-hint"; h.className = "fixed top-32 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-full font-black z-[5000] shadow-2xl border-2 border-amber-500"; h.innerText = "WSKAŻ MIEJSCE NA MAPIE";
             document.body.appendChild(h);
         };
 
         map.on('click', (e) => {
-            if(document.getElementById('h-tap')) {
-                State.tPos = e.latlng;
-                document.getElementById('h-tap').remove();
-                openSheet('s-type');
+            const h = document.getElementById('tap-hint');
+            if(h) {
+                state.pos = e.latlng;
+                h.remove();
+                document.getElementById('sheet-type').classList.add('active');
             }
         });
 
-        window.pickType = (t, i, c) => { State.sel = { type:t, icon:i, color:c }; closeSheets(); openSheet('s-form'); };
-        window.submitReport = () => {
-            const l = document.getElementById('in-line').value.trim().toUpperCase();
-            if(!l) return;
-            push(ref(db, `v38/${State.city}/alerts`), { 
-                ...State.sel, line:l, dir:document.getElementById('in-dir').value, lat:State.tPos.lat, lng:State.tPos.lng, 
-                createdAt:Date.now(), lastActive:Date.now(), author: State.user.displayName 
-            });
-            closeSheets();
+        window.finalizeType = (t, i, c) => { 
+            state.type=t; state.icon=i; state.color=c; 
+            document.getElementById('sheet-type').classList.remove('active'); 
+            document.getElementById('sheet-form').classList.add('active'); 
         };
 
-        window.showInfo = (id, data) => {
-            openSheet('s-info');
-            document.getElementById('v-icon').style.color = data.color;
-            document.getElementById('v-icon').innerHTML = `<i class="fa-solid ${data.icon}"></i>`;
-            document.getElementById('v-title').innerText = data.line;
-            document.getElementById('v-desc').innerText = data.dir || "Brak kierunku";
-            document.getElementById('v-author').innerText = data.author || "Anonim";
+        document.getElementById('btn-final-publish').onclick = () => {
+            const line = document.getElementById('input-line').value.toUpperCase();
+            if(!line) return alert("Podaj linię!");
+            push(ref(db, `v38/${state.city}/alerts`), { ...state, line: line, lat: state.pos.lat, lng: state.pos.lng, author: state.user.displayName, time: Date.now() });
+            document.querySelectorAll('.sheet').forEach(s => s.classList.remove('active'));
+            document.getElementById('input-line').value = '';
         };
 
-        window.openSheet = (id) => document.getElementById(id).classList.add('active');
-        window.closeSheets = () => document.querySelectorAll('.sheet').forEach(s => s.classList.remove('active'));
+        // --- UI HELPERS ---
+        document.getElementById('btn-open-guide').onclick = () => document.getElementById('sheet-guide').classList.add('active');
+        document.querySelectorAll('.close-sheet-btn').forEach(b => b.onclick = () => document.querySelectorAll('.sheet').forEach(s => s.classList.remove('active')));
+
     </script>
 </body>
 </html>
