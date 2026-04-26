@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ełk Nasze Wiadomości</title>
+    <title>Ełk Nasze Eventy</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
@@ -28,7 +28,6 @@
 
         .author-badge { font-weight: 900; color: #3b82f6; padding: 0.25rem 0.75rem; background: rgba(59, 130, 246, 0.1); border-radius: 9999px; font-size: 10px; }
         
-        /* STYLE FORMATOWANIA DISCORD */
         .md-h1 { font-size: 2.25rem; font-weight: 900; display: block; margin: 1rem 0; color: white; line-height: 1.2; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
         .md-h3 { font-size: 1.5rem; font-weight: 700; display: block; margin: 0.75rem 0; color: #cbd5e1; }
         .md-small { font-size: 0.85rem; opacity: 0.7; display: block; line-height: 1.4; color: #94a3b8; }
@@ -40,7 +39,6 @@
 
         .category-tag { font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; background: rgba(255,255,255,0.1); color: #cbd5e1; }
         
-        /* STYLE KOMENTARZY I REAKCJI */
         .like-btn { transition: 0.3s; cursor: pointer; }
         .like-btn:active { transform: scale(1.4); }
         .comment-item { border-left: 2px solid var(--main); background: rgba(255,255,255,0.02); padding: 10px 15px; border-radius: 0 12px 12px 0; margin-bottom: 10px; position: relative; }
@@ -52,12 +50,10 @@
         .comm-react-btn { font-size: 10px; font-weight: 700; display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; cursor: pointer; transition: 0.2s; }
         .comm-react-btn:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
 
-        /* NOWE STYLE ODPOWIEDZI */
         .replies-container { margin-left: 20px; border-left: 1px dashed rgba(255,255,255,0.1); padding-left: 15px; margin-top: 10px; display: none; }
         .reply-item { background: rgba(255,255,255,0.01); padding: 8px 12px; border-radius: 8px; margin-bottom: 5px; font-size: 13px; border: 1px solid rgba(255,255,255,0.02); position: relative; }
         .toggle-replies { font-size: 9px; font-weight: 800; color: #64748b; cursor: pointer; text-transform: uppercase; margin-top: 5px; display: inline-block; }
         .toggle-replies:hover { color: white; }
-        .reply-indicator { color: #3b82f6; font-weight: bold; }
     </style>
 </head>
 <body id="main-body">
@@ -189,6 +185,15 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const postsRef = db.ref('elk/posts');
+        const configRef = db.ref('elk/config');
+
+        // FUNKCJA INICJUJĄCA CONFIG W CHMURZE
+        configRef.child('adminPass').once('value', (snap) => {
+            if (!snap.exists()) {
+                configRef.update({ adminPass: "1234" });
+                console.log("Utworzono domyślne hasło w chmurze: 1234");
+            }
+        });
 
         let allData = [];
         let showLimit = 3;
@@ -236,8 +241,8 @@
             },
 
             openAdmin: () => {
-                const pin = prompt("KOD:");
-                db.ref('elk/config/adminPass').once('value', (snap) => {
+                const pin = prompt("KOD Z CHMURY:");
+                configRef.child('adminPass').once('value', (snap) => {
                     if(pin === snap.val()) {
                         isAdminLoggedIn = true;
                         document.getElementById('main-body').classList.add('admin-active');
@@ -374,23 +379,12 @@
                 postsRef.child(currentOpenPostId).update({ likes: (post.likes || 0) + 1 }).then(() => { localStorage.setItem(storageKey, "true"); });
             },
 
-            // --- NOWA LOGIKA KOMENTARZY (HIERARCHICZNA) ---
             addComment: () => {
                 const nick = document.getElementById('comm-nick').value;
                 const text = document.getElementById('comm-text').value;
                 if(!nick || !text) return alert("Uzupełnij pola!");
-
-                const commentData = {
-                    nick: nick, text: text, date: new Date().toLocaleString('pl-PL'), ts: Date.now(), reacts: 0
-                };
-
-                let ref;
-                if(currentReplyToId) {
-                    ref = db.ref(`elk/comments/${currentOpenPostId}/${currentReplyToId}/replies`);
-                } else {
-                    ref = db.ref(`elk/comments/${currentOpenPostId}`);
-                }
-
+                const commentData = { nick: nick, text: text, date: new Date().toLocaleString('pl-PL'), ts: Date.now(), reacts: 0 };
+                let ref = currentReplyToId ? db.ref(`elk/comments/${currentOpenPostId}/${currentReplyToId}/replies`) : db.ref(`elk/comments/${currentOpenPostId}`);
                 ref.push(commentData).then(() => {
                     document.getElementById('comm-text').value = "";
                     core.cancelReply();
@@ -413,30 +407,22 @@
             toggleReplies: (cid) => {
                 const el = document.getElementById(`replies-${cid}`);
                 const btn = document.getElementById(`toggle-btn-${cid}`);
-                if(el.style.display === "block") {
-                    el.style.display = "none";
-                    btn.innerText = "Pokaż odpowiedzi";
-                } else {
-                    el.style.display = "block";
-                    btn.innerText = "Ukryj odpowiedzi";
-                }
+                const isVis = el.style.display === "block";
+                el.style.display = isVis ? "none" : "block";
+                btn.innerText = isVis ? "Pokaż odpowiedzi" : "Ukryj odpowiedzi";
             },
 
             reactComment: (cid, isReply = false, parentId = null) => {
                 const storageKey = `react_comm_${cid}`;
                 if(localStorage.getItem(storageKey)) return;
-                
-                let path = `elk/comments/${currentOpenPostId}/${cid}/reacts`;
-                if(isReply) path = `elk/comments/${currentOpenPostId}/${parentId}/replies/${cid}/reacts`;
-                
+                let path = isReply ? `elk/comments/${currentOpenPostId}/${parentId}/replies/${cid}/reacts` : `elk/comments/${currentOpenPostId}/${cid}/reacts`;
                 db.ref(path).transaction(c => (c || 0) + 1);
                 localStorage.setItem(storageKey, "true");
             },
 
             deleteComment: (cid, isReply = false, parentId = null) => {
                 if(!confirm("Usunąć ten komentarz?")) return;
-                let path = `elk/comments/${currentOpenPostId}/${cid}`;
-                if(isReply) path = `elk/comments/${currentOpenPostId}/${parentId}/replies/${cid}`;
+                let path = isReply ? `elk/comments/${currentOpenPostId}/${parentId}/replies/${cid}` : `elk/comments/${currentOpenPostId}/${cid}`;
                 db.ref(path).remove();
             },
 
@@ -446,45 +432,16 @@
                     list.innerHTML = "";
                     const data = snap.val();
                     if(!data) { list.innerHTML = "<p class='opacity-30 text-xs italic'>Brak komentarzy.</p>"; return; }
-                    
                     Object.entries(data).sort((a,b) => b[1].ts - a[1].ts).forEach(([cid, c]) => {
                         let repliesHtml = "";
                         let replyCount = 0;
                         if(c.replies) {
                             replyCount = Object.keys(c.replies).length;
                             Object.entries(c.replies).sort((a,b) => a[1].ts - b[1].ts).forEach(([rid, r]) => {
-                                repliesHtml += `
-                                    <div class="reply-item">
-                                        <button onclick="core.deleteComment('${rid}', true, '${cid}')" class="del-comm-btn">Usuń</button>
-                                        <div class="flex justify-between items-center mb-1">
-                                            <span class="font-black text-blue-400 text-[11px] uppercase tracking-tighter">${r.nick}</span>
-                                            <span class="text-[8px] opacity-30">${r.date}</span>
-                                        </div>
-                                        <p class="text-xs text-slate-300">${r.text}</p>
-                                        <div onclick="core.reactComment('${rid}', true, '${cid}')" class="comm-react-btn mt-2 w-max scale-90 origin-left">
-                                            <i class="fa-solid fa-heart"></i> <span>${r.reacts || 0}</span>
-                                        </div>
-                                    </div>`;
+                                repliesHtml += `<div class="reply-item"><button onclick="core.deleteComment('${rid}', true, '${cid}')" class="del-comm-btn">Usuń</button><div class="flex justify-between items-center mb-1"><span class="font-black text-blue-400 text-[11px] uppercase tracking-tighter">${r.nick}</span><span class="text-[8px] opacity-30">${r.date}</span></div><p class="text-xs text-slate-300">${r.text}</p><div onclick="core.reactComment('${rid}', true, '${cid}')" class="comm-react-btn mt-2 w-max scale-90 origin-left"><i class="fa-solid fa-heart"></i> <span>${r.reacts || 0}</span></div></div>`;
                             });
                         }
-
-                        list.innerHTML += `
-                            <div class="comment-item">
-                                <button onclick="core.deleteComment('${cid}')" class="del-comm-btn">Usuń</button>
-                                <div class="flex justify-between items-center mb-1">
-                                    <span class="font-black text-blue-400 text-xs uppercase tracking-tighter">${c.nick}</span>
-                                    <span class="text-[9px] opacity-30">${c.date}</span>
-                                </div>
-                                <p class="text-sm text-slate-300">${c.text}</p>
-                                <div class="flex items-center gap-3 mt-2">
-                                    <div onclick="core.reactComment('${cid}')" class="comm-react-btn">
-                                        <i class="fa-solid fa-heart"></i> <span>${c.reacts || 0}</span>
-                                    </div>
-                                    <span onclick="core.setReply('${cid}', '${c.nick}')" class="reply-btn">Odpowiedz</span>
-                                    ${replyCount > 0 ? `<span id="toggle-btn-${cid}" onclick="core.toggleReplies('${cid}')" class="toggle-replies">${replyCount} odp. - Pokaż</span>` : ''}
-                                </div>
-                                <div id="replies-${cid}" class="replies-container">${repliesHtml}</div>
-                            </div>`;
+                        list.innerHTML += `<div class="comment-item"><button onclick="core.deleteComment('${cid}')" class="del-comm-btn">Usuń</button><div class="flex justify-between items-center mb-1"><span class="font-black text-blue-400 text-xs uppercase tracking-tighter">${c.nick}</span><span class="text-[9px] opacity-30">${c.date}</span></div><p class="text-sm text-slate-300">${c.text}</p><div class="flex items-center gap-3 mt-2"><div onclick="core.reactComment('${cid}')" class="comm-react-btn"><i class="fa-solid fa-heart"></i> <span>${c.reacts || 0}</span></div><span onclick="core.setReply('${cid}', '${c.nick}')" class="reply-btn">Odpowiedz</span>${replyCount > 0 ? `<span id="toggle-btn-${cid}" onclick="core.toggleReplies('${cid}')" class="toggle-replies">${replyCount} odp. - Pokaż</span>` : ''}</div><div id="replies-${cid}" class="replies-container">${repliesHtml}</div></div>`;
                     });
                 });
             },
