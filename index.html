@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ełk Nasze Wiadomości</title>
+    <title>Ełk Nasze Eventy</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
@@ -40,17 +40,24 @@
 
         .category-tag { font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; background: rgba(255,255,255,0.1); color: #cbd5e1; }
         
-        /* NOWE STYLE KOMENTARZY I LIKE */
+        /* STYLE KOMENTARZY I REAKCJI */
         .like-btn { transition: 0.3s; cursor: pointer; }
         .like-btn:active { transform: scale(1.4); }
         .comment-item { border-left: 2px solid var(--main); background: rgba(255,255,255,0.02); padding: 10px 15px; border-radius: 0 12px 12px 0; margin-bottom: 10px; position: relative; }
         .del-comm-btn { position: absolute; right: 10px; top: 10px; color: #ef4444; font-size: 10px; font-weight: 900; text-transform: uppercase; border: 1px solid rgba(239, 68, 68, 0.2); padding: 2px 8px; border-radius: 5px; display: none; }
         body.admin-active .del-comm-btn { display: block; }
         
-        .reply-btn { font-size: 9px; font-weight: 900; color: var(--main); text-transform: uppercase; margin-top: 5px; cursor: pointer; opacity: 0.6; }
+        .reply-btn { font-size: 9px; font-weight: 900; color: var(--main); text-transform: uppercase; cursor: pointer; opacity: 0.6; }
         .reply-btn:hover { opacity: 1; }
-        .comm-react-btn { font-size: 10px; font-weight: 700; display: flex; items-center: gap: 4px; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+        .comm-react-btn { font-size: 10px; font-weight: 700; display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; cursor: pointer; transition: 0.2s; }
         .comm-react-btn:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+
+        /* NOWE STYLE ODPOWIEDZI */
+        .replies-container { margin-left: 20px; border-left: 1px dashed rgba(255,255,255,0.1); padding-left: 15px; margin-top: 10px; display: none; }
+        .reply-item { background: rgba(255,255,255,0.01); padding: 8px 12px; border-radius: 8px; margin-bottom: 5px; font-size: 13px; border: 1px solid rgba(255,255,255,0.02); position: relative; }
+        .toggle-replies { font-size: 9px; font-weight: 800; color: #64748b; cursor: pointer; text-transform: uppercase; margin-top: 5px; display: inline-block; }
+        .toggle-replies:hover { color: white; }
+        .reply-indicator { color: #3b82f6; font-weight: bold; }
     </style>
 </head>
 <body id="main-body">
@@ -117,10 +124,14 @@
                 <h3 class="text-xl font-black uppercase italic mb-6">Komentarze</h3>
                 <div id="comments-list" class="space-y-4 mb-8"></div>
                 
-                <div id="comment-box-anchor" class="glass p-6 rounded-[24px] space-y-4">
+                <div id="comment-box-anchor" class="glass p-6 rounded-[24px] space-y-4 border border-blue-500/20">
+                    <div id="replying-to-info" class="hidden flex justify-between items-center bg-blue-500/10 p-2 rounded-lg border border-blue-500/20">
+                        <span class="text-[10px] font-bold uppercase">Odpowiadasz użytkownikowi: <span id="target-nick" class="text-blue-400"></span></span>
+                        <button onclick="core.cancelReply()" class="text-red-500 text-[10px] font-black uppercase">Anuluj</button>
+                    </div>
                     <input type="text" id="comm-nick" placeholder="Twój Nick" class="input-dark">
                     <textarea id="comm-text" rows="3" placeholder="Napisz co o tym sądzisz..." class="input-dark"></textarea>
-                    <button onclick="core.addComment()" class="bg-blue-600 w-full p-4 rounded-xl font-bold uppercase tracking-widest hover:bg-blue-500 transition">Wyślij komentarz</button>
+                    <button onclick="core.addComment()" class="bg-blue-600 w-full p-4 rounded-xl font-bold uppercase tracking-widest hover:bg-blue-500 transition shadow-lg shadow-blue-500/20">Wyślij</button>
                 </div>
             </div>
         </div>
@@ -150,19 +161,16 @@
                     </div>
                 </div>
 
-                <textarea id="in-content" rows="10" placeholder="Treść artykułu... (# Nagłówek, **Pogrubienie**, *Kursywa*, -# Mały tekst, __Podkreślenie__)" class="input-dark"></textarea>
+                <textarea id="in-content" rows="10" placeholder="Treść (#, **, *, -#, __)" class="input-dark"></textarea>
                 
                 <div class="bg-white/5 p-4 rounded-xl border border-dashed border-white/10">
-                    <p class="text-[10px] font-bold text-slate-500 mb-2 uppercase">Zdjęcia w tym wpisie:</p>
+                    <p class="text-[10px] font-bold text-slate-500 mb-2 uppercase">Zdjęcia:</p>
                     <div id="edit-images-preview" class="flex flex-wrap gap-2 mb-3"></div>
-                    <input type="file" id="in-files" onchange="core.previewNewFiles()" multiple accept="image/*" class="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-500/10 file:text-blue-500 hover:file:bg-blue-500/20">
+                    <input type="file" id="in-files" onchange="core.previewNewFiles()" multiple accept="image/*" class="text-xs text-slate-500">
                     <div id="new-files-names" class="text-[9px] text-blue-400 mt-2 font-bold uppercase"></div>
                 </div>
 
-                <button onclick="core.publish()" id="publish-btn" class="w-full bg-blue-600 p-4 rounded-xl font-bold uppercase transition active:scale-95 shadow-lg shadow-blue-500/20">
-                    Opublikuj na stronie
-                </button>
-                
+                <button onclick="core.publish()" id="publish-btn" class="w-full bg-blue-600 p-4 rounded-xl font-bold uppercase tracking-widest">Opublikuj</button>
                 <div id="admin-list" class="mt-10 pt-6 border-t border-white/5 space-y-2"></div>
             </div>
         </div>
@@ -178,7 +186,6 @@
         };
 
         const IMGBB_API_KEY = "19570ba1fa4dc27bd0ba974b4eb2e253";
-
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const postsRef = db.ref('elk/posts');
@@ -187,6 +194,7 @@
         let showLimit = 3;
         let editId = null;
         let currentOpenPostId = null;
+        let currentReplyToId = null;
         let currentEditImages = [];
         let currentTab = 'all';
         let isAdminLoggedIn = false;
@@ -206,8 +214,7 @@
 
             previewNewFiles: () => {
                 const files = document.getElementById('in-files').files;
-                const label = document.getElementById('new-files-names');
-                label.innerText = files.length > 0 ? `Wybrano nowe pliki: ${files.length}` : "";
+                document.getElementById('new-files-names').innerText = files.length > 0 ? `Wybrano nowe pliki: ${files.length}` : "";
             },
 
             switchTab: (tabId, btn) => {
@@ -223,6 +230,7 @@
                 document.getElementById('view-article').classList.add('hidden');
                 document.getElementById('view-admin').classList.add('hidden');
                 core.cancelEdit();
+                core.cancelReply();
                 currentOpenPostId = null;
                 window.scrollTo(0,0);
             },
@@ -230,8 +238,7 @@
             openAdmin: () => {
                 const pin = prompt("KOD:");
                 db.ref('elk/config/adminPass').once('value', (snap) => {
-                    const realPass = snap.val();
-                    if(pin === realPass) {
+                    if(pin === snap.val()) {
                         isAdminLoggedIn = true;
                         document.getElementById('main-body').classList.add('admin-active');
                         document.getElementById('admin-indicator').classList.remove('hidden');
@@ -333,7 +340,6 @@
             },
 
             deletePost: (id) => confirm("Usunąć wpis?") && postsRef.child(id).remove(),
-
             showAllPosts: () => { showLimit = 999; core.renderPosts(allData); document.getElementById('more-container').classList.add('hidden'); },
 
             filterPosts: () => {
@@ -360,49 +366,78 @@
                 document.getElementById('more-container').classList.toggle('hidden', isSearching || items.length <= showLimit);
             },
 
-            toggleUpdateDate: () => document.getElementById('upd-info')?.classList.toggle('hidden'),
-
             likePost: () => {
                 if(!currentOpenPostId) return;
                 const storageKey = `liked_${currentOpenPostId}`;
                 if(localStorage.getItem(storageKey)) return alert("Już zareagowałeś na ten post!");
-                
                 const post = allData.find(x => x.id === currentOpenPostId);
-                const currentLikes = post.likes || 0;
-                postsRef.child(currentOpenPostId).update({ likes: currentLikes + 1 }).then(() => {
-                    localStorage.setItem(storageKey, "true");
-                });
+                postsRef.child(currentOpenPostId).update({ likes: (post.likes || 0) + 1 }).then(() => { localStorage.setItem(storageKey, "true"); });
             },
 
+            // --- NOWA LOGIKA KOMENTARZY (HIERARCHICZNA) ---
             addComment: () => {
                 const nick = document.getElementById('comm-nick').value;
                 const text = document.getElementById('comm-text').value;
-                if(!nick || !text) return alert("Uzupełnij nick i komentarz!");
-                db.ref(`elk/comments/${currentOpenPostId}`).push({
+                if(!nick || !text) return alert("Uzupełnij pola!");
+
+                const commentData = {
                     nick: nick, text: text, date: new Date().toLocaleString('pl-PL'), ts: Date.now(), reacts: 0
-                }).then(() => { document.getElementById('comm-text').value = ""; });
+                };
+
+                let ref;
+                if(currentReplyToId) {
+                    ref = db.ref(`elk/comments/${currentOpenPostId}/${currentReplyToId}/replies`);
+                } else {
+                    ref = db.ref(`elk/comments/${currentOpenPostId}`);
+                }
+
+                ref.push(commentData).then(() => {
+                    document.getElementById('comm-text').value = "";
+                    core.cancelReply();
+                });
             },
 
-            replyTo: (nick) => {
-                const area = document.getElementById('comm-text');
-                area.value = `@${nick} ` + area.value;
-                area.focus();
+            setReply: (cid, nick) => {
+                currentReplyToId = cid;
+                document.getElementById('replying-to-info').classList.remove('hidden');
+                document.getElementById('target-nick').innerText = nick;
+                document.getElementById('comm-text').focus();
                 document.getElementById('comment-box-anchor').scrollIntoView({behavior: 'smooth'});
             },
 
-            reactComment: (cid) => {
+            cancelReply: () => {
+                currentReplyToId = null;
+                document.getElementById('replying-to-info').classList.add('hidden');
+            },
+
+            toggleReplies: (cid) => {
+                const el = document.getElementById(`replies-${cid}`);
+                const btn = document.getElementById(`toggle-btn-${cid}`);
+                if(el.style.display === "block") {
+                    el.style.display = "none";
+                    btn.innerText = "Pokaż odpowiedzi";
+                } else {
+                    el.style.display = "block";
+                    btn.innerText = "Ukryj odpowiedzi";
+                }
+            },
+
+            reactComment: (cid, isReply = false, parentId = null) => {
                 const storageKey = `react_comm_${cid}`;
                 if(localStorage.getItem(storageKey)) return;
                 
-                const ref = db.ref(`elk/comments/${currentOpenPostId}/${cid}/reacts`);
-                ref.transaction((current) => (current || 0) + 1);
+                let path = `elk/comments/${currentOpenPostId}/${cid}/reacts`;
+                if(isReply) path = `elk/comments/${currentOpenPostId}/${parentId}/replies/${cid}/reacts`;
+                
+                db.ref(path).transaction(c => (c || 0) + 1);
                 localStorage.setItem(storageKey, "true");
             },
 
-            deleteComment: (commentId) => {
-                if(confirm("Usunąć ten komentarz?")) {
-                    db.ref(`elk/comments/${currentOpenPostId}/${commentId}`).remove();
-                }
+            deleteComment: (cid, isReply = false, parentId = null) => {
+                if(!confirm("Usunąć ten komentarz?")) return;
+                let path = `elk/comments/${currentOpenPostId}/${cid}`;
+                if(isReply) path = `elk/comments/${currentOpenPostId}/${parentId}/replies/${cid}`;
+                db.ref(path).remove();
             },
 
             loadComments: (postId) => {
@@ -411,7 +446,28 @@
                     list.innerHTML = "";
                     const data = snap.val();
                     if(!data) { list.innerHTML = "<p class='opacity-30 text-xs italic'>Brak komentarzy.</p>"; return; }
+                    
                     Object.entries(data).sort((a,b) => b[1].ts - a[1].ts).forEach(([cid, c]) => {
+                        let repliesHtml = "";
+                        let replyCount = 0;
+                        if(c.replies) {
+                            replyCount = Object.keys(c.replies).length;
+                            Object.entries(c.replies).sort((a,b) => a[1].ts - b[1].ts).forEach(([rid, r]) => {
+                                repliesHtml += `
+                                    <div class="reply-item">
+                                        <button onclick="core.deleteComment('${rid}', true, '${cid}')" class="del-comm-btn">Usuń</button>
+                                        <div class="flex justify-between items-center mb-1">
+                                            <span class="font-black text-blue-400 text-[11px] uppercase tracking-tighter">${r.nick}</span>
+                                            <span class="text-[8px] opacity-30">${r.date}</span>
+                                        </div>
+                                        <p class="text-xs text-slate-300">${r.text}</p>
+                                        <div onclick="core.reactComment('${rid}', true, '${cid}')" class="comm-react-btn mt-2 w-max scale-90 origin-left">
+                                            <i class="fa-solid fa-heart"></i> <span>${r.reacts || 0}</span>
+                                        </div>
+                                    </div>`;
+                            });
+                        }
+
                         list.innerHTML += `
                             <div class="comment-item">
                                 <button onclick="core.deleteComment('${cid}')" class="del-comm-btn">Usuń</button>
@@ -424,8 +480,10 @@
                                     <div onclick="core.reactComment('${cid}')" class="comm-react-btn">
                                         <i class="fa-solid fa-heart"></i> <span>${c.reacts || 0}</span>
                                     </div>
-                                    <span onclick="core.replyTo('${c.nick}')" class="reply-btn">Odpowiedz</span>
+                                    <span onclick="core.setReply('${cid}', '${c.nick}')" class="reply-btn">Odpowiedz</span>
+                                    ${replyCount > 0 ? `<span id="toggle-btn-${cid}" onclick="core.toggleReplies('${cid}')" class="toggle-replies">${replyCount} odp. - Pokaż</span>` : ''}
                                 </div>
+                                <div id="replies-${cid}" class="replies-container">${repliesHtml}</div>
                             </div>`;
                     });
                 });
@@ -439,7 +497,7 @@
                 document.getElementById('like-count').innerText = data.likes || 0;
                 core.loadComments(data.id);
                 let imgs = (data.images || []).map(img => `<img src="${img}" class="w-full rounded-3xl mb-6 shadow-2xl">`).join('');
-                document.getElementById('article-content').innerHTML = `<div class="mb-4"><span class="category-tag">${data.category || 'Wydarzenia'}</span></div><h1 class="text-4xl md:text-5xl font-black mb-4 tracking-tighter">${data.title}</h1><div class="flex items-center gap-4 mb-8"><div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center font-bold">${data.author.charAt(0)}</div><div><p class="text-sm font-bold text-blue-500">${data.author}</p><p onclick="core.toggleUpdateDate()" class="text-xs opacity-40 cursor-pointer">${data.date}</p>${data.updated ? `<p id="upd-info" class="hidden text-[10px] text-amber-500 font-bold uppercase mt-1 italic">Edytowano: ${data.updated}</p>` : ''}</div></div><div class="text-slate-300 text-lg leading-relaxed white-pre mb-10 border-l-4 border-blue-600 pl-6">${core.parseMarkdown(data.content)}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">${imgs}</div>`;
+                document.getElementById('article-content').innerHTML = `<div class="mb-4"><span class="category-tag">${data.category || 'Wydarzenia'}</span></div><h1 class="text-4xl md:text-5xl font-black mb-4 tracking-tighter">${data.title}</h1><div class="flex items-center gap-4 mb-8"><div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center font-bold">${data.author.charAt(0)}</div><div><p class="text-sm font-bold text-blue-500">${data.author}</p><p class="text-xs opacity-40 cursor-pointer" onclick="core.toggleUpdateDate()">${data.date}</p>${data.updated ? `<p id="upd-info" class="hidden text-[10px] text-amber-500 font-bold uppercase mt-1 italic">Edytowano: ${data.updated}</p>` : ''}</div></div><div class="text-slate-300 text-lg leading-relaxed white-pre mb-10 border-l-4 border-blue-600 pl-6">${core.parseMarkdown(data.content)}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">${imgs}</div>`;
                 window.scrollTo(0,0);
             }
         };
