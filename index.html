@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>RADAR SYSTEM v61.0 | WSZYSTKIE FUNKCJE</title>
+    <title>RADAR SYSTEM v62.0 | FULL EDITION</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -16,40 +16,44 @@
         html, body { height: 100%; width: 100%; background-color: var(--secondary); overflow: hidden; position: fixed; }
         #map { position: absolute; inset: 0; z-index: 10; background: #cbd5e1; }
 
-        /* Splash Screen */
+        /* Splash & Setup */
         #splash-screen { position: fixed; inset: 0; z-index: 9999; background: #f8fafc; display: flex; align-items: center; justify-content: center; transition: 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
         .setup-container { width: 100%; max-width: 400px; padding: 30px; }
         
         .in-heavy { width: 100%; background: #f1f5f9; border: 2px solid transparent; padding: 20px; border-radius: 25px; font-weight: 800; outline: none; margin-bottom: 15px; }
         .in-heavy:focus { border-color: var(--primary); background: white; }
 
-        /* UI Elements */
+        /* Sheets UI */
         .sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 2000; background: var(--glass); border-radius: 45px 45px 0 0; padding: 35px 25px; transform: translateY(110%); transition: 0.5s cubic-bezier(0.16, 1, 0.3, 1); max-height: 85vh; overflow-y: auto; box-shadow: 0 -20px 60px rgba(0,0,0,0.15); }
         .sheet.active { transform: translateY(0); }
         
-        .city-card { background: white; padding: 25px; border-radius: 35px; border: 2px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 12px; }
+        /* Markers & Elements */
         .m-radar { width: 55px; height: 55px; border: 4px solid white; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+        .m-event { width: 60px; height: 60px; border: 4px solid #8b5cf6; background: white; color: #8b5cf6; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(139, 92, 246, 0.4); animation: pulse 2s infinite; }
         
-        .event-item { background: #f8fafc; padding: 20px; border-radius: 25px; margin-bottom: 10px; border: 1px solid #e2e8f0; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        .btn-card { background: white; padding: 20px; border-radius: 25px; border: 1px solid #f1f5f9; display: flex; align-items: center; gap: 4px; transition: 0.3s; }
+        .admin-badge { background: #ef4444; color: white; padding: 2px 8px; border-radius: 8px; font-size: 10px; font-weight: 900; position: absolute; top: -5px; right: -5px; }
     </style>
 </head>
 <body>
 
     <div id="splash-screen">
-        <div class="setup-container text-center">
+        <div class="setup-container">
             <div id="step-1">
-                <h1 id="welcome-txt" class="text-4xl font-black italic mb-2">RADAR</h1>
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-10">Wszystkie funkcje przywrócone</p>
+                <h1 id="welcome-title" class="text-4xl font-black italic text-center mb-2">RADAR v62</h1>
+                <p class="text-[10px] font-black text-slate-400 text-center uppercase tracking-[0.4em] mb-10">Wersja Pełna (Admin + Events)</p>
                 <input type="text" id="user-nick" placeholder="Podaj swój Nick" class="in-heavy text-center">
-                <button id="btn-start" class="w-full bg-amber-500 text-white p-6 rounded-[30px] font-black uppercase shadow-xl flex justify-between items-center px-10">
-                    <span>ZACZYNAMY</span> <i class="fa-solid fa-arrow-right"></i>
+                <button id="btn-start" class="w-full bg-amber-500 text-white p-6 rounded-[30px] font-black uppercase flex justify-between items-center px-10">
+                    ZACZYNAMY <i class="fa-solid fa-chevron-right"></i>
                 </button>
             </div>
-            <div id="step-2" class="hidden text-left">
-                <h2 class="text-3xl font-black italic mb-8">Wybierz miasto</h2>
-                <div id="pick-gorzow" class="city-card">
+            <div id="step-2" class="hidden">
+                <h2 class="text-2xl font-black italic mb-6">Gdzie jedziesz?</h2>
+                <div id="pick-gorzow" class="bg-white p-6 rounded-[30px] border-2 border-slate-100 flex justify-between items-center cursor-pointer mb-4">
                     <span class="font-black italic uppercase">Gorzów Wlkp.</span>
-                    <i class="fa-solid fa-location-dot text-amber-500"></i>
+                    <i class="fa-solid fa-map-location-dot text-amber-500"></i>
                 </div>
             </div>
         </div>
@@ -58,121 +62,231 @@
     <div id="map"></div>
 
     <div class="fixed top-8 left-4 right-4 z-[1000] flex justify-between items-center bg-white/95 backdrop-blur-md p-4 rounded-[30px] shadow-2xl">
-        <div class="flex items-center gap-4">
-            <div class="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-amber-500"><i class="fa-solid fa-tower-broadcast"></i></div>
+        <div id="btn-admin-access" class="relative flex items-center gap-4 cursor-pointer">
+            <div class="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-amber-500"><i class="fa-solid fa-user-shield"></i></div>
             <div>
-                <h2 id="hud-city" class="text-sm font-black uppercase italic">RADAR</h2>
-                <p id="hud-user" class="text-[10px] font-bold text-amber-600">GOŚĆ</p>
+                <h2 id="hud-city" class="text-xs font-black uppercase italic">RADAR</h2>
+                <p id="hud-user" class="text-[9px] font-bold text-slate-400 uppercase">Gość</p>
             </div>
         </div>
-        <button id="btn-show-events" class="w-12 h-12 bg-slate-100 rounded-2xl text-slate-600 flex items-center justify-center shadow-sm">
-            <i class="fa-solid fa-calendar-day"></i>
+        <button id="btn-open-events" class="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center shadow-sm">
+            <i class="fa-solid fa-calendar-check"></i>
         </button>
     </div>
 
     <div class="fixed bottom-10 left-0 right-0 z-[1000] flex justify-center px-6 gap-4 pointer-events-none">
-        <button id="btn-add" class="pointer-events-auto bg-slate-900 text-white flex-1 max-w-[200px] py-6 rounded-[35px] font-black italic shadow-2xl border-b-4 border-amber-500 flex items-center justify-center gap-3 active:scale-95 transition-all">
+        <button id="btn-trigger-add" class="pointer-events-auto bg-slate-900 text-white flex-1 max-w-[200px] py-6 rounded-[35px] font-black italic shadow-2xl border-b-4 border-amber-500 flex items-center justify-center gap-3 active:scale-95 transition-all">
             <i class="fa-solid fa-plus-circle text-amber-500 text-2xl"></i> DODAJ
         </button>
     </div>
 
     <div id="sheet-events" class="sheet">
         <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-black italic">Trwające Wydarzenia</h2>
+            <h2 class="text-2xl font-black italic">Wydarzenia & Utrudnienia</h2>
             <button class="close-btn text-slate-300"><i class="fa-solid fa-xmark text-2xl"></i></button>
         </div>
-        <div id="events-list" class="space-y-4">
-            <p class="text-center text-slate-400 font-bold uppercase text-[10px]">Brak aktywnych wydarzeń</p>
+        <div id="long-events-list" class="space-y-4">
+            <p class="text-center text-slate-400 py-10 font-bold uppercase text-[10px]">Brak aktywnych wydarzeń długoterminowych</p>
+        </div>
+    </div>
+
+    <div id="sheet-admin" class="sheet">
+        <h2 class="text-2xl font-black mb-6 uppercase italic text-red-600">Admin Panel</h2>
+        <div class="space-y-4">
+            <div class="bg-red-50 p-6 rounded-[30px] border border-red-100">
+                <p class="font-black text-xs uppercase mb-4 text-red-400">Aktywne Alerty (Usuwanie)</p>
+                <div id="admin-alerts-list" class="space-y-2"></div>
+            </div>
+            <button id="btn-clear-all" class="w-full p-5 bg-red-600 text-white rounded-2xl font-black uppercase text-xs">Wyczyść całą mapę</button>
         </div>
     </div>
 
     <div id="sheet-type" class="sheet">
-        <h3 class="text-center font-black text-xs uppercase text-slate-400 mb-8">Typ zgłoszenia</h3>
-        <div class="grid grid-cols-3 gap-4">
-            <div onclick="setType('KONTROLA','fa-user-secret','#ef4444')" class="flex flex-col items-center p-8 bg-red-50 rounded-[35px] text-red-500 border-2 border-red-100"><i class="fa-solid fa-user-secret text-4xl"></i></div>
-            <div onclick="setType('WYDARZENIE','fa-calendar-star','#8b5cf6')" class="flex flex-col items-center p-8 bg-purple-50 rounded-[35px] text-purple-500 border-2 border-purple-100"><i class="fa-solid fa-calendar-star text-4xl"></i></div>
-            <div onclick="setType('AWARIA','fa-triangle-exclamation','#f59e0b')" class="flex flex-col items-center p-8 bg-amber-50 rounded-[35px] text-amber-500 border-2 border-amber-100"><i class="fa-solid fa-triangle-exclamation text-4xl"></i></div>
+        <h3 class="text-center font-black text-xs uppercase text-slate-400 mb-8">Co się dzieje?</h3>
+        <div class="grid grid-cols-2 gap-4">
+            <button onclick="pickType('KONTROLA','fa-user-secret','#ef4444','alert')" class="flex flex-col items-center p-8 bg-red-50 rounded-[35px] text-red-500 border-2 border-red-100">
+                <i class="fa-solid fa-user-secret text-4xl mb-2"></i>
+                <span class="text-[10px] font-black uppercase">Kontrola</span>
+            </button>
+            <button onclick="pickType('WYDARZENIE','fa-road-barrier','#8b5cf6','event')" class="flex flex-col items-center p-8 bg-purple-50 rounded-[35px] text-purple-500 border-2 border-purple-100">
+                <i class="fa-solid fa-road-barrier text-4xl mb-2"></i>
+                <span class="text-[10px] font-black uppercase">Remont/Blokada</span>
+            </button>
+            <button onclick="pickType('AWARIA','fa-bus','f59e0b','alert')" class="flex flex-col items-center p-8 bg-amber-50 rounded-[35px] text-amber-500 border-2 border-amber-100">
+                <i class="fa-solid fa-bus text-4xl mb-2"></i>
+                <span class="text-[10px] font-black uppercase">Awaria Pojazdu</span>
+            </button>
+            <button onclick="pickType('KOREK','fa-clock','#3b82f6','alert')" class="flex flex-col items-center p-8 bg-blue-50 rounded-[35px] text-blue-500 border-2 border-blue-100">
+                <i class="fa-solid fa-clock text-4xl mb-2"></i>
+                <span class="text-[10px] font-black uppercase">Duży Korek</span>
+            </button>
         </div>
     </div>
 
     <div id="sheet-form" class="sheet">
-        <h2 class="text-2xl font-black italic mb-6">Szczegóły</h2>
-        <input type="text" id="val-line" placeholder="LINIA / NAZWA" class="in-heavy text-center text-3xl uppercase mb-6">
-        <button id="btn-save" class="w-full bg-amber-500 text-white p-6 rounded-[30px] font-black uppercase shadow-xl">OPUBLIKUJ</button>
+        <h2 id="form-title" class="text-2xl font-black italic mb-6">Szczegóły</h2>
+        <input type="text" id="in-line" placeholder="LINIA / NAZWA" class="in-heavy text-center text-3xl uppercase">
+        <textarea id="in-desc" placeholder="OPIS (TYLKO DLA WYDARZEŃ)" class="in-heavy hidden h-32 py-4"></textarea>
+        <button id="btn-save" class="w-full bg-amber-500 text-white p-6 rounded-[30px] font-black uppercase shadow-xl mt-4">DODAJ NA MAPĘ</button>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-        import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+        import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
 
         const fbConfig = { databaseURL: "https://mzk-by-facio-default-rtdb.europe-west1.firebasedatabase.app" };
         const app = initializeApp(fbConfig);
         const db = getDatabase(app);
 
-        let st = { nick: localStorage.getItem('radar_nick')||'', city: '', pos: null, sel: null, markers: {} };
+        let st = { 
+            nick: localStorage.getItem('radar_nick') || '', 
+            city: '', 
+            pos: null, 
+            sel: null, 
+            markers: {},
+            isAdmin: false 
+        };
 
         const map = L.map('map', { zoomControl:false, attributionControl:false }).setView([52.73, 15.23], 13);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
 
-        // --- AUTH/SETUP ---
-        if(st.nick) { document.getElementById('welcome-txt').innerText = "Witaj ponownie!"; document.getElementById('user-nick').value = st.nick; }
-        
+        // --- LOGIN/START ---
+        if(st.nick) { 
+            document.getElementById('welcome-title').innerText = "Witaj ponownie!"; 
+            document.getElementById('user-nick').value = st.nick; 
+        }
+
         document.getElementById('btn-start').onclick = () => {
             const n = document.getElementById('user-nick').value.trim();
-            if(!n) return alert("Podaj Nick!");
-            st.nick = n; localStorage.setItem('radar_nick', n);
+            if(!n) return alert("Wpisz swój nick!");
+            st.nick = n;
+            localStorage.setItem('radar_nick', n);
             document.getElementById('step-1').classList.add('hidden');
             document.getElementById('step-2').classList.remove('hidden');
         };
 
+        // --- CITY LOGIC ---
         document.getElementById('pick-gorzow').onclick = () => {
             st.city = 'gorzow';
             document.getElementById('splash-screen').style.transform = 'translateY(-100%)';
             document.getElementById('hud-city').innerText = "Gorzów Wlkp.";
             document.getElementById('hud-user').innerText = st.nick;
 
-            onValue(ref(db, `v38/gorzow/alerts`), (s) => {
-                const data = s.val() || {};
-                const list = document.getElementById('events-list');
-                list.innerHTML = "";
+            // OBSŁUGA DANYCH W CZASIE RZECZYWISTYM
+            onValue(ref(db, `v38/${st.city}/alerts`), (snap) => {
+                const data = snap.val() || {};
+                const evList = document.getElementById('long-events-list');
+                const admList = document.getElementById('admin-alerts-list');
+                evList.innerHTML = ""; admList.innerHTML = "";
                 
-                Object.values(data).forEach(v => {
-                    // Dodaj na mapę
-                    if(!st.markers[v.lat+v.lng]) {
-                        const icon = `<div class="m-radar" style="background:${v.color}"><i class="fa-solid ${v.icon} text-2xl"></i><div class="text-[10px] font-black mt-1">${v.line}</div></div>`;
-                        st.markers[v.lat+v.lng] = L.marker([v.lat, v.lng], { icon: L.divIcon({ className:'', html:icon, iconAnchor:[27,27] }) }).addTo(map);
+                // Czyścimy markery przed przeładowaniem
+                Object.values(st.markers).forEach(m => map.removeLayer(m));
+                st.markers = {};
+
+                Object.entries(data).forEach(([key, v]) => {
+                    // 1. Rysowanie na mapie
+                    const isEv = v.mode === 'event';
+                    const iconHtml = isEv ? 
+                        `<div class="m-event"><i class="fa-solid ${v.icon} text-2xl"></i></div>` :
+                        `<div class="m-radar" style="background:${v.color}"><i class="fa-solid ${v.icon} text-2xl"></i><div class="text-[10px] font-black mt-1">${v.line}</div></div>`;
+                    
+                    st.markers[key] = L.marker([v.lat, v.lng], { 
+                        icon: L.divIcon({ className: '', html: iconHtml, iconAnchor: [30, 30] }) 
+                    }).addTo(map);
+
+                    // 2. Dodawanie do listy wydarzeń (jeśli mode == event)
+                    if(isEv) {
+                        const item = document.createElement('div');
+                        item.className = "bg-purple-50 p-5 rounded-[25px] border border-purple-100";
+                        item.innerHTML = `<div class="flex justify-between"><b>${v.line}</b> <span class="text-[9px] uppercase font-black opacity-40">${new Date(v.time).toLocaleTimeString()}</span></div><p class="text-xs mt-2 text-slate-600">${v.desc || 'Brak dodatkowego opisu.'}</p>`;
+                        evList.appendChild(item);
                     }
-                    // Dodaj do listy wydarzeń
-                    const el = document.createElement('div');
-                    el.className = "event-item";
-                    el.innerHTML = `<div class="flex justify-between items-center"><span class="font-black italic text-lg" style="color:${v.color}">${v.line}</span><span class="text-[9px] font-black bg-slate-200 px-2 py-1 rounded-full text-slate-500">${new Date(v.time).toLocaleTimeString()}</span></div><p class="text-[10px] font-bold text-slate-400 mt-2 uppercase">Dodane przez: ${v.author}</p>`;
-                    list.appendChild(el);
+
+                    // 3. Panel Admina
+                    const admItem = document.createElement('div');
+                    admItem.className = "flex justify-between items-center bg-white p-3 rounded-xl border border-red-100";
+                    admItem.innerHTML = `<span class="text-[10px] font-black uppercase">${v.line} (${v.type})</span> <button onclick="deletePoint('${key}')" class="text-red-500 p-2"><i class="fa-solid fa-trash"></i></button>`;
+                    admList.appendChild(admItem);
                 });
             });
         };
 
-        // --- ADDING ---
-        document.getElementById('btn-add').onclick = () => {
-            const h = document.createElement('div'); h.id="hint"; h.className="fixed top-32 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-full font-black z-[5000] border-2 border-amber-500 shadow-2xl"; h.innerText="DOTKNIJ MIEJSCA NA MAPIE";
+        // --- DODAWANIE ---
+        document.getElementById('btn-trigger-add').onclick = () => {
+            const h = document.createElement('div'); h.id="hint"; h.className="fixed top-32 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-full font-black z-[5000] border-2 border-amber-500 shadow-2xl animate-bounce";
+            h.innerText="DOTKNIJ MIEJSCA NA MAPIE";
             document.body.appendChild(h);
         };
 
-        map.on('click', (e) => { if(document.getElementById('hint')) { st.pos = e.latlng; document.getElementById('hint').remove(); document.getElementById('sheet-type').classList.add('active'); } });
+        map.on('click', (e) => {
+            if(document.getElementById('hint')) {
+                st.pos = e.latlng;
+                document.getElementById('hint').remove();
+                document.getElementById('sheet-type').classList.add('active');
+            }
+        });
 
-        window.setType = (t, i, c) => { st.sel = {t, i, c}; document.getElementById('sheet-type').classList.remove('active'); document.getElementById('sheet-form').classList.add('active'); };
-
-        document.getElementById('btn-save').onclick = () => {
-            const l = document.getElementById('val-line').value.toUpperCase();
-            if(!l) return;
-            push(ref(db, `v38/${st.city}/alerts`), { line:l, lat:st.pos.lat, lng:st.pos.lng, type:st.sel.t, icon:st.sel.i, color:st.sel.c, author:st.nick, time:Date.now() });
-            document.querySelectorAll('.sheet').forEach(s => s.classList.remove('active'));
-            document.getElementById('val-line').value = '';
+        window.pickType = (t, i, c, mode) => {
+            st.sel = {t, i, c, mode};
+            document.getElementById('sheet-type').classList.remove('active');
+            document.getElementById('sheet-form').classList.add('active');
+            
+            // Jeśli to wydarzenie, pokaż pole opisu
+            const descField = document.getElementById('in-desc');
+            descField.classList.toggle('hidden', mode !== 'event');
+            document.getElementById('form-title').innerText = mode === 'event' ? "Dodaj Wydarzenie" : "Szybki Alert";
         };
 
-        // --- SHEETS CONTROL ---
-        document.getElementById('btn-show-events').onclick = () => document.getElementById('sheet-events').classList.add('active');
-        document.querySelectorAll('.close-btn').forEach(b => b.onclick = () => document.querySelectorAll('.sheet').forEach(s => s.classList.remove('active')));
+        document.getElementById('btn-save').onclick = () => {
+            const line = document.getElementById('in-line').value.toUpperCase();
+            const desc = document.getElementById('in-desc').value;
+            if(!line) return alert("Wpisz nazwę/linię!");
+
+            push(ref(db, `v38/${st.city}/alerts`), {
+                line, desc,
+                lat: st.pos.lat, lng: st.pos.lng,
+                type: st.sel.t, icon: st.sel.i, color: st.sel.c, mode: st.sel.mode,
+                author: st.nick, time: Date.now()
+            });
+
+            document.querySelectorAll('.sheet').forEach(s => s.classList.remove('active'));
+            document.getElementById('in-line').value = '';
+            document.getElementById('in-desc').value = '';
+        };
+
+        // --- ADMIN LOGIC ---
+        document.getElementById('btn-admin-access').onclick = () => {
+            if(st.isAdmin) {
+                document.getElementById('sheet-admin').classList.add('active');
+            } else {
+                const code = prompt("Podaj kod admina:");
+                if(code === "2137") { 
+                    st.isAdmin = true; 
+                    alert("Admin zalogowany!");
+                    document.getElementById('sheet-admin').classList.add('active');
+                }
+            }
+        };
+
+        window.deletePoint = (id) => {
+            if(confirm("Usunąć to zgłoszenie?")) {
+                remove(ref(db, `v38/${st.city}/alerts/${id}`));
+            }
+        };
+
+        document.getElementById('btn-clear-all').onclick = () => {
+            if(confirm("CZY NA PEWNO WYCZYŚCIĆ CAŁĄ MAPĘ?")) {
+                set(ref(db, `v38/${st.city}/alerts`), null);
+            }
+        };
+
+        // --- UI HELPERS ---
+        document.getElementById('btn-open-events').onclick = () => document.getElementById('sheet-events').classList.add('active');
+        document.querySelectorAll('.close-btn').forEach(b => b.onclick = () => {
+            document.querySelectorAll('.sheet').forEach(s => s.classList.remove('active'));
+        });
+
     </script>
 </body>
 </html>
