@@ -3,135 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ełk Nasze Eventy | v42 Cloud</title>
+    <title>Ełk Nasze Eventy | Portal v42</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --bg-dark: #0f0f0f;
-            --card-dark: #1a1a1a;
-            --primary-blue: #0056b3;
-            --accent-yellow: #ffcc00;
-            --text-main: #f5f5f5;
-            --text-muted: #999;
-            --danger: #d9534f;
-        }
-
+        :root { --blue: #0056b3; --yellow: #ffcc00; --dark: #0f0f0f; --card: #1a1a1a; --text: #f5f5f5; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: var(--bg-dark); color: var(--text-main); line-height: 1.6; }
+        body { background: var(--dark); color: var(--text); line-height: 1.6; }
 
-        /* --- HEADER & NAV --- */
-        header { background: #000; border-bottom: 3px solid var(--primary-blue); position: sticky; top: 0; z-index: 1000; }
-        .header-top { max-width: 1300px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; }
-        .logo { font-size: 28px; font-weight: 900; color: #fff; cursor: pointer; text-decoration: none; text-transform: uppercase; }
-        .logo span { color: var(--accent-yellow); }
-        
-        nav { background: #111; padding: 10px 0; border-bottom: 1px solid #222; }
-        .nav-container { max-width: 1300px; margin: 0 auto; display: flex; gap: 25px; padding: 0 20px; }
-        .nav-link { color: #ccc; text-decoration: none; font-weight: bold; font-size: 13px; text-transform: uppercase; cursor: pointer; transition: 0.3s; }
-        .nav-link:hover { color: var(--accent-yellow); }
+        /* --- HEADER --- */
+        header { background: #000; border-bottom: 3px solid var(--blue); position: sticky; top: 0; z-index: 1000; }
+        .h-container { max-width: 1300px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; }
+        .logo { font-size: 28px; font-weight: 900; color: #fff; cursor: pointer; text-transform: uppercase; text-decoration: none; }
+        .logo span { color: var(--yellow); }
+        .btn-admin { background: var(--blue); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
 
-        .container { max-width: 1300px; margin: 30px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 350px; gap: 35px; }
+        .container { max-width: 1300px; margin: 30px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 350px; gap: 30px; }
 
-        /* --- NEWS GRID (Strona Główna) --- */
-        .news-section { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-        .featured-post { grid-column: span 2; position: relative; height: 450px; border-radius: 10px; overflow: hidden; cursor: pointer; }
-        .featured-post img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
-        .featured-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 40px; background: linear-gradient(transparent, rgba(0,0,0,0.9)); }
-        .featured-title { font-size: 32px; font-weight: 800; color: #fff; margin-bottom: 5px; }
+        /* --- NEWS GRID --- */
+        .news-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .card { background: var(--card); border-radius: 10px; overflow: hidden; cursor: pointer; border: 1px solid #222; transition: 0.3s; }
+        .card:hover { border-color: var(--blue); transform: translateY(-3px); }
+        .card-img { height: 220px; width: 100%; object-fit: cover; background: #000; }
+        .card-body { padding: 20px; }
+        .card-title { font-size: 20px; font-weight: 700; margin-bottom: 10px; color: #fff; }
+        .card-snip { color: #999; font-size: 14px; margin-bottom: 15px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
-        .standard-post { background: var(--card-dark); border-radius: 8px; overflow: hidden; border: 1px solid #222; cursor: pointer; transition: 0.3s; display: flex; flex-direction: column; }
-        .standard-post:hover { transform: translateY(-3px); border-color: var(--primary-blue); }
-        .post-img-box { height: 220px; background: #000; }
-        .post-img-box img { width: 100%; height: 100%; object-fit: cover; }
-        .post-content { padding: 20px; flex-grow: 1; }
-        .post-title { font-size: 19px; font-weight: 700; margin: 10px 0; color: #fff; }
-        .post-snippet { color: var(--text-muted); font-size: 14px; margin-bottom: 15px; }
+        /* --- FULL ARTICLE --- */
+        .article-full { background: var(--card); padding: 40px; border-radius: 15px; grid-column: span 2; max-width: 900px; margin: 0 auto; }
+        .art-body { font-size: 18px; line-height: 1.8; margin: 30px 0; white-space: pre-wrap; color: #ddd; }
+        .gallery img { width: 100%; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
 
-        /* --- WIDOK ARTYKUŁU --- */
-        .article-view { background: var(--card-dark); padding: 40px; border-radius: 12px; grid-column: span 2; max-width: 900px; margin: 0 auto; }
-        .article-body { font-size: 18px; line-height: 1.8; color: #ddd; white-space: pre-wrap; margin: 30px 0; }
-        .article-gallery { display: flex; flex-direction: column; gap: 20px; }
-        .article-gallery img { width: 100%; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-
-        /* --- SIDEBAR & ADMIN --- */
-        .sidebar-title { font-size: 18px; font-weight: 800; border-bottom: 2px solid var(--primary-blue); padding-bottom: 8px; margin-bottom: 20px; }
-        .admin-box { background: var(--card-dark); padding: 35px; border-radius: 12px; grid-column: span 2; }
-        input, textarea { width: 100%; padding: 12px; background: #222; border: 1px solid #333; color: #fff; border-radius: 6px; margin-bottom: 15px; }
-        .btn { padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn-blue { background: var(--primary-blue); color: #fff; width: 100%; }
+        /* --- ADMIN PANEL --- */
+        .admin-box { background: var(--card); padding: 30px; border-radius: 15px; grid-column: span 2; }
+        input, textarea { width: 100%; padding: 12px; background: #222; border: 1px solid #333; color: #fff; border-radius: 8px; margin-bottom: 15px; }
+        .btn-save { background: var(--blue); color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; }
 
         .hidden { display: none !important; }
-        #loader { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center; flex-direction:column; }
+        #loader { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; justify-content:center; align-items:center; color: var(--yellow); font-weight: bold; }
+        
+        @media (max-width: 800px) { .container { grid-template-columns: 1fr; } .news-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
-<div id="loader"><p>Wysyłanie do bazy v42...</p></div>
+<div id="loader">Wysyłanie do v42... Proszę czekać...</div>
 
 <header>
-    <div class="header-top">
-        <div class="logo" onclick="showView('home')">Ełk <span>Nasze Eventy</span></div>
-        <button class="btn" style="background:var(--primary-blue); color:white; padding:8px 15px" onclick="checkAuth()">Panel Admina</button>
+    <div class="h-container">
+        <div class="logo" onclick="location.reload()">Ełk <span>Nasze Eventy</span></div>
+        <button class="btn-admin" onclick="checkAuth()">Panel Admina</button>
     </div>
-    <nav>
-        <div class="nav-container">
-            <div class="nav-link" onclick="showView('home')">Wiadomości</div>
-            <div class="nav-link" onclick="showView('links-page')">Linki</div>
-        </div>
-    </nav>
 </header>
 
 <div class="container">
     <div id="view-home" style="display:contents">
-        <main><div class="news-section" id="news-grid"></div></main>
+        <main><div class="news-grid" id="news-grid"></div></main>
         <aside>
-            <h3 class="sidebar-title">Szybkie Linki</h3>
-            <div id="sidebar-links"></div>
+            <h3 style="border-bottom: 2px solid var(--blue); padding-bottom:10px; margin-bottom:20px">LINKI</h3>
+            <div id="links-list"></div>
         </aside>
     </div>
 
     <div id="view-article" class="hidden" style="grid-column: span 2;">
-        <button class="btn" style="background:#333; color:white; margin-bottom:20px" onclick="showView('home')">← Powrót</button>
-        <div class="article-view" id="full-article-content"></div>
+        <button onclick="showView('home')" style="background:#333; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer; margin-bottom:20px">← Powrót</button>
+        <div class="article-full" id="article-content"></div>
+    </div>
+
+    <div id="view-login" class="hidden" style="grid-column: span 2;">
+        <div style="max-width: 400px; margin: 100px auto; background: var(--card); padding: 40px; border-radius: 15px; text-align: center;">
+            <h2>Hasło Admina</h2>
+            <input type="password" id="pass" style="margin-top:20px; text-align:center">
+            <button class="btn-save" onclick="login()">Zaloguj</button>
+        </div>
     </div>
 
     <div id="view-admin" class="hidden" style="grid-column: span 2;">
         <div class="admin-box">
-            <h2>Zarządzanie Portalem (v42)</h2>
-            <input type="hidden" id="edit-id">
-            <input type="text" id="post-title" placeholder="Tytuł Eventu / Artykułu">
-            <input type="text" id="post-author" placeholder="Autor">
-            <textarea id="post-content" rows="10" placeholder="Pełna treść artykułu..."></textarea>
-            <label>Galeria Zdjęć (Wybierz wiele):</label>
-            <input type="file" id="post-imgs" multiple accept="image/*" style="margin:10px 0">
-            <button class="btn btn-blue" onclick="savePost()">OPUBLIKUJ NA STRONIE</button>
-            <hr style="margin: 30px 0; border-color:#333">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px">
-                <div id="admin-posts-list"></div>
-                <div>
-                    <h3>Dodaj Link</h3>
-                    <input type="text" id="link-name" placeholder="Nazwa linku">
-                    <input type="text" id="link-url" placeholder="URL">
-                    <button class="btn btn-blue" onclick="saveLink()">Dodaj Link</button>
-                    <div id="admin-links-list" style="margin-top:20px"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="view-login" class="hidden" style="grid-column: span 2;">
-        <div style="max-width: 400px; margin: 100px auto; background: var(--card-dark); padding: 40px; border-radius: 10px; text-align: center;">
-            <h2>Panel Redaktora</h2>
-            <input type="password" id="admin-pass" style="margin-top:20px; text-align:center" placeholder="Hasło: diax67">
-            <button class="btn btn-blue" onclick="doLogin()">Zaloguj</button>
+            <h2>Dodaj nowy wpis do v42</h2>
+            <input type="text" id="title" placeholder="Tytuł eventu">
+            <input type="text" id="author" placeholder="Autor">
+            <textarea id="content" rows="10" placeholder="Pełny opis artykułu..."></textarea>
+            <label>Dodaj zdjęcia (możesz wybrać kilka):</label>
+            <input type="file" id="imgs" multiple accept="image/*" style="margin-top:10px">
+            <button class="btn-save" onclick="savePost()">OPUBLIKUJ W CHMURZE</button>
+            <div id="admin-posts" style="margin-top:40px"></div>
         </div>
     </div>
 </div>
 
 <script>
-    // --- FIREBASE CONFIG (Użyj swoich danych) ---
+    // --- KONFIGURACJA (WKLEJ SWOJE DANE) ---
     const firebaseConfig = {
         apiKey: "TWOJE_API_KEY",
         authDomain: "mzk-by-facio.firebaseapp.com",
@@ -142,82 +105,82 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const rootPath = "v42"; // Ścieżka z Twojego screena
+    const root = "v42";
 
     function showView(v) {
-        document.querySelectorAll('.container > div').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
         document.getElementById('view-'+v).classList.remove('hidden');
-        window.scrollTo(0,0);
     }
 
-    function checkAuth() { sessionStorage.getItem('logged') ? showView('admin') : showView('login'); }
-    function doLogin() { if(document.getElementById('admin-pass').value === 'diax67') { sessionStorage.setItem('logged', 'true'); showView('admin'); } }
+    function checkAuth() { sessionStorage.getItem('admin') ? showView('admin') : showView('login'); }
+    function login() { if(document.getElementById('pass').value === 'diax67') { sessionStorage.setItem('admin', '1'); showView('admin'); } }
 
     async function savePost() {
-        const id = document.getElementById('edit-id').value;
-        const title = document.getElementById('post-title').value;
-        const content = document.getElementById('post-content').value;
-        const files = document.getElementById('post-imgs').files;
-        
+        const t = document.getElementById('title').value;
+        const c = document.getElementById('content').value;
+        const a = document.getElementById('author').value;
+        const f = document.getElementById('imgs').files;
+
+        if(!t || !c) return alert("Wypełnij dane!");
         document.getElementById('loader').style.display = 'flex';
-        let images = [];
-        for(let f of files) { images.push(await toBase64(f)); }
 
-        const data = {
-            title, author: document.getElementById('post-author').value,
-            content, images, timestamp: Date.now(), date: new Date().toLocaleString()
-        };
+        let pics = [];
+        for(let file of f) { pics.push(await toB64(file)); }
 
-        if(id) await db.ref(`${rootPath}/posts/${id}`).update(data);
-        else await db.ref(`${rootPath}/posts`).push(data);
+        await db.ref(root + "/posts").push({
+            title: t, content: c, author: a, images: pics,
+            date: new Date().toLocaleString(), ts: Date.now()
+        });
 
-        document.getElementById('loader').style.display = 'none';
         location.reload();
     }
 
-    const toBase64 = file => new Promise(res => { const r = new FileReader(); r.readAsDataURL(file); r.onload = () => res(r.result); });
+    const toB64 = file => new Promise(res => { const r = new FileReader(); r.readAsDataURL(file); r.onload = () => res(r.result); });
 
-    db.ref(`${rootPath}/posts`).on('value', snap => {
-        const posts = [];
-        snap.forEach(c => { posts.push({id: c.key, ...c.val()}); });
-        posts.sort((a,b) => b.timestamp - a.timestamp);
-        
+    // Pobieranie postów
+    db.ref(root + "/posts").on('value', snap => {
         const grid = document.getElementById('news-grid');
-        const adminL = document.getElementById('admin-posts-list');
-        grid.innerHTML = ""; adminL.innerHTML = "<h3>Twoje Posty</h3>";
+        const adm = document.getElementById('admin-posts');
+        grid.innerHTML = ""; adm.innerHTML = "<h3>Zarządzaj postami:</h3>";
+        
+        let data = [];
+        snap.forEach(c => { data.push({id: c.key, ...c.val()}); });
+        data.sort((a,b) => b.ts - a.ts);
 
-        posts.forEach((p, idx) => {
-            const snip = p.content.substring(0, 150) + "...";
+        data.forEach(p => {
             const img = p.images ? p.images[0] : '';
-            
-            if(idx === 0) {
-                grid.innerHTML += `<div class="featured-post" onclick="openArticle('${p.id}')"><img src="${img}"><div class="featured-overlay"><h2 class="featured-title">${p.title}</h2><p>Czytaj całość →</p></div></div>`;
-            } else {
-                grid.innerHTML += `<div class="standard-post" onclick="openArticle('${p.id}')"><div class="post-img-box"><img src="${img}"></div><div class="post-content"><h3 class="post-title">${p.title}</h3><p class="post-snippet">${snip}</p><small>${p.date}</small></div></div>`;
-            }
-            adminL.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px"><span>${p.title}</span><button onclick="db.ref('${rootPath}/posts/${p.id}').remove()">Usuń</button></div>`;
+            // Karta na stronę główną (skrócona)
+            grid.innerHTML += `
+                <div class="card" onclick="openFull('${p.id}')">
+                    <img src="${img}" class="card-img">
+                    <div class="card-body">
+                        <div class="card-title">${p.title}</div>
+                        <div class="card-snip">${p.content}</div>
+                        <small style="color:var(--yellow)">${p.date}</small>
+                    </div>
+                </div>`;
+            // Lista w adminie
+            adm.innerHTML += `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #333">
+                <span>${p.title}</span>
+                <button onclick="db.ref('${root}/posts/${p.id}').remove()" style="color:red; background:none; border:none; cursor:pointer">USUŃ</button>
+            </div>`;
         });
     });
 
-    async function openArticle(id) {
-        const s = await db.ref(`${rootPath}/posts/${id}`).once('value');
+    async function openFull(id) {
+        const s = await db.ref(root + "/posts/" + id).once('value');
         const p = s.val();
-        let gal = (p.images || []).map(i => `<img src="${i}">`).join('');
-        document.getElementById('full-article-content').innerHTML = `<h1>${p.title}</h1><p style="color:var(--accent-yellow)">${p.author} | ${p.date}</p><div class="article-body">${p.content}</div><div class="article-gallery">${gal}</div>`;
+        let imgs = (p.images || []).map(i => `<img src="${i}">`).join('');
+        
+        document.getElementById('article-content').innerHTML = `
+            <h1 style="font-size:35px">${p.title}</h1>
+            <p style="margin:10px 0; color:var(--yellow)">Autor: ${p.author} | ${p.date}</p>
+            <div class="art-body">${p.content}</div>
+            <div class="gallery">${imgs}</div>
+        `;
         showView('article');
+        window.scrollTo(0,0);
     }
-
-    function saveLink() {
-        const name = document.getElementById('link-name').value;
-        const url = document.getElementById('link-url').value;
-        if(name && url) db.ref(`${rootPath}/links`).push({name, url});
-    }
-
-    db.ref(`${rootPath}/links`).on('value', snap => {
-        const side = document.getElementById('sidebar-links');
-        side.innerHTML = "";
-        snap.forEach(c => { const l = c.val(); side.innerHTML += `<a href="${l.url}" target="_blank" style="display:block; background:#222; padding:10px; margin-bottom:5px; text-decoration:none; color:white; border-radius:5px">${l.name}</a>`; });
-    });
 </script>
 </body>
 </html>
