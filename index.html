@@ -20,6 +20,7 @@
         .card:hover { transform: translateY(-5px); border-color: var(--main); }
         .input-dark { background: #161c2d; border: 2px solid #2d3748; border-radius: 12px; padding: 12px; width: 100%; color: white; outline: none; transition: 0.3s; }
         .input-dark:focus { border-color: var(--main); box-shadow: 0 0 15px rgba(0,98,255,0.2); }
+        
         .white-pre { white-space: pre-wrap; word-wrap: break-word; }
         #loader { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999; align-items: center; justify-content: center; }
         
@@ -27,6 +28,11 @@
         .post-anim { animation: fadeInUp 0.4s ease forwards; }
 
         .author-badge { font-weight: 900; color: #3b82f6; padding: 0.25rem 0.75rem; background: rgba(59, 130, 246, 0.1); border-radius: 9999px; font-size: 10px; }
+        
+        /* Style dla Twojego formatowania Discordowego */
+        .md-h1 { font-size: 2.25rem; font-weight: 900; display: block; margin: 1rem 0; color: white; line-height: 1.2; }
+        .md-h3 { font-size: 1.5rem; font-weight: 700; display: block; margin: 0.75rem 0; color: #cbd5e1; }
+        .md-small { font-size: 0.8rem; opacity: 0.8; display: inline-block; }
     </style>
 </head>
 <body>
@@ -82,7 +88,8 @@
             <div class="space-y-4">
                 <input type="text" id="in-title" placeholder="Tytuł wydarzenia" class="input-dark">
                 <input type="text" id="in-author" placeholder="Autor / Twoja Nazwa" class="input-dark">
-                <textarea id="in-content" rows="6" placeholder="Treść artykułu..." class="input-dark"></textarea>
+                
+                <textarea id="in-content" rows="10" placeholder="Treść artykułu... (# Nagłówek, **Pogrubienie**, *Kursywa*, -# Mały tekst)" class="input-dark"></textarea>
                 
                 <div class="bg-white/5 p-4 rounded-xl border border-dashed border-white/10">
                     <p class="text-[10px] font-bold text-slate-500 mb-2 uppercase">Zdjęcia w tym wpisie:</p>
@@ -120,6 +127,23 @@
         let currentEditImages = [];
 
         window.core = {
+            // Funkcja parsująca styl Discorda na HTML
+            parseMarkdown: (text) => {
+                if(!text) return "";
+                let html = text;
+                // # Pogrubienie i powiększenie mocne
+                html = html.replace(/^#\s+(.*)$/gm, '<span class="md-h1">$1</span>');
+                // ### Powiększenie i pogrubienie lekkie
+                html = html.replace(/^###\s+(.*)$/gm, '<span class="md-h3">$1</span>');
+                // -# Pomniejszenie
+                html = html.replace(/^-#\s+(.*)$/gm, '<span class="md-small">$1</span>');
+                // ** Pogrubienie
+                html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                // * Kursywa
+                html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                return html;
+            },
+
             goHome: () => {
                 document.getElementById('view-home').classList.remove('hidden');
                 document.getElementById('search-area').classList.remove('hidden');
@@ -178,15 +202,24 @@
                 }
 
                 const finalImages = [...currentEditImages, ...newImageUrls];
+                const nowStr = new Date().toLocaleString('pl-PL');
 
-                const postData = {
+                let postData = {
                     title: t, 
-                    content: c, 
+                    content: c, // Przechowujemy czysty tekst z kodami Discorda
                     author: a, 
-                    ts: Date.now(), 
-                    date: new Date().toLocaleString('pl-PL'),
                     images: finalImages
                 };
+
+                if(editId) {
+                    const old = allData.find(x => x.id === editId);
+                    postData.date = old.date; 
+                    postData.ts = old.ts;
+                    postData.updated = nowStr; 
+                } else {
+                    postData.date = nowStr;
+                    postData.ts = Date.now();
+                }
 
                 const action = editId ? postsRef.child(editId).update(postData) : postsRef.push(postData);
                 action.then(() => location.reload()).catch(err => {
@@ -257,15 +290,21 @@
                 toShow.forEach(v => {
                     const card = document.createElement('div');
                     card.className = "card glass p-6 rounded-2xl cursor-pointer mb-4 post-anim";
+                    let dateInfo = `<span class="text-[10px] text-slate-500 font-bold tracking-tight">${v.date}</span>`;
+                    if(v.updated) dateInfo += ` <span class="text-[10px] text-amber-500 font-black ml-1">[AKTUALIZACJA: ${v.updated}]</span>`;
+                    
+                    // Podgląd w karcie usuwa kody Markdown dla czystego tekstu
+                    const plainPreview = v.content.replace(/[#*]/g, '');
+
                     card.innerHTML = `
                         <div class="flex gap-5 flex-col md:flex-row items-center md:items-start">
                             ${v.images?.[0] ? `<img src="${v.images[0]}" class="w-full md:w-28 h-28 object-cover rounded-xl shadow-lg border border-white/5">` : `<div class="w-28 h-28 bg-slate-800 rounded-xl flex items-center justify-center text-slate-600"><i class="fa-solid fa-image text-3xl"></i></div>`}
                             <div class="flex-1 text-center md:text-left">
                                 <h2 class="font-black text-xl mb-1 tracking-tighter">${v.title}</h2>
-                                <p class="text-slate-400 text-sm line-clamp-2 leading-relaxed">${v.content}</p>
+                                <p class="text-slate-400 text-sm line-clamp-2 leading-relaxed">${plainPreview}</p>
                                 <div class="flex flex-wrap justify-center md:justify-start items-center gap-3 mt-4">
                                     <span class="author-badge">${v.author}</span>
-                                    <span class="text-[10px] text-slate-500 font-bold tracking-tight">${v.date}</span>
+                                    ${dateInfo}
                                 </div>
                             </div>
                         </div>`;
@@ -283,17 +322,22 @@
                 document.getElementById('view-article').classList.remove('hidden');
                 
                 let imgs = (data.images || []).map(img => `<img src="${img}" class="w-full rounded-3xl mb-6 shadow-2xl border border-white/5">`).join('');
-                
+                let fullDate = `<p class="text-[10px] text-slate-500 font-bold">${data.date}</p>`;
+                if(data.updated) fullDate += `<p class="text-[10px] text-amber-500 font-black uppercase mt-1">[Aktualizacja: ${data.updated}]</p>`;
+
+                // Tutaj parsujemy kody Discorda na HTML
+                const formattedBody = core.parseMarkdown(data.content);
+
                 document.getElementById('article-content').innerHTML = `
                     <h1 class="text-4xl md:text-5xl font-black mb-4 tracking-tighter leading-tight">${data.title}</h1>
                     <div class="flex items-center gap-4 mb-8">
                         <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/30">${data.author.charAt(0)}</div>
                         <div>
                             <p class="text-sm font-bold text-blue-500 tracking-tighter">${data.author}</p>
-                            <p class="text-[10px] text-slate-500 font-bold">${data.date}</p>
+                            ${fullDate}
                         </div>
                     </div>
-                    <div class="text-slate-300 text-lg leading-relaxed white-pre mb-10 border-l-4 border-blue-600 pl-6">${data.content}</div>
+                    <div class="text-slate-300 text-lg leading-relaxed white-pre mb-10 border-l-4 border-blue-600 pl-6">${formattedBody}</div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${imgs}</div>
                 `;
                 window.scrollTo(0,0);
