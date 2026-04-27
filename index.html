@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -70,14 +71,20 @@
         .preview-wrapper img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
         .preview-del { position: absolute; -top: 5px; -right: 5px; background: red; color: white; width: 15px; height: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; }
 
-        /* REKLAMY */
-        .ad-container { position: fixed; top: 100px; width: 140px; height: 500px; z-index: 40; display: none; }
-        @media (min-width: 1280px) { .ad-container { display: block; } }
+        /* NOWE STYLE REKLAM - RESPONSYWNE */
+        .ad-container { position: fixed; top: 100px; width: 140px; min-height: 50px; z-index: 40; display: block; }
         .ad-left { left: 10px; }
         .ad-right { right: 10px; }
-        .ad-box { width: 100%; height: 100%; background: #161c2d; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; transition: 0.3s; margin-bottom: 10px; }
-        .ad-box:hover { transform: scale(1.02); border-color: var(--main); }
+        .ad-box { width: 100%; height: 500px; background: #161c2d; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; transition: 0.3s; margin-bottom: 15px; }
         .ad-box img { width: 100%; height: 100%; object-fit: cover; }
+        .ad-box:hover { border-color: var(--main); transform: scale(1.02); }
+
+        .no-ad-placeholder { font-size: 10px; font-weight: 900; color: rgba(255,255,255,0.2); text-transform: uppercase; border: 2px dashed rgba(255,255,255,0.05); padding: 20px 10px; text-align: center; border-radius: 12px; }
+
+        @media (max-width: 1279px) {
+            .ad-container { position: static; width: 100%; max-width: 500px; margin: 0 auto 20px auto; padding: 0 10px; }
+            .ad-box { height: 150px; }
+        }
         
         footer { border-top: 1px solid rgba(255,255,255,0.05); padding: 40px 0; margin-top: 80px; background: rgba(0,0,0,0.2); }
     </style>
@@ -227,8 +234,7 @@
                     <button onclick="core.publishAd()" id="ad-publish-btn" class="bg-blue-600 w-full py-3 rounded-lg font-bold text-xs uppercase tracking-widest">Dodaj / Zapisz Reklamę</button>
                 </div>
 
-                <div id="admin-ads-list" class="space-y-3">
-                    </div>
+                <div id="admin-ads-list" class="space-y-3"></div>
             </div>
         </div>
     </main>
@@ -257,7 +263,7 @@
             </div>
         </div>
         <div class="text-center mt-12 text-[10px] text-slate-600 uppercase tracking-widest">
-            facio® 2026 Wszystkie prawa zastrzeżone
+            facio® &copy; 2024 Wszystkie prawa zastrzeżone
         </div>
     </footer>
 
@@ -341,7 +347,6 @@
                 } else { alert("Błąd!"); }
             },
 
-            // LOGIKA REKLAM (CRUD)
             publishAd: async () => {
                 const side = document.getElementById('ad-side').value;
                 const file = document.getElementById('ad-file').files[0];
@@ -632,7 +637,6 @@
             core.filterPosts();
         });
 
-        // OBSŁUGA REKLAM (LISTA I WYŚWIETLANIE)
         adsRef.on('value', (snap) => {
             const data = snap.val();
             allAds = [];
@@ -645,13 +649,10 @@
             if(data) {
                 Object.entries(data).forEach(([id, ad]) => {
                     allAds.push({ id, ...ad });
-                    
-                    // Do stref bocznych
                     const adHtml = `<a href="${ad.link}" target="_blank" class="ad-box block"><img src="${ad.img}" alt="Reklama"></a>`;
                     if(ad.side === 'left') adLZone.innerHTML += adHtml;
                     else adRZone.innerHTML += adHtml;
 
-                    // Do listy admina
                     adAdminList.innerHTML += `<div class="flex items-center gap-3 bg-white/5 p-2 rounded-lg">
                         <img src="${ad.img}" class="w-10 h-10 object-cover rounded">
                         <div class="flex-1 text-[10px] truncate"><span class="font-bold text-blue-400 uppercase">${ad.side}</span><br>${ad.link}</div>
@@ -662,6 +663,9 @@
                     </div>`;
                 });
             }
+            
+            if(adLZone.innerHTML === "") adLZone.innerHTML = '<div class="no-ad-placeholder">Brak reklamy (Lewa)</div>';
+            if(adRZone.innerHTML === "") adRZone.innerHTML = '<div class="no-ad-placeholder">Brak reklamy (Prawa)</div>';
         });
 
         reportsRef.on('value', (s) => {
