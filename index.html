@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -66,13 +67,26 @@
         .notif-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 12px; margin-bottom: 10px; }
         .report-highlight { background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.1); }
 
-        /* NOWE STYLE DLA PODGLĄDU */
         .preview-wrapper { position: relative; width: 60px; height: 60px; }
         .preview-wrapper img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
         .preview-del { position: absolute; -top: 5px; -right: 5px; background: red; color: white; width: 15px; height: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; }
+
+        /* REKLAMY */
+        .ad-container { position: fixed; top: 100px; width: 140px; height: 500px; z-index: 40; display: none; }
+        @media (min-width: 1280px) { .ad-container { display: block; } }
+        .ad-left { left: 10px; }
+        .ad-right { right: 10px; }
+        .ad-box { width: 100%; height: 100%; background: #161c2d; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; transition: 0.3s; margin-bottom: 10px; }
+        .ad-box:hover { transform: scale(1.02); border-color: var(--main); }
+        .ad-box img { width: 100%; height: 100%; object-fit: cover; }
+        
+        footer { border-top: 1px solid rgba(255,255,255,0.05); padding: 40px 0; margin-top: 80px; background: rgba(0,0,0,0.2); }
     </style>
 </head>
 <body id="main-body">
+
+    <div class="ad-container ad-left" id="ad-l-zone"></div>
+    <div class="ad-container ad-right" id="ad-r-zone"></div>
 
     <div id="loader">
         <div class="animate-spin text-4xl text-blue-500"><i class="fa-solid fa-circle-notch"></i></div>
@@ -92,7 +106,7 @@
         </div>
     </header>
 
-    <main class="max-w-5xl mx-auto px-4">
+    <main class="max-w-5xl mx-auto px-4 min-h-screen">
         
         <div id="search-area" class="mb-8 space-y-6">
             <div class="relative">
@@ -149,10 +163,15 @@
         </div>
 
         <div id="view-admin" class="hidden pb-20">
+            <button onclick="core.goHome()" class="mb-6 text-blue-500 font-bold flex items-center gap-2 hover:text-white transition uppercase text-[10px] tracking-widest">
+                <i class="fa-solid fa-house"></i> Powrót do strony głównej
+            </button>
+
             <div class="flex flex-wrap gap-4 mb-8">
                 <button onclick="core.setAdminTab('new')" id="btn-adm-new" class="tab-btn active">Wpisy</button>
                 <button onclick="core.setAdminTab('comms')" id="btn-adm-comms" class="tab-btn">Komentarze</button>
                 <button onclick="core.setAdminTab('notifs')" id="btn-adm-notifs" class="tab-btn">Zgłoszenia <span id="notif-count" class="hidden notif-badge">0</span></button>
+                <button onclick="core.setAdminTab('ads')" id="btn-adm-ads" class="tab-btn">Reklamy</button>
             </div>
 
             <div id="admin-new-section" class="max-w-xl mx-auto glass p-8 rounded-[30px] shadow-2xl">
@@ -192,8 +211,56 @@
                 <h2 class="text-xl font-bold italic uppercase tracking-tighter mb-6 text-red-500">Zgłoszenia</h2>
                 <div id="reports-list"></div>
             </div>
+
+            <div id="admin-ads-section" class="hidden max-w-xl mx-auto glass p-8 rounded-[30px] space-y-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 id="ad-mode-title" class="text-xl font-bold italic uppercase tracking-tighter">Zarządzaj Reklamami</h2>
+                    <button onclick="core.cancelAdEdit()" id="cancel-ad-edit-btn" class="hidden text-red-500 text-[10px] font-bold uppercase border border-red-500/30 px-3 py-1 rounded-full">Anuluj</button>
+                </div>
+                
+                <div class="p-6 border border-white/10 rounded-2xl space-y-4 bg-white/5">
+                    <select id="ad-side" class="input-dark bg-slate-900 text-sm">
+                        <option value="left">Lewa strona</option>
+                        <option value="right">Prawa strona</option>
+                    </select>
+                    <input type="file" id="ad-file" accept="image/*" class="text-xs">
+                    <input type="text" id="ad-target" placeholder="Link docelowy (URL)" class="input-dark text-sm">
+                    <button onclick="core.publishAd()" id="ad-publish-btn" class="bg-blue-600 w-full py-3 rounded-lg font-bold text-xs uppercase tracking-widest">Dodaj / Zapisz Reklamę</button>
+                </div>
+
+                <div id="admin-ads-list" class="space-y-3">
+                    </div>
+            </div>
         </div>
     </main>
+
+    <footer class="max-w-full">
+        <div class="max-w-5xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
+            <div>
+                <h4 class="font-black uppercase mb-4 text-blue-500">O Serwisie</h4>
+                <p class="text-slate-400 leading-relaxed">Portal informacyjny miasta Ełk. Najświeższe wydarzenia, aktualizacje i informacje prosto z serca Mazur.</p>
+            </div>
+            <div>
+                <h4 class="font-black uppercase mb-4">Informacje</h4>
+                <ul class="text-slate-400 space-y-2">
+                    <li><a href="#" class="hover:text-white">Redakcja</a></li>
+                    <li><a href="#" class="hover:text-white">Polityka Prywatności</a></li>
+                    <li><a href="#" class="hover:text-white">Współpraca</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-black uppercase mb-4">Social Media</h4>
+                <div class="flex gap-4 text-2xl">
+                    <a href="#" class="text-slate-400 hover:text-white"><i class="fa-brands fa-discord"></i></a>
+                    <a href="#" class="text-slate-400 hover:text-white"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" class="text-slate-400 hover:text-white"><i class="fa-brands fa-facebook"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="text-center mt-12 text-[10px] text-slate-600 uppercase tracking-widest">
+            facio® 2026 Wszystkie prawa zastrzeżone
+        </div>
+    </footer>
 
     <script>
         const firebaseConfig = {
@@ -210,12 +277,15 @@
         const postsRef = db.ref('elk/posts');
         const reportsRef = db.ref('elk/reports');
         const commentsRootRef = db.ref('elk/comments');
+        const adsRef = db.ref('elk/ads');
 
         const DEFAULT_PASS = "1234";
 
         let allData = [];
+        let allAds = [];
         let showLimit = 3;
         let editId = null;
+        let adEditId = null;
         let currentOpenPostId = null;
         let currentReplyToId = null;
         let currentEditImages = [];
@@ -229,11 +299,8 @@
                 return html;
             },
 
-            // --- NAPRAWIONA FUNKCJA PODGLĄDU ---
             previewNewFiles: () => {
                 const files = document.getElementById('in-files').files;
-                const container = document.getElementById('edit-images-preview');
-                // Nie czyścimy całości, tylko renderujemy od nowa serwerowe + nowe
                 core.renderEditImages(files);
             },
 
@@ -248,6 +315,7 @@
                 document.getElementById('admin-new-section').classList.toggle('hidden', tab !== 'new');
                 document.getElementById('admin-comms-section').classList.toggle('hidden', tab !== 'comms');
                 document.getElementById('admin-notifs-section').classList.toggle('hidden', tab !== 'notifs');
+                document.getElementById('admin-ads-section').classList.toggle('hidden', tab !== 'ads');
                 document.querySelectorAll('#view-admin .tab-btn').forEach(b => b.classList.remove('active'));
                 document.getElementById(`btn-adm-${tab}`).classList.add('active');
                 if(tab === 'comms') core.loadAllCommentsAdmin();
@@ -274,6 +342,57 @@
                 } else { alert("Błąd!"); }
             },
 
+            // LOGIKA REKLAM (CRUD)
+            publishAd: async () => {
+                const side = document.getElementById('ad-side').value;
+                const file = document.getElementById('ad-file').files[0];
+                const target = document.getElementById('ad-target').value;
+                
+                if(!target) return alert("Podaj link!");
+                if(!adEditId && !file) return alert("Wybierz zdjęcie!");
+
+                document.getElementById('loader').style.display = 'flex';
+                let imgUrl = adEditId ? allAds.find(x => x.id === adEditId).img : "";
+
+                if(file) {
+                    const fd = new FormData();
+                    fd.append("image", file);
+                    try {
+                        const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
+                        const d = await r.json();
+                        if(d.success) imgUrl = d.data.url;
+                    } catch(e) { alert("Błąd uploadu!"); }
+                }
+
+                const data = { side, img: imgUrl, link: target, ts: Date.now() };
+                const act = adEditId ? adsRef.child(adEditId).update(data) : adsRef.push(data);
+                act.then(() => {
+                    core.cancelAdEdit();
+                    document.getElementById('loader').style.display = 'none';
+                });
+            },
+
+            editAd: (id) => {
+                const ad = allAds.find(x => x.id === id);
+                adEditId = id;
+                document.getElementById('ad-side').value = ad.side;
+                document.getElementById('ad-target').value = ad.link;
+                document.getElementById('ad-mode-title').innerText = "Edytuj Reklamę";
+                document.getElementById('cancel-ad-edit-btn').classList.remove('hidden');
+                document.getElementById('ad-publish-btn').innerText = "Zapisz Zmiany";
+            },
+
+            deleteAd: (id) => confirm("Usunąć tę reklamę?") && adsRef.child(id).remove(),
+
+            cancelAdEdit: () => {
+                adEditId = null;
+                document.getElementById('ad-target').value = "";
+                document.getElementById('ad-file').value = "";
+                document.getElementById('ad-mode-title').innerText = "Zarządzaj Reklamami";
+                document.getElementById('cancel-ad-edit-btn').classList.add('hidden');
+                document.getElementById('ad-publish-btn').innerText = "Dodaj / Zapisz Reklamę";
+            },
+
             removeImageFromEdit: (index) => {
                 currentEditImages.splice(index, 1);
                 core.renderEditImages(document.getElementById('in-files').files);
@@ -282,17 +401,9 @@
             renderEditImages: (newFiles = []) => {
                 const container = document.getElementById('edit-images-preview');
                 container.innerHTML = "";
-                
-                // Pokaż zdjęcia z serwera
                 currentEditImages.forEach((url, index) => {
-                    container.innerHTML += `
-                        <div class="preview-wrapper">
-                            <img src="${url}">
-                            <div class="preview-del" onclick="core.removeImageFromEdit(${index})">x</div>
-                        </div>`;
+                    container.innerHTML += `<div class="preview-wrapper"><img src="${url}"><div class="preview-del" onclick="core.removeImageFromEdit(${index})">x</div></div>`;
                 });
-
-                // Pokaż podgląd plików lokalnych
                 Array.from(newFiles).forEach(file => {
                     const reader = new FileReader();
                     reader.onload = (e) => {
@@ -317,7 +428,6 @@
                 document.getElementById('loader').style.display = 'flex';
                 let newUrls = [];
                 
-                // Upload nowych plików
                 if(files.length > 0) {
                     for(let f of files) {
                         const fd = new FormData(); fd.append("image", f);
@@ -521,6 +631,38 @@
                 });
             }
             core.filterPosts();
+        });
+
+        // OBSŁUGA REKLAM (LISTA I WYŚWIETLANIE)
+        adsRef.on('value', (snap) => {
+            const data = snap.val();
+            allAds = [];
+            const adLZone = document.getElementById('ad-l-zone');
+            const adRZone = document.getElementById('ad-r-zone');
+            const adAdminList = document.getElementById('admin-ads-list');
+            
+            adLZone.innerHTML = ""; adRZone.innerHTML = ""; adAdminList.innerHTML = "";
+
+            if(data) {
+                Object.entries(data).forEach(([id, ad]) => {
+                    allAds.push({ id, ...ad });
+                    
+                    // Do stref bocznych
+                    const adHtml = `<a href="${ad.link}" target="_blank" class="ad-box block"><img src="${ad.img}" alt="Reklama"></a>`;
+                    if(ad.side === 'left') adLZone.innerHTML += adHtml;
+                    else adRZone.innerHTML += adHtml;
+
+                    // Do listy admina
+                    adAdminList.innerHTML += `<div class="flex items-center gap-3 bg-white/5 p-2 rounded-lg">
+                        <img src="${ad.img}" class="w-10 h-10 object-cover rounded">
+                        <div class="flex-1 text-[10px] truncate"><span class="font-bold text-blue-400 uppercase">${ad.side}</span><br>${ad.link}</div>
+                        <div class="flex gap-2">
+                            <button onclick="core.editAd('${id}')" class="text-amber-500 text-[9px] font-bold">EDYTUJ</button>
+                            <button onclick="core.deleteAd('${id}')" class="text-red-500 text-[9px] font-bold">USUŃ</button>
+                        </div>
+                    </div>`;
+                });
+            }
         });
 
         reportsRef.on('value', (s) => {
