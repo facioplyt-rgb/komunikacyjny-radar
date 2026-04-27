@@ -34,14 +34,17 @@
         .urgent-badge { position: absolute; top: 12px; right: 12px; background: var(--urgent); color: white; font-size: 9px; padding: 3px 8px; border-radius: 6px; font-weight: 900; z-index: 10; }
         
         #loader { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; gap: 20px; }
-        .preview-img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 2px solid var(--main); }
+        
+        .preview-wrapper { position: relative; width: 80px; height: 80px; }
+        .preview-img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; border: 2px solid #2d3748; }
+        .remove-img-btn { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #161c2d; }
     </style>
 </head>
 <body>
 
     <div id="loader">
         <div class="animate-spin text-5xl text-blue-500"><i class="fa-solid fa-circle-notch"></i></div>
-        <span class="text-xs font-black uppercase tracking-widest text-blue-400">Przetwarzanie...</span>
+        <span class="text-xs font-black uppercase tracking-widest text-blue-400">Przetwarzanie danych...</span>
     </div>
 
     <div class="marquee" id="marquee-container" style="background: var(--urgent);">
@@ -76,7 +79,7 @@
 
         <div id="view-home" class="pb-20">
             <div id="news-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-            <button id="load-more" onclick="core.loadAll()" class="w-full mt-10 p-4 border border-white/10 rounded-2xl text-xs font-black uppercase hover:bg-white/5 transition">Pokaż więcej</button>
+            <button id="load-more" onclick="core.loadAll()" class="w-full mt-10 p-4 border border-white/10 rounded-2xl text-xs font-black uppercase hover:bg-white/5 transition">Pokaż starsze posty</button>
         </div>
 
         <div id="view-article" class="hidden pb-20 max-w-3xl mx-auto">
@@ -89,7 +92,7 @@
                 </button>
                 <div id="comments-list" class="space-y-4"></div>
                 <div class="mt-10 space-y-3 bg-white/5 p-6 rounded-3xl">
-                    <input type="text" id="comm-nick" placeholder="Twoje imię" class="input-dark text-sm">
+                    <input type="text" id="comm-nick" placeholder="Twój nick" class="input-dark text-sm">
                     <textarea id="comm-text" rows="2" placeholder="Skomentuj..." class="input-dark text-sm"></textarea>
                     <button onclick="core.addComment()" class="w-full bg-blue-600 p-3 rounded-xl font-black uppercase text-xs">Dodaj</button>
                 </div>
@@ -118,8 +121,9 @@
                     </label>
 
                     <div class="space-y-2">
-                        <input type="file" id="in-files" multiple class="text-xs" onchange="core.previewImages()">
-                        <div id="preview-images" class="flex flex-wrap gap-2"></div>
+                        <label class="text-[10px] font-black opacity-40 uppercase">Zdjęcia posta:</label>
+                        <div id="preview-images" class="flex flex-wrap gap-4 mb-4"></div>
+                        <input type="file" id="in-files" multiple class="text-xs" onchange="core.handleFileSelect()">
                     </div>
 
                     <button id="btn-publish" onclick="core.publish()" class="w-full bg-blue-600 p-4 rounded-xl font-black uppercase tracking-widest">Opublikuj wiadomość</button>
@@ -151,6 +155,7 @@
         let allPosts = [];
         let currentPostId = null;
         let currentTab = 'all';
+        let existingImages = []; // Przechowuje URL zdjęć już będących w bazie przy edycji
 
         window.core = {
             getWeather: async () => {
@@ -162,19 +167,32 @@
                 } catch(e) {}
             },
 
-            previewImages: () => {
+            // Obsługa podglądu zdjęć (zarówno tych z bazy, jak i nowych)
+            renderPreviews: () => {
                 const container = document.getElementById('preview-images');
                 container.innerHTML = "";
-                const files = document.getElementById('in-files').files;
-                Array.from(files).forEach(file => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const img = document.createElement('img');
-                        img.src = e.target.result; img.className = "preview-img";
-                        container.appendChild(img);
-                    };
-                    reader.readAsDataURL(file);
+
+                // Najpierw renderuj zdjęcia które już są w bazie (przy edycji)
+                existingImages.forEach((url, index) => {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = "preview-wrapper";
+                    wrapper.innerHTML = `
+                        <img src="${url}" class="preview-img">
+                        <div class="remove-img-btn" onclick="core.removeExistingImg(${index})"><i class="fa-solid fa-xmark"></i></div>
+                    `;
+                    container.appendChild(wrapper);
                 });
+            },
+
+            handleFileSelect: () => {
+                // Ta funkcja tylko odświeża listę plików do wysłania w przeglądarce
+                // Przeglądarka sama pokazuje nazwy przy input file, a my skupiamy się na zarządzaniu istniejącymi
+                console.log("Wybrano nowe pliki do dodania");
+            },
+
+            removeExistingImg: (index) => {
+                existingImages.splice(index, 1);
+                core.renderPreviews();
             },
 
             parseMd: (t) => {
@@ -186,11 +204,11 @@
             },
 
             goHome: () => {
-                document.title = "Ełk Nasze Informacje";
                 document.getElementById('view-home').classList.remove('hidden');
                 document.getElementById('view-article').classList.add('hidden');
                 document.getElementById('view-admin').classList.toggle('hidden', localStorage.getItem('is_editor') !== 'true');
                 document.getElementById('search-area').classList.remove('hidden');
+                window.scrollTo(0,0);
             },
 
             showLogin: () => document.getElementById('login-modal').style.display = 'flex',
@@ -235,32 +253,30 @@
                 if(!t || !c) return alert("Uzupełnij tytuł i treść!");
 
                 document.getElementById('loader').style.display = 'flex';
-                let urls = [];
+                
+                let newUrls = [];
                 const files = document.getElementById('in-files').files;
 
                 try {
-                    // Upload tylko jeśli wybrano nowe zdjęcia
+                    // Upload nowych zdjęć
                     if(files.length > 0) {
                         for(let f of files) {
                             const fd = new FormData(); fd.append("image", f);
                             const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method: "POST", body: fd });
-                            const d = await r.json(); if(d.success) urls.push(d.data.url);
+                            const d = await r.json(); if(d.success) newUrls.push(d.data.url);
                         }
                     }
+
+                    // Łączymy stare zachowane zdjęcia z nowymi wgranymi
+                    const finalImages = [...existingImages, ...newUrls];
 
                     const postData = {
                         title: t, content: c, author: document.getElementById('in-author').value || "Redakcja",
                         category: document.getElementById('in-category').value,
                         isUrgent: document.getElementById('in-urgent').checked,
-                        date: new Date().toLocaleString('pl-PL'), ts: Date.now()
+                        date: new Date().toLocaleString('pl-PL'), ts: Date.now(),
+                        images: finalImages
                     };
-
-                    if(urls.length > 0) {
-                        postData.images = urls;
-                    } else if(editId) {
-                        const old = allPosts.find(x => x.id === editId);
-                        if(old && old.images) postData.images = old.images;
-                    }
 
                     const ref = editId ? db.ref(`elk/posts/${editId}`) : db.ref('elk/posts').push();
                     if(!editId) postData.likes = 0;
@@ -268,7 +284,7 @@
                     await ref.update(postData);
                     location.reload();
                 } catch(e) {
-                    alert("Błąd serwera. Spróbuj ponownie.");
+                    alert("Błąd połączenia. Spróbuj ponownie.");
                     document.getElementById('loader').style.display = 'none';
                 }
             },
@@ -281,10 +297,14 @@
                 document.getElementById('in-author').value = p.author;
                 document.getElementById('in-category').value = p.category;
                 document.getElementById('in-urgent').checked = p.isUrgent || false;
+                
+                // Załaduj istniejące zdjęcia do zarządzania
+                existingImages = p.images ? [...p.images] : [];
+                core.renderPreviews();
+
                 document.getElementById('admin-form-title').innerText = "Edytuj Post";
-                document.getElementById('btn-publish').innerText = "Zapisz Zmiany";
+                document.getElementById('btn-publish').innerText = "Zatwierdź Zmiany";
                 document.getElementById('btn-cancel-edit').classList.remove('hidden');
-                document.getElementById('preview-images').innerHTML = "";
                 window.scrollTo(0,0);
             },
 
@@ -292,6 +312,8 @@
                 document.getElementById('edit-id').value = "";
                 document.getElementById('in-title').value = "";
                 document.getElementById('in-content').value = "";
+                existingImages = [];
+                core.renderPreviews();
                 document.getElementById('admin-form-title').innerText = "Nowy Artykuł";
                 document.getElementById('btn-publish').innerText = "Opublikuj";
                 document.getElementById('btn-cancel-edit').classList.add('hidden');
@@ -320,7 +342,6 @@
 
             showFull: (p) => {
                 currentPostId = p.id;
-                document.title = p.title;
                 document.getElementById('view-home').classList.add('hidden');
                 document.getElementById('search-area').classList.add('hidden');
                 document.getElementById('view-article').classList.remove('hidden');
