@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -16,49 +17,48 @@
         body { background: #0b0f1a; color: white; font-family: 'Inter', sans-serif; scroll-behavior: smooth; overflow-x: hidden; }
         
         .glass { background: rgba(22, 28, 45, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid rgba(255,255,255,0.05); background: #161c2d; position: relative; }
-        .card:hover { transform: translateY(-8px); border-color: var(--main); box-shadow: 0 20px 40px -15px rgba(0,98,255,0.3); }
+        .card { transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid rgba(255,255,255,0.05); background: #161c2d; position: relative; }
+        .card:hover { transform: translateY(-8px); border-color: var(--main); }
         
-        .input-dark { background: #0b0f1a; border: 2px solid #2d3748; border-radius: 12px; padding: 12px; width: 100%; color: white; outline: none; transition: 0.2s; }
-        .input-dark:focus { border-color: var(--main); box-shadow: 0 0 0 4px rgba(0,98,255,0.1); }
+        .input-dark { background: #0b0f1a; border: 2px solid #2d3748; border-radius: 12px; padding: 12px; width: 100%; color: white; outline: none; }
+        .input-dark:focus { border-color: var(--main); }
         
-        /* Marquee Strip */
-        .marquee { white-space: nowrap; overflow: hidden; position: relative; color: white; font-size: 11px; font-weight: 900; padding: 8px 0; text-transform: uppercase; transition: background 0.5s ease; border-bottom: 1px solid rgba(0,0,0,0.2); }
+        .marquee { white-space: nowrap; overflow: hidden; position: relative; color: white; font-size: 11px; font-weight: 900; padding: 8px 0; text-transform: uppercase; transition: background 0.5s ease; }
         .marquee-content { display: inline-block; animation: marquee 35s linear infinite; padding-left: 100%; }
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
         .tab-btn { padding: 10px 24px; font-size: 11px; font-weight: 800; text-transform: uppercase; border-radius: 14px; color: #64748b; transition: 0.3s; background: rgba(255,255,255,0.03); }
-        .tab-btn.active { background: var(--main); color: white; box-shadow: 0 4px 15px rgba(0,98,255,0.3); }
+        .tab-btn.active { background: var(--main); color: white; }
         
-        .md-h1 { font-size: 2.25rem; font-weight: 900; display: block; margin: 1.5rem 0 1rem; border-left: 6px solid var(--main); padding-left: 15px; line-height: 1; }
+        .md-h1 { font-size: 2rem; font-weight: 900; display: block; margin: 1.5rem 0 1rem; border-left: 6px solid var(--main); padding-left: 15px; }
         .md-link { color: var(--main); text-decoration: underline; font-weight: bold; }
-        .urgent-badge { position: absolute; top: 12px; right: 12px; background: var(--urgent); color: white; font-size: 9px; padding: 3px 8px; border-radius: 6px; font-weight: 900; z-index: 10; letter-spacing: 1px; box-shadow: 0 4px 10px rgba(255,0,60,0.4); }
+        .urgent-badge { position: absolute; top: 12px; right: 12px; background: var(--urgent); color: white; font-size: 9px; padding: 3px 8px; border-radius: 6px; font-weight: 900; z-index: 10; }
         
-        #loader { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; gap: 20px; }
-        .preview-img { width: 80px; height: 80px; object-cover; border-radius: 12px; border: 2px solid var(--main); }
+        #loader { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; gap: 20px; }
+        .preview-img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 2px solid var(--main); }
     </style>
 </head>
 <body>
 
     <div id="loader">
         <div class="animate-spin text-5xl text-blue-500"><i class="fa-solid fa-circle-notch"></i></div>
-        <span class="text-xs font-black uppercase tracking-widest text-blue-400">Przesyłanie informacji...</span>
+        <span class="text-xs font-black uppercase tracking-widest text-blue-400">Przetwarzanie...</span>
     </div>
 
     <div class="marquee" id="marquee-container" style="background: var(--urgent);">
-        <div class="marquee-content" id="breaking-news">Witamy w serwisie informacyjnym Ełku...</div>
+        <div class="marquee-content" id="breaking-news">Wczytywanie informacji z Ełku...</div>
     </div>
 
     <header class="sticky top-0 z-50 glass">
-        <div class="max-w-6xl mx-auto px-4 h-18 flex justify-between items-center py-4">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex justify-between items-center">
             <div class="flex items-center gap-6">
-                <h1 onclick="core.goHome()" class="text-2xl font-black italic cursor-pointer uppercase tracking-tighter">EŁK <span class="text-blue-500">NASZE</span> INFO</h1>
-                <div id="weather" class="hidden md:flex items-center gap-3 text-[11px] font-black opacity-80 bg-white/5 px-4 py-2 rounded-full border border-white/5">
+                <h1 onclick="core.goHome()" class="text-xl font-black italic cursor-pointer uppercase">EŁK <span class="text-blue-500">NASZE</span> INFO</h1>
+                <div id="weather" class="hidden md:flex items-center gap-2 text-[10px] font-black opacity-70 bg-white/5 px-3 py-1 rounded-full">
                     <i class="fa-solid fa-temperature-half text-blue-400"></i> <span id="weather-temp">--°C</span>
                 </div>
             </div>
             <div class="flex items-center gap-4">
-                <button id="btn-admin-panel" onclick="core.showLogin()" class="text-[10px] font-bold uppercase opacity-50 hover:opacity-100 transition">Panel</button>
+                <button id="btn-admin-panel" onclick="core.showLogin()" class="text-[10px] font-bold uppercase opacity-50">Panel</button>
                 <button id="btn-logout" onclick="core.logout()" class="hidden text-[10px] font-bold uppercase text-red-500 bg-red-500/10 px-3 py-1 rounded-lg">Wyloguj</button>
             </div>
         </div>
@@ -66,11 +66,8 @@
 
     <main class="max-w-6xl mx-auto px-4 mt-8">
         <div id="search-area" class="mb-10 space-y-6">
-            <div class="relative group">
-                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 opacity-30 group-focus-within:text-blue-500 group-focus-within:opacity-100 transition"></i>
-                <input type="text" id="search-input" oninput="core.filterPosts()" placeholder="Czego szukasz w Ełku?" class="input-dark pl-12 h-14 text-lg">
-            </div>
-            <div class="flex flex-wrap gap-3">
+            <input type="text" id="search-input" oninput="core.filterPosts()" placeholder="Szukaj newsa z Ełku..." class="input-dark">
+            <div class="flex flex-wrap gap-2">
                 <button onclick="core.switchTab('all', this)" class="tab-btn active">Wszystkie</button>
                 <button onclick="core.switchTab('Wydarzenia', this)" class="tab-btn">Wydarzenia</button>
                 <button onclick="core.switchTab('Informacje', this)" class="tab-btn">Informacje</button>
@@ -79,98 +76,68 @@
         </div>
 
         <div id="view-home" class="pb-20">
-            <div id="news-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
-            <button id="load-more" onclick="core.loadAll()" class="w-full mt-12 p-5 border border-white/10 rounded-2xl text-xs font-black uppercase hover:bg-blue-600 hover:text-white transition-all duration-300">Pokaż archiwum postów</button>
+            <div id="news-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            <button id="load-more" onclick="core.loadAll()" class="w-full mt-10 p-4 border border-white/10 rounded-2xl text-xs font-black uppercase hover:bg-white/5 transition">Pokaż więcej</button>
         </div>
 
         <div id="view-article" class="hidden pb-20 max-w-3xl mx-auto">
-            <button onclick="core.goHome()" class="mb-10 text-slate-400 font-black uppercase text-[10px] flex items-center gap-2 hover:text-white transition"><i class="fa-solid fa-chevron-left"></i> Powrót do listy</button>
+            <button onclick="core.goHome()" class="mb-8 text-slate-400 font-black uppercase text-[10px] flex items-center gap-2 hover:text-white transition"><i class="fa-solid fa-chevron-left"></i> Powrót</button>
             <div id="article-content"></div>
             
-            <div class="mt-16 pt-10 border-t border-white/10">
-                <div class="flex items-center justify-between mb-12">
-                    <button onclick="core.likePost()" class="flex items-center gap-4 bg-red-500/10 text-red-500 px-10 py-4 rounded-2xl hover:bg-red-500 hover:text-white transition-all transform active:scale-95">
-                        <i class="fa-solid fa-heart text-xl"></i> <span id="like-count" class="font-black text-xl">0</span>
-                    </button>
-                </div>
-                
-                <div id="comments-list" class="space-y-6"></div>
-                
-                <div class="mt-12 bg-[#161c2d] p-8 rounded-[32px] border border-white/5 shadow-2xl">
-                    <h3 class="text-lg font-black uppercase mb-6 italic text-blue-500">Dodaj swój komentarz</h3>
-                    <div class="space-y-4">
-                        <input type="text" id="comm-nick" placeholder="Twoje imię / Nick" class="input-dark">
-                        <textarea id="comm-text" rows="3" placeholder="Co o tym sądzisz?" class="input-dark"></textarea>
-                        <button onclick="core.addComment()" class="w-full bg-blue-600 p-4 rounded-xl font-black uppercase tracking-widest hover:bg-blue-700 transition">Wyślij opinię</button>
-                    </div>
+            <div class="mt-12 pt-10 border-t border-white/10">
+                <button onclick="core.likePost()" class="flex items-center gap-4 bg-red-500/10 text-red-500 px-8 py-3 rounded-2xl hover:bg-red-500 hover:text-white transition mb-10">
+                    <i class="fa-solid fa-heart"></i> <span id="like-count" class="font-black">0</span>
+                </button>
+                <div id="comments-list" class="space-y-4"></div>
+                <div class="mt-10 space-y-3 bg-white/5 p-6 rounded-3xl">
+                    <input type="text" id="comm-nick" placeholder="Twoje imię" class="input-dark text-sm">
+                    <textarea id="comm-text" rows="2" placeholder="Skomentuj..." class="input-dark text-sm"></textarea>
+                    <button onclick="core.addComment()" class="w-full bg-blue-600 p-3 rounded-xl font-black uppercase text-xs">Dodaj</button>
                 </div>
             </div>
         </div>
 
         <div id="view-admin" class="hidden pb-20">
-            <div class="max-w-2xl mx-auto bg-[#161c2d] p-10 rounded-[40px] border border-white/10 shadow-2xl">
-                <h2 id="admin-form-title" class="text-3xl font-black mb-8 uppercase text-blue-500 italic">Panel Redaktora</h2>
-                <div class="space-y-5">
+            <div class="max-w-2xl mx-auto bg-[#161c2d] p-8 rounded-3xl border border-white/10 shadow-2xl">
+                <h2 id="admin-form-title" class="text-2xl font-black mb-6 uppercase text-blue-500 italic">Panel Redaktora</h2>
+                <div class="space-y-4">
                     <input type="hidden" id="edit-id">
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black uppercase opacity-40 ml-2">Tytuł Artykułu</label>
-                        <input type="text" id="in-title" placeholder="Wpisz chwytliwy tytuł..." class="input-dark">
+                    <input type="text" id="in-title" placeholder="Tytuł" class="input-dark">
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="text" id="in-author" placeholder="Autor" class="input-dark">
+                        <select id="in-category" class="input-dark">
+                            <option value="Wydarzenia">Wydarzenia</option>
+                            <option value="Informacje">Informacje</option>
+                            <option value="Aktualizacje">Aktualizacje</option>
+                        </select>
                     </div>
-                    <div class="grid grid-cols-2 gap-5">
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black uppercase opacity-40 ml-2">Autor</label>
-                            <input type="text" id="in-author" placeholder="Twoje Imię" class="input-dark">
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black uppercase opacity-40 ml-2">Kategoria</label>
-                            <select id="in-category" class="input-dark">
-                                <option value="Wydarzenia">Wydarzenia</option>
-                                <option value="Informacje">Informacje</option>
-                                <option value="Aktualizacje">Aktualizacje</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black uppercase opacity-40 ml-2">Treść (Obsługuje Markdown)</label>
-                        <textarea id="in-content" rows="10" placeholder="Użyj # dla nagłówka, ** dla pogrubienia, [tekst](link) dla linków..." class="input-dark"></textarea>
-                    </div>
+                    <textarea id="in-content" rows="8" placeholder="Treść (# Nagłówek, **Pogrubienie**)" class="input-dark"></textarea>
                     
-                    <label class="flex items-center gap-4 bg-red-500/5 p-5 rounded-2xl cursor-pointer border border-red-500/10 group">
-                        <input type="checkbox" id="in-urgent" class="w-6 h-6 accent-red-600">
-                        <div class="flex flex-col">
-                            <span class="text-sm font-black uppercase text-red-500">Oznacz jako wiadomość PILNĄ</span>
-                            <span class="text-[10px] opacity-50 uppercase font-bold">Pojawi się w pasku "Wszystkie"</span>
-                        </div>
+                    <label class="flex items-center gap-3 bg-white/5 p-4 rounded-xl cursor-pointer">
+                        <input type="checkbox" id="in-urgent" class="w-5 h-5 accent-red-600">
+                        <span class="text-xs font-black uppercase text-red-500">Oznacz jako wiadomość PILNĄ</span>
                     </label>
 
                     <div class="space-y-2">
-                        <label class="text-[10px] font-black uppercase opacity-40 ml-2">Zdjęcia (Można kilka)</label>
-                        <input type="file" id="in-files" multiple class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer" onchange="core.previewImages()">
-                        <div id="preview-images" class="flex flex-wrap gap-3 mt-4"></div>
+                        <input type="file" id="in-files" multiple class="text-xs" onchange="core.previewImages()">
+                        <div id="preview-images" class="flex flex-wrap gap-2"></div>
                     </div>
 
-                    <button id="btn-publish" onclick="core.publish()" class="w-full bg-blue-600 p-5 rounded-2xl font-black uppercase text-lg shadow-xl shadow-blue-900/20 hover:scale-[1.02] transition">Opublikuj wiadomość</button>
-                    <button id="btn-cancel-edit" onclick="core.resetAdminForm()" class="hidden w-full text-xs font-black uppercase opacity-40 py-2">Anuluj edycję</button>
+                    <button id="btn-publish" onclick="core.publish()" class="w-full bg-blue-600 p-4 rounded-xl font-black uppercase tracking-widest">Opublikuj wiadomość</button>
+                    <button id="btn-cancel-edit" onclick="core.resetAdminForm()" class="hidden w-full text-[10px] font-black uppercase opacity-40 mt-2">Anuluj edycję</button>
                     
-                    <div class="pt-10">
-                        <h3 class="text-xs font-black uppercase opacity-40 mb-4 border-b border-white/5 pb-2">Zarządzaj istniejącymi postami</h3>
-                        <div id="admin-posts-list" class="space-y-3"></div>
-                    </div>
+                    <div id="admin-posts-list" class="mt-10 space-y-2 border-t border-white/5 pt-6"></div>
                 </div>
             </div>
         </div>
     </main>
 
     <div id="login-modal" class="fixed inset-0 bg-black/95 z-[1000] hidden items-center justify-center p-6">
-        <div class="bg-[#161c2d] p-10 rounded-[40px] w-full max-w-sm border border-white/10 text-center shadow-2xl">
-            <div class="w-20 h-20 bg-blue-600/10 rounded-full flex items-center justify-center mx-auto mb-6 text-blue-500 text-3xl">
-                <i class="fa-solid fa-lock"></i>
-            </div>
-            <h2 class="text-2xl font-black mb-2 uppercase italic tracking-tighter">Autoryzacja</h2>
-            <p class="text-[10px] font-bold uppercase opacity-40 mb-8">Wprowadź kod dostępu dla redakcji</p>
-            <input type="password" id="admin-key-input" placeholder="••••••••" class="input-dark text-center text-2xl tracking-[1em] mb-8">
-            <button onclick="core.checkAdminKey()" class="w-full bg-blue-600 p-5 rounded-2xl font-black uppercase tracking-widest hover:bg-blue-700 transition">Wejdź do panelu</button>
-            <button onclick="core.closeLogin()" class="mt-6 text-[10px] font-black uppercase opacity-30 hover:opacity-100 transition">Wróć na stronę</button>
+        <div class="bg-[#161c2d] p-10 rounded-3xl w-full max-w-sm border border-white/10 text-center">
+            <h2 class="text-2xl font-black mb-6 uppercase italic">Redakcja</h2>
+            <input type="password" id="admin-key-input" placeholder="Wpisz kod..." class="input-dark text-center mb-6">
+            <button onclick="core.checkAdminKey()" class="w-full bg-blue-600 p-4 rounded-xl font-black uppercase">Wejdź</button>
+            <button onclick="core.closeLogin()" class="mt-4 text-[10px] font-black uppercase opacity-30">Zamknij</button>
         </div>
     </div>
 
@@ -191,9 +158,9 @@
                 try {
                     const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=53.82&longitude=22.36&current_weather=true');
                     const d = await r.json();
-                    document.getElementById('weather-temp').innerText = `${Math.round(d.current_weather.temperature)}°C w Ełku`;
+                    document.getElementById('weather-temp').innerText = `${Math.round(d.current_weather.temperature)}°C Ełk`;
                     document.getElementById('weather').classList.remove('hidden');
-                } catch(e) { console.log("Pogoda niedostępna"); }
+                } catch(e) {}
             },
 
             previewImages: () => {
@@ -204,8 +171,7 @@
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         const img = document.createElement('img');
-                        img.src = e.target.result;
-                        img.className = "preview-img shadow-lg shadow-blue-500/20";
+                        img.src = e.target.result; img.className = "preview-img";
                         container.appendChild(img);
                     };
                     reader.readAsDataURL(file);
@@ -226,7 +192,6 @@
                 document.getElementById('view-article').classList.add('hidden');
                 document.getElementById('view-admin').classList.toggle('hidden', localStorage.getItem('is_editor') !== 'true');
                 document.getElementById('search-area').classList.remove('hidden');
-                window.scrollTo(0,0);
             },
 
             showLogin: () => document.getElementById('login-modal').style.display = 'flex',
@@ -235,7 +200,7 @@
                 if(document.getElementById('admin-key-input').value === MY_SECRET_KEY) {
                     localStorage.setItem('is_editor', 'true');
                     location.reload();
-                } else alert("Dostęp zabroniony: Zły kod!");
+                } else alert("Zły kod!");
             },
             logout: () => { localStorage.removeItem('is_editor'); location.reload(); },
 
@@ -268,33 +233,45 @@
                 const editId = document.getElementById('edit-id').value;
                 const t = document.getElementById('in-title').value;
                 const c = document.getElementById('in-content').value;
-                if(!t || !c) return alert("Błąd: Tytuł i treść nie mogą być puste!");
+                if(!t || !c) return alert("Uzupełnij tytuł i treść!");
 
                 document.getElementById('loader').style.display = 'flex';
                 let urls = [];
                 const files = document.getElementById('in-files').files;
 
-                for(let f of files) {
-                    const fd = new FormData(); fd.append("image", f);
-                    try {
-                        const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method: "POST", body: fd });
-                        const d = await r.json(); 
-                        if(d.success) urls.push(d.data.url);
-                    } catch(e) { console.error("Upload error"); }
-                }
+                try {
+                    // Upload tylko jeśli wybrano nowe zdjęcia
+                    if(files.length > 0) {
+                        for(let f of files) {
+                            const fd = new FormData(); fd.append("image", f);
+                            const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method: "POST", body: fd });
+                            const d = await r.json(); if(d.success) urls.push(d.data.url);
+                        }
+                    }
 
-                const postData = {
-                    title: t, content: c, author: document.getElementById('in-author').value || "Redakcja",
-                    category: document.getElementById('in-category').value,
-                    isUrgent: document.getElementById('in-urgent').checked,
-                    date: new Date().toLocaleString('pl-PL'), ts: Date.now()
-                };
-                
-                if(urls.length > 0) postData.images = urls;
-                const ref = editId ? db.ref(`elk/posts/${editId}`) : db.ref('elk/posts').push();
-                if(!editId) postData.likes = 0;
-                
-                ref.update(postData).then(() => location.reload());
+                    const postData = {
+                        title: t, content: c, author: document.getElementById('in-author').value || "Redakcja",
+                        category: document.getElementById('in-category').value,
+                        isUrgent: document.getElementById('in-urgent').checked,
+                        date: new Date().toLocaleString('pl-PL'), ts: Date.now()
+                    };
+
+                    if(urls.length > 0) {
+                        postData.images = urls;
+                    } else if(editId) {
+                        const old = allPosts.find(x => x.id === editId);
+                        if(old && old.images) postData.images = old.images;
+                    }
+
+                    const ref = editId ? db.ref(`elk/posts/${editId}`) : db.ref('elk/posts').push();
+                    if(!editId) postData.likes = 0;
+                    
+                    await ref.update(postData);
+                    location.reload();
+                } catch(e) {
+                    alert("Błąd serwera. Spróbuj ponownie.");
+                    document.getElementById('loader').style.display = 'none';
+                }
             },
 
             editPost: (id) => {
@@ -305,9 +282,10 @@
                 document.getElementById('in-author').value = p.author;
                 document.getElementById('in-category').value = p.category;
                 document.getElementById('in-urgent').checked = p.isUrgent || false;
-                document.getElementById('admin-form-title').innerText = "Edycja Treści";
-                document.getElementById('btn-publish').innerText = "Zatwierdź Zmiany";
+                document.getElementById('admin-form-title').innerText = "Edytuj Post";
+                document.getElementById('btn-publish').innerText = "Zapisz Zmiany";
                 document.getElementById('btn-cancel-edit').classList.remove('hidden');
+                document.getElementById('preview-images').innerHTML = "";
                 window.scrollTo(0,0);
             },
 
@@ -325,16 +303,15 @@
                 container.innerHTML = "";
                 items.forEach(p => {
                     const card = document.createElement('div');
-                    card.className = "card rounded-[32px] overflow-hidden cursor-pointer flex flex-col h-full";
+                    card.className = "card rounded-3xl overflow-hidden cursor-pointer flex flex-col";
                     card.innerHTML = `
-                        ${p.isUrgent ? '<span class="urgent-badge"><i class="fa-solid fa-bolt mr-1"></i> PILNE</span>' : ''}
-                        ${p.images?.[0] ? `<img src="${p.images[0]}" class="w-full h-56 object-cover">` : '<div class="h-3 bg-blue-600"></div>'}
-                        <div class="p-8 flex flex-col flex-grow">
-                            <span class="text-[10px] font-black uppercase text-blue-500 mb-3 block tracking-widest">${p.category}</span>
-                            <h2 class="text-xl font-black leading-tight mb-4 group-hover:text-blue-400 transition">${p.title}</h2>
-                            <div class="mt-auto pt-6 flex justify-between opacity-30 text-[9px] font-black uppercase tracking-tighter border-t border-white/5">
-                                <span><i class="fa-solid fa-pen-nib mr-1 text-blue-500"></i> ${p.author}</span>
-                                <span>${p.date.split(',')[0]}</span>
+                        ${p.isUrgent ? '<span class="urgent-badge">PILNE</span>' : ''}
+                        ${p.images?.[0] ? `<img src="${p.images[0]}" class="w-full h-44 object-cover">` : '<div class="h-2 bg-blue-600"></div>'}
+                        <div class="p-6">
+                            <span class="text-[9px] font-black uppercase text-blue-500 mb-2 block">${p.category}</span>
+                            <h2 class="text-lg font-bold leading-tight mb-4">${p.title}</h2>
+                            <div class="mt-auto flex justify-between opacity-30 text-[9px] font-black uppercase">
+                                <span>${p.author}</span><span>${p.date.split(',')[0]}</span>
                             </div>
                         </div>`;
                     card.onclick = () => core.showFull(p);
@@ -344,18 +321,15 @@
 
             showFull: (p) => {
                 currentPostId = p.id;
-                document.title = p.title + " | Ełk Info";
+                document.title = p.title;
                 document.getElementById('view-home').classList.add('hidden');
                 document.getElementById('search-area').classList.add('hidden');
                 document.getElementById('view-article').classList.remove('hidden');
                 document.getElementById('article-content').innerHTML = `
-                    <div class="flex items-center gap-3 mb-4">
-                        <span class="bg-blue-600 text-[10px] font-black px-3 py-1 rounded-full uppercase">${p.category}</span>
-                        <span class="text-xs opacity-40 font-bold">${p.date}</span>
-                    </div>
-                    <h1 class="text-4xl md:text-5xl font-black mb-8 italic leading-none tracking-tighter">${p.title}</h1>
-                    <div class="text-slate-200 text-xl leading-relaxed mb-12 font-medium">${core.parseMd(p.content)}</div>
-                    <div class="grid gap-6">${(p.images || []).map(img => `<img src="${img}" class="w-full rounded-[32px] shadow-2xl border border-white/5">`).join('')}</div>
+                    <h1 class="text-3xl font-black mb-4 italic leading-tight">${p.title}</h1>
+                    <p class="text-[10px] opacity-40 font-bold mb-8 uppercase">${p.author} • ${p.date}</p>
+                    <div class="text-slate-200 text-lg leading-relaxed mb-10">${core.parseMd(p.content)}</div>
+                    <div class="grid gap-4">${(p.images || []).map(img => `<img src="${img}" class="w-full rounded-3xl shadow-xl">`).join('')}</div>
                 `;
                 document.getElementById('like-count').innerText = p.likes || 0;
                 core.loadComments(p.id);
@@ -365,35 +339,25 @@
             loadComments: (pid) => {
                 db.ref(`elk/comments/${pid}`).on('value', snap => {
                     const list = document.getElementById('comments-list');
-                    list.innerHTML = `<h3 class="font-black uppercase text-xs opacity-40 mb-6 tracking-widest flex items-center gap-2"><i class="fa-solid fa-comments text-blue-500 text-lg"></i> Głosy Czytelników</h3>`;
+                    list.innerHTML = `<h3 class="font-black uppercase text-xs opacity-40 mb-4">Dyskusja</h3>`;
                     if(!snap.val()) return;
                     Object.values(snap.val()).reverse().forEach(c => {
-                        list.innerHTML += `<div class="bg-white/5 p-6 rounded-3xl border border-white/5">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="font-black text-blue-400 text-xs uppercase">${c.nick}</span>
-                                <span class="text-[8px] opacity-20 uppercase font-bold">${c.date || ''}</span>
-                            </div>
-                            <p class="text-slate-300 leading-relaxed">${c.text}</p>
-                        </div>`;
+                        list.innerHTML += `<div class="bg-white/5 p-4 rounded-2xl text-sm border border-white/5"><span class="font-black text-blue-400 text-[10px] uppercase">${c.nick}</span><p class="mt-1 opacity-80">${c.text}</p></div>`;
                     });
                 });
             },
 
             addComment: () => {
                 const n = document.getElementById('comm-nick').value, t = document.getElementById('comm-text').value;
-                if(!n || !t) return alert("Błąd: Nick i treść komentarza są wymagane!");
-                db.ref(`elk/comments/${currentPostId}`).push({ nick: n, text: t, date: new Date().toLocaleString('pl-PL'), ts: Date.now() });
+                if(n && t) db.ref(`elk/comments/${currentPostId}`).push({ nick: n, text: t, ts: Date.now() });
                 document.getElementById('comm-text').value = "";
             },
 
-            likePost: () => {
-                db.ref(`elk/posts/${currentPostId}/likes`).transaction(l => (l || 0) + 1);
-            },
+            likePost: () => db.ref(`elk/posts/${currentPostId}/likes`).transaction(l => (l || 0) + 1),
 
             filterPosts: () => {
                 const q = document.getElementById('search-input').value.toLowerCase();
-                const filtered = allPosts.filter(p => (currentTab === 'all' || p.category === currentTab) && (p.title.toLowerCase().includes(q) || p.content.toLowerCase().includes(q)));
-                core.render(filtered);
+                core.render(allPosts.filter(p => (currentTab === 'all' || p.category === currentTab) && p.title.toLowerCase().includes(q)));
             },
 
             loadAll: () => {
@@ -409,15 +373,10 @@
                 Object.entries(snap.val()).reverse().forEach(([id, v]) => {
                     allPosts.push({id, ...v});
                     if(admList) {
-                        admList.innerHTML += `<div class="flex justify-between items-center bg-black/20 p-4 rounded-2xl border border-white/5">
-                            <div class="flex flex-col truncate mr-4">
-                                <span class="text-[10px] font-black text-blue-500 uppercase">${v.category}</span>
-                                <span class="text-xs font-bold truncate">${v.title}</span>
-                            </div>
-                            <div class="flex gap-4 shrink-0">
-                                <button onclick="core.editPost('${id}')" class="text-blue-500 hover:text-blue-400 font-black text-[10px] uppercase">Edytuj</button>
-                                <button onclick="confirm('Czy na pewno chcesz usunąć ten artykuł?') && db.ref('elk/posts/${id}').remove()" class="text-red-500 hover:text-red-400 font-black text-[10px] uppercase">Usuń</button>
-                            </div>
+                        admList.innerHTML += `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl mb-2 text-[10px] font-bold">
+                            <span class="truncate mr-4 uppercase">${v.title}</span>
+                            <div class="flex gap-3"><button onclick="core.editPost('${id}')" class="text-blue-500 uppercase">Edytuj</button>
+                            <button onclick="confirm('Usuwamy?') && db.ref('elk/posts/${id}').remove()" class="text-red-500 uppercase">Usuń</button></div>
                         </div>`;
                     }
                 });
@@ -426,7 +385,6 @@
             core.updateMarquee();
         };
 
-        // Auth Logic
         if(localStorage.getItem('is_editor') === 'true') {
             document.getElementById('btn-logout').classList.remove('hidden');
             document.getElementById('btn-admin-panel').classList.add('hidden');
@@ -434,7 +392,6 @@
             document.getElementById('view-home').classList.add('hidden');
         }
 
-        // Init
         db.ref('elk/posts').limitToLast(12).on('value', processPosts);
         core.getWeather();
     </script>
