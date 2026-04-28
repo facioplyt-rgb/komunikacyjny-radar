@@ -55,7 +55,7 @@
         .reply-btn:hover { opacity: 1; }
         .comm-react-btn { font-size: 10px; font-weight: 700; display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; cursor: pointer; transition: 0.2s; }
         .comm-react-btn:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
-        .comm-react-btn.liked { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+        .comm-react-btn.liked { color: #ef4444; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); }
 
         .replies-container { margin-left: 20px; border-left: 1px dashed rgba(255,255,255,0.1); padding-left: 15px; margin-top: 10px; display: none; }
         .reply-item { background: rgba(255,255,255,0.01); padding: 8px 12px; border-radius: 8px; margin-bottom: 5px; font-size: 13px; border: 1px solid rgba(255,255,255,0.02); position: relative; }
@@ -68,7 +68,7 @@
 
         .preview-wrapper { position: relative; width: 60px; height: 60px; }
         .preview-wrapper img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
-        .preview-del { position: absolute; -top: 5px; -right: 5px; background: red; color: white; width: 15px; height: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; }
+        .preview-del { position: absolute; top: -5px; right: -5px; background: red; color: white; width: 15px; height: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; }
 
         .ad-container { position: fixed; top: 100px; width: 140px; min-height: 50px; z-index: 40; display: block; }
         .ad-left { left: 10px; }
@@ -393,17 +393,11 @@
                 } else { alert("Błąd!"); }
             },
 
-            // NOWA FUNKCJA POKAZYWANIA KLAUZULI
             showLegal: (type) => {
-                const titles = {
-                    redaction: "Redakcja",
-                    privacy: "Polityka Prywatności",
-                    coop: "Współpraca"
-                };
+                const titles = { redaction: "Redakcja", privacy: "Polityka Prywatności", coop: "Współpraca" };
                 const content = document.getElementById(`txt-${type}`).innerText;
                 document.getElementById('legal-title').innerText = titles[type];
                 document.getElementById('legal-body').innerText = content;
-
                 document.getElementById('view-home').classList.add('hidden');
                 document.getElementById('search-area').classList.add('hidden');
                 document.getElementById('view-article').classList.add('hidden');
@@ -481,6 +475,8 @@
                 });
             },
 
+            removeImageFromEdit: (idx) => { currentEditImages.splice(idx, 1); core.renderEditImages(); },
+
             publish: async () => {
                 const t = document.getElementById('in-title').value;
                 const c = document.getElementById('in-content').value;
@@ -555,8 +551,11 @@
             likePost: () => {
                 const key = `liked_${currentOpenPostId}`; if(localStorage.getItem(key)) return alert("Już polubiono!");
                 const p = allData.find(x => x.id === currentOpenPostId);
-                postsRef.child(currentOpenPostId).update({ likes: (p.likes || 0) + 1 }).then(() => {
-                    localStorage.setItem(key, "1"); document.getElementById('main-like-btn').classList.add('liked');
+                const newLikes = (p.likes || 0) + 1;
+                postsRef.child(currentOpenPostId).update({ likes: newLikes }).then(() => {
+                    localStorage.setItem(key, "1"); 
+                    document.getElementById('main-like-btn').classList.add('liked');
+                    document.getElementById('like-count').innerText = newLikes;
                 });
             },
 
@@ -572,6 +571,7 @@
             setReply: (cid, nick) => {
                 currentReplyToId = cid; document.getElementById('replying-to-info').classList.remove('hidden');
                 document.getElementById('target-nick').innerText = nick;
+                document.getElementById('comm-text').focus();
             },
             cancelReply: () => { currentReplyToId = null; document.getElementById('replying-to-info').classList.add('hidden'); },
 
@@ -587,7 +587,9 @@
             reactComment: (cid, isReply = false, pId = null) => {
                 const key = `re_${cid}`; if(localStorage.getItem(key)) return alert("Już zareagowano!");
                 let path = isReply ? `elk/comments/${currentOpenPostId}/${pId}/replies/${cid}/reacts` : `elk/comments/${currentOpenPostId}/${cid}/reacts`;
-                db.ref(path).transaction(c => (c || 0) + 1); localStorage.setItem(key, "1");
+                db.ref(path).transaction(c => (c || 0) + 1); 
+                localStorage.setItem(key, "1");
+                // UI zaktualizuje się przez listener 'on value'
             },
 
             deleteComment: (cid, isReply, pId, postId) => {
@@ -636,16 +638,19 @@
 
             loadComments: (postId) => {
                 db.ref(`elk/comments/${postId}`).on('value', snap => {
+                    if(currentOpenPostId !== postId) return;
                     const list = document.getElementById('comments-list'); list.innerHTML = "";
                     if(!snap.val()) return;
                     Object.entries(snap.val()).sort((a,b) => b[1].ts - a[1].ts).forEach(([cid, c]) => {
                         let reps = ""; 
                         if(c.replies) {
                             Object.entries(c.replies).forEach(([rid, r]) => {
-                                reps += `<div class="reply-item"><button onclick="core.deleteComment('${rid}', true, '${cid}')" class="del-comm-btn">Usuń</button><span class="font-black text-blue-400 text-[11px]">${r.nick}</span><p class="text-xs">${r.text}</p><div class="flex gap-3 mt-1"><span onclick="core.reactComment('${rid}', true, '${cid}')" class="comm-react-btn scale-75"><i class="fa-solid fa-heart"></i> ${r.reacts || 0}</span><span onclick="core.reportComment('${rid}', '${r.text}', '${r.nick}', true, '${cid}')" class="report-btn">Zgłoś</span></div></div>`;
+                                const rLiked = localStorage.getItem(`re_${rid}`) ? 'liked' : '';
+                                reps += `<div class="reply-item"><button onclick="core.deleteComment('${rid}', true, '${cid}')" class="del-comm-btn">Usuń</button><span class="font-black text-blue-400 text-[11px]">${r.nick}</span><p class="text-xs">${r.text}</p><div class="flex gap-3 mt-1"><span onclick="core.reactComment('${rid}', true, '${cid}')" class="comm-react-btn ${rLiked} scale-75"><i class="fa-solid fa-heart"></i> ${r.reacts || 0}</span><span onclick="core.reportComment('${rid}', '${r.text}', '${r.nick}', true, '${cid}')" class="report-btn">Zgłoś</span></div></div>`;
                             });
                         }
-                        list.innerHTML += `<div class="comment-item"><button onclick="core.deleteComment('${cid}', false)" class="del-comm-btn">Usuń</button><span class="font-black text-blue-400 text-xs">${c.nick}</span><p class="text-sm">${c.text}</p><div class="flex gap-4 mt-2"><span onclick="core.reactComment('${cid}')" class="comm-react-btn"><i class="fa-solid fa-heart"></i> ${c.reacts || 0}</span><span onclick="core.setReply('${cid}', '${c.nick}')" class="reply-btn">Odpowiedz</span><span onclick="core.reportComment('${cid}', '${c.text}', '${c.nick}')" class="report-btn">Zgłoś</span>${c.replies ? `<span onclick="core.toggleReplies('${cid}')" class="toggle-replies">Pokaż odpowiedzi</span>`:''}</div><div id="replies-${cid}" class="replies-container">${reps}</div></div>`;
+                        const cLiked = localStorage.getItem(`re_${cid}`) ? 'liked' : '';
+                        list.innerHTML += `<div class="comment-item"><button onclick="core.deleteComment('${cid}', false)" class="del-comm-btn">Usuń</button><span class="font-black text-blue-400 text-xs">${c.nick}</span><p class="text-sm">${c.text}</p><div class="flex gap-4 mt-2"><span onclick="core.reactComment('${cid}')" class="comm-react-btn ${cLiked}"><i class="fa-solid fa-heart"></i> ${c.reacts || 0}</span><span onclick="core.setReply('${cid}', '${c.nick}')" class="reply-btn">Odpowiedz</span><span onclick="core.reportComment('${cid}', '${c.text}', '${c.nick}')" class="report-btn">Zgłoś</span>${c.replies ? `<span onclick="core.toggleReplies('${cid}')" class="toggle-replies">Pokaż odpowiedzi</span>`:''}</div><div id="replies-${cid}" class="replies-container">${reps}</div></div>`;
                     });
                 });
             },
@@ -654,6 +659,11 @@
                 currentOpenPostId = data.id;
                 document.getElementById('view-home').classList.add('hidden'); document.getElementById('search-area').classList.add('hidden');
                 document.getElementById('view-article').classList.remove('hidden');
+                
+                const isLiked = localStorage.getItem(`liked_${data.id}`) ? 'liked' : '';
+                document.getElementById('main-like-btn').className = `like-btn flex items-center gap-2 bg-white/5 px-6 py-3 rounded-full border border-white/5 transition ${isLiked}`;
+                document.getElementById('like-count').innerText = data.likes || 0;
+
                 core.loadComments(data.id);
                 document.getElementById('article-content').innerHTML = `<h1 class="text-4xl font-black mb-4">${data.title}</h1><div class="flex gap-4 mb-8"><span class="author-badge">${data.author}</span><span class="text-xs opacity-40">${data.date}</span></div><div class="text-slate-300 text-lg white-pre border-l-4 border-blue-600 pl-6 mb-10">${core.parseMarkdown(data.content)}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">${(data.images||[]).map(i=>`<img src="${i}" class="w-full rounded-3xl">`).join('')}</div>`;
                 window.scrollTo(0,0);
@@ -675,11 +685,12 @@
 
         postsRef.on('value', snap => {
             const data = snap.val(); allData = [];
-            const admList = document.getElementById('admin-list'); admList.innerHTML = "";
+            const admList = document.getElementById('admin-list'); 
+            if(admList) admList.innerHTML = "";
             if(data) {
                 Object.entries(data).sort((a,b) => b[1].ts - a[1].ts).forEach(([id, v]) => {
                     allData.push({ id, ...v });
-                    admList.innerHTML += `<div class="flex justify-between bg-white/5 p-2 rounded-xl"><span>${v.title}</span><div class="flex gap-2"><button onclick="core.editMode('${id}')" class="text-amber-500 text-[10px]">EDYCJA</button><button onclick="core.deletePost('${id}')" class="text-red-500 text-[10px]">USUŃ</button></div></div>`;
+                    if(admList) admList.innerHTML += `<div class="flex justify-between bg-white/5 p-2 rounded-xl"><span>${v.title}</span><div class="flex gap-2"><button onclick="core.editMode('${id}')" class="text-amber-500 text-[10px]">EDYCJA</button><button onclick="core.deletePost('${id}')" class="text-red-500 text-[10px]">USUŃ</button></div></div>`;
                 });
             }
             core.filterPosts();
