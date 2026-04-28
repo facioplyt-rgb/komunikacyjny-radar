@@ -10,8 +10,6 @@
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         :root { --main: #0062ff; }
@@ -90,12 +88,6 @@
         }
         
         footer { border-top: 1px solid rgba(255,255,255,0.05); padding: 40px 0; background: rgba(0,0,0,0.2); width: 100%; margin-top: 20px; }
-
-        /* DODANE STYLE DISCORD */
-        .discord-btn { background: #5865F2; color: white; padding: 15px; border-radius: 12px; font-weight: 900; text-transform: uppercase; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.3s; width: 100%; cursor: pointer; border: none; }
-        .discord-btn:hover { background: #4752c4; transform: translateY(-2px); }
-        .user-pill { background: rgba(88, 101, 242, 0.1); padding: 10px 15px; border-radius: 12px; border: 1px solid rgba(88, 101, 242, 0.2); margin-bottom: 15px; }
-        .user-avatar { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #5865F2; }
     </style>
 </head>
 <body id="main-body">
@@ -166,30 +158,14 @@
                 <div id="comments-list" class="space-y-4 mb-8"></div>
                 
                 <div id="comment-box-anchor" class="glass p-6 rounded-[24px] space-y-4 border border-blue-500/20">
-                    <div id="discord-login-area">
-                        <button onclick="core.loginDiscord()" class="discord-btn">
-                            <i class="fa-brands fa-discord text-xl"></i> Zaloguj przez Discord, aby skomentować
-                        </button>
+                    <div id="replying-to-info" class="hidden flex justify-between items-center bg-blue-500/10 p-2 rounded-lg border border-blue-500/20">
+                        <span class="text-[10px] font-bold uppercase">Odpowiadasz użytkownikowi: <span id="target-nick" class="text-blue-400"></span></span>
+                        <button onclick="core.cancelReply()" class="text-red-500 text-[10px] font-black uppercase">Anuluj</button>
                     </div>
-                    
-                    <div id="comment-form-area" class="hidden space-y-4">
-                        <div class="user-pill flex justify-between items-center">
-                            <div class="flex items-center gap-3">
-                                <img id="u-avatar" src="" class="user-avatar">
-                                <span id="u-name" class="font-black text-xs text-blue-400 uppercase tracking-widest"></span>
-                            </div>
-                            <button onclick="core.logoutDiscord()" class="text-[10px] font-black text-red-500 uppercase hover:text-red-400">Wyloguj</button>
-                        </div>
-
-                        <div id="replying-to-info" class="hidden flex justify-between items-center bg-blue-500/10 p-2 rounded-lg border border-blue-500/20">
-                            <span class="text-[10px] font-bold uppercase">Odpowiadasz użytkownikowi: <span id="target-nick" class="text-blue-400"></span></span>
-                            <button onclick="core.cancelReply()" class="text-red-500 text-[10px] font-black uppercase">Anuluj</button>
-                        </div>
-                        
-                        <textarea id="comm-text" rows="3" placeholder="Napisz co o tym sądzisz..." class="input-dark"></textarea>
-                        <button onclick="core.addComment()" class="bg-blue-600 w-full p-4 rounded-xl font-bold uppercase tracking-widest hover:bg-blue-500 transition shadow-lg shadow-blue-500/20">Wyślij</button>
-                    </div>
-                    </div>
+                    <input type="text" id="comm-nick" placeholder="Twój Nick" class="input-dark">
+                    <textarea id="comm-text" rows="3" placeholder="Napisz co o tym sądzisz..." class="input-dark"></textarea>
+                    <button onclick="core.addComment()" class="bg-blue-600 w-full p-4 rounded-xl font-bold uppercase tracking-widest hover:bg-blue-500 transition shadow-lg shadow-blue-500/20">Wyślij</button>
+                </div>
             </div>
         </div>
 
@@ -352,12 +328,6 @@
 
         const DEFAULT_PASS = "1234";
 
-        // KONFIGURACJA SUPABASE (Z TWOICH DANYCH)
-        const SUPABASE_URL = 'https://facispylyt-rgb.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_8zplJVjyWRV-A8ecQElLfQ_0mylk_Aq';
-        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        let currentUser = null;
-
         let allData = [];
         let allAds = [];
         let adIndices = { left: 0, right: 0 };
@@ -370,30 +340,6 @@
         let currentTab = 'all';
 
         window.core = {
-            // FUNKCJE LOGOWANIA DISCORD
-            loginDiscord: () => {
-                sb.auth.signInWithOAuth({ provider: 'discord' });
-            },
-            logoutDiscord: async () => {
-                await sb.auth.signOut();
-                location.reload();
-            },
-            checkDiscordUser: async () => {
-                const { data: { user } } = await sb.auth.getUser();
-                if(user) {
-                    currentUser = user;
-                    const loginArea = document.getElementById('discord-login-area');
-                    const formArea = document.getElementById('comment-form-area');
-                    if(loginArea) loginArea.classList.add('hidden');
-                    if(formArea) formArea.classList.remove('hidden');
-                    
-                    const uName = document.getElementById('u-name');
-                    const uAvatar = document.getElementById('u-avatar');
-                    if(uName) uName.innerText = user.user_metadata.full_name;
-                    if(uAvatar) uAvatar.src = user.user_metadata.avatar_url;
-                }
-            },
-
             parseMarkdown: (text) => {
                 if(!text) return "";
                 let html = text;
@@ -447,6 +393,7 @@
                 } else { alert("Błąd!"); }
             },
 
+            // NOWA FUNKCJA POKAZYWANIA KLAUZULI
             showLegal: (type) => {
                 const titles = {
                     redaction: "Redakcja",
@@ -613,15 +560,11 @@
                 });
             },
 
-            // AKTUALIZACJA FUNKCJI DODAWANIA KOMENTARZA
             addComment: () => {
-                if(!currentUser) return alert("Musisz być zalogowany przez Discord!");
-                const n = currentUser.user_metadata.full_name;
-                const avatarUrl = currentUser.user_metadata.avatar_url;
+                const n = document.getElementById('comm-nick').value;
                 const t = document.getElementById('comm-text').value;
-                if(!t) return alert("Wpisz treść komentarza!");
-                
-                const data = { nick: n, avatar: avatarUrl, text: t, date: new Date().toLocaleString('pl-PL'), ts: Date.now(), reacts: 0 };
+                if(!n || !t) return alert("Pola!");
+                const data = { nick: n, text: t, date: new Date().toLocaleString('pl-PL'), ts: Date.now(), reacts: 0 };
                 let ref = currentReplyToId ? db.ref(`elk/comments/${currentOpenPostId}/${currentReplyToId}/replies`) : db.ref(`elk/comments/${currentOpenPostId}`);
                 ref.push(data).then(() => { document.getElementById('comm-text').value = ""; core.cancelReply(); });
             },
@@ -691,7 +634,6 @@
                 });
             },
 
-            // AKTUALIZACJA FUNKCJI WIDOKU KOMENTARZY - DODANY AWATAR
             loadComments: (postId) => {
                 db.ref(`elk/comments/${postId}`).on('value', snap => {
                     const list = document.getElementById('comments-list'); list.innerHTML = "";
@@ -700,12 +642,10 @@
                         let reps = ""; 
                         if(c.replies) {
                             Object.entries(c.replies).forEach(([rid, r]) => {
-                                const rAvatar = r.avatar ? `<img src="${r.avatar}" class="w-4 h-4 rounded-full inline-block mr-1 align-middle border border-blue-500/30">` : '';
-                                reps += `<div class="reply-item"><button onclick="core.deleteComment('${rid}', true, '${cid}')" class="del-comm-btn">Usuń</button><div class="mb-1">${rAvatar}<span class="font-black text-blue-400 text-[11px] align-middle">${r.nick}</span></div><p class="text-xs">${r.text}</p><div class="flex gap-3 mt-1"><span onclick="core.reactComment('${rid}', true, '${cid}')" class="comm-react-btn scale-75"><i class="fa-solid fa-heart"></i> ${r.reacts || 0}</span><span onclick="core.reportComment('${rid}', '${r.text}', '${r.nick}', true, '${cid}')" class="report-btn">Zgłoś</span></div></div>`;
+                                reps += `<div class="reply-item"><button onclick="core.deleteComment('${rid}', true, '${cid}')" class="del-comm-btn">Usuń</button><span class="font-black text-blue-400 text-[11px]">${r.nick}</span><p class="text-xs">${r.text}</p><div class="flex gap-3 mt-1"><span onclick="core.reactComment('${rid}', true, '${cid}')" class="comm-react-btn scale-75"><i class="fa-solid fa-heart"></i> ${r.reacts || 0}</span><span onclick="core.reportComment('${rid}', '${r.text}', '${r.nick}', true, '${cid}')" class="report-btn">Zgłoś</span></div></div>`;
                             });
                         }
-                        const cAvatar = c.avatar ? `<img src="${c.avatar}" class="w-6 h-6 rounded-full inline-block mr-2 align-middle border border-blue-500/50">` : '';
-                        list.innerHTML += `<div class="comment-item"><button onclick="core.deleteComment('${cid}', false)" class="del-comm-btn">Usuń</button><div class="mb-1">${cAvatar}<span class="font-black text-blue-400 text-xs align-middle">${c.nick}</span></div><p class="text-sm">${c.text}</p><div class="flex gap-4 mt-2"><span onclick="core.reactComment('${cid}')" class="comm-react-btn"><i class="fa-solid fa-heart"></i> ${c.reacts || 0}</span><span onclick="core.setReply('${cid}', '${c.nick}')" class="reply-btn">Odpowiedz</span><span onclick="core.reportComment('${cid}', '${c.text}', '${c.nick}')" class="report-btn">Zgłoś</span>${c.replies ? `<span onclick="core.toggleReplies('${cid}')" class="toggle-replies">Pokaż odpowiedzi</span>`:''}</div><div id="replies-${cid}" class="replies-container">${reps}</div></div>`;
+                        list.innerHTML += `<div class="comment-item"><button onclick="core.deleteComment('${cid}', false)" class="del-comm-btn">Usuń</button><span class="font-black text-blue-400 text-xs">${c.nick}</span><p class="text-sm">${c.text}</p><div class="flex gap-4 mt-2"><span onclick="core.reactComment('${cid}')" class="comm-react-btn"><i class="fa-solid fa-heart"></i> ${c.reacts || 0}</span><span onclick="core.setReply('${cid}', '${c.nick}')" class="reply-btn">Odpowiedz</span><span onclick="core.reportComment('${cid}', '${c.text}', '${c.nick}')" class="report-btn">Zgłoś</span>${c.replies ? `<span onclick="core.toggleReplies('${cid}')" class="toggle-replies">Pokaż odpowiedzi</span>`:''}</div><div id="replies-${cid}" class="replies-container">${reps}</div></div>`;
                     });
                 });
             },
@@ -732,9 +672,6 @@
                 });
             }
         };
-
-        // URUCHAMIAMY SPRAWDZANIE ZALOGOWANIA PRZY STARCIE
-        core.checkDiscordUser();
 
         postsRef.on('value', snap => {
             const data = snap.val(); allData = [];
