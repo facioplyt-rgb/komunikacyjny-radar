@@ -5,16 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ełk Nasze Wiadomości</title>
     
-    <!-- STYLE I CZCIONKI -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     
-    <!-- BIBLIOTEKI FIREBASE -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
-
-    <!-- ZABEZPIECZENIE PRZED XSS (WIRUSAMI W TEKŚCIE) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
 
     <style>
@@ -83,6 +79,16 @@
         </button>
     </div>
 
+    <!-- EKRAN WYBORU NICKU (PIERWSZE LOGOWANIE) -->
+    <div id="setup-overlay" class="fixed inset-0 bg-[#0b0f1a] z-[90] flex flex-col items-center justify-center text-center p-6 hidden">
+        <h2 class="text-4xl font-black italic mb-2 uppercase text-white">Witaj w serwisie!</h2>
+        <p class="text-slate-400 mb-8 text-sm">Zanim zaczniesz czytać, musisz ustalić swój unikalny Nick.<br>Pod nim będą widoczne Twoje komentarze.</p>
+        <input type="text" id="setup-nick-input" placeholder="Wpisz swój Nick..." class="input-dark max-w-xs mb-6 text-center text-lg font-bold">
+        <button onclick="core.saveProfile()" class="bg-blue-600 px-8 py-4 rounded-full font-black uppercase text-sm tracking-widest hover:bg-blue-500 transition shadow-xl">
+            Zapisz i Wejdź
+        </button>
+    </div>
+
     <div id="toast-container"></div>
     <div class="ad-container ad-left" id="ad-l-zone"></div>
     <div class="ad-container ad-right" id="ad-r-zone"></div>
@@ -108,6 +114,7 @@
                 </div>
 
                 <div class="flex items-center gap-3 ml-4 border-l border-white/10 pl-4">
+                    <span id="display-user-nick" class="text-[10px] font-bold text-blue-400 uppercase tracking-wider hidden sm:block"></span>
                     <button onclick="core.logout()" class="text-[10px] font-bold uppercase text-red-500 hover:text-red-400 transition">Wyloguj</button>
                     <span id="admin-indicator" class="hidden text-[9px] bg-green-500/20 text-green-500 px-2 py-1 rounded-md font-black uppercase tracking-tighter">Admin</span>
                     <button id="btn-open-admin" onclick="core.openAdmin()" class="hidden text-[10px] font-bold uppercase tracking-widest text-blue-400 hover:text-blue-300 transition">Panel</button>
@@ -161,9 +168,9 @@
                         <span class="text-[10px] font-bold uppercase">Odpowiadasz użytkownikowi: <span id="target-nick" class="text-blue-400"></span></span>
                         <button onclick="core.cancelReply()" class="text-red-500 text-[10px] font-black uppercase">Anuluj</button>
                     </div>
-                    <input type="text" id="comm-nick" placeholder="Podaj swój nick (wymagane)" class="input-dark">
+                    <!-- POLE NICK ZNIKNĘŁO! -->
                     <textarea id="comm-text" rows="3" placeholder="Napisz co o tym sądzisz..." class="input-dark"></textarea>
-                    <button onclick="core.addComment()" class="bg-blue-600 w-full p-4 rounded-xl font-bold uppercase tracking-widest hover:bg-blue-500 transition shadow-lg shadow-blue-500/20">Wyślij</button>
+                    <button onclick="core.addComment()" class="bg-blue-600 w-full p-4 rounded-xl font-bold uppercase tracking-widest hover:bg-blue-500 transition shadow-lg shadow-blue-500/20">Dodaj Komentarz</button>
                 </div>
             </div>
         </div>
@@ -275,7 +282,7 @@
     </main>
 
     <script>
-        // ======= TWOJE POPRAWNE DANE KONFIGURACYJNE =======
+        // ======= KONFIGURACJA =======
         const firebaseConfig = {
             apiKey: "AIzaSyCb5QmZdwWwa9LafqqGZvGW-6vblkab32M",
             authDomain: "mzk-by-facio.firebaseapp.com",
@@ -286,11 +293,7 @@
             appId: "1:676970411647:web:26137e7242c0db7c83714a",
             measurementId: "G-EE72F501ZR"
         };
-
-        // ======= TU WKLEJ SWOJE UID =======
         const ADMIN_UID = "wXo2D56goYaId2IY7iUkcWs5tAG3"; 
-        
-        // ======= KLUCZ IMGBB =======
         const IMGBB_API_KEY = "19570ba1fa4dc27bd0ba974b4eb2e253";
 
         firebase.initializeApp(firebaseConfig);
@@ -313,72 +316,89 @@
         let currentReplyToId = null;
         let currentEditImages = [];
         let currentTab = 'all';
-        let appInitialized = false; // Flaga blokująca podwójne uruchomienie
+        let appInitialized = false; 
+        
+        // ZMIENNA PRZECHOWUJĄCA ZAPISANY NICK
+        let currentNick = "Użytkownik"; 
 
         window.core = {
-           // LOGOWANIE - WYMUSZENIE ZAPISU SESJI I ZMIANY EKRANU
             login: () => {
-                console.log("[LOGOWANIE] Ustawiam twardą pamięć sesji...");
                 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
                 .then(() => {
                     const provider = new firebase.auth.GoogleAuthProvider();
                     return auth.signInWithPopup(provider);
                 })
-                .then((result) => {
-                    console.log("[LOGOWANIE] Sukces! Zalogowano jako:", result.user.email);
-                    
-                    // Ręczne, natychmiastowe zdjęcie blokady po poprawnym logowaniu:
-                    document.getElementById('auth-overlay').classList.add('hidden');
-                    document.getElementById('main-header').classList.remove('hidden');
-                    document.getElementById('main-content').classList.remove('hidden');
-                    document.getElementById('main-footer').classList.remove('hidden');
-
-                    if(result.user.uid === ADMIN_UID) {
-                        document.getElementById('admin-indicator').classList.remove('hidden');
-                        document.getElementById('btn-open-admin').classList.remove('hidden');
-                        document.getElementById('main-body').classList.add('admin-active');
-                    }
-
-                    if (!appInitialized) {
-                        core.initApp(); 
-                        appInitialized = true;
-                    }
-                })
                 .catch(err => {
                     console.error("[BŁĄD LOGOWANIA]:", err.message);
-                    alert("Błąd: Przeglądarka zablokowała zapisywanie sesji. Otwórz stronę w zwykłym Chrome.");
+                    alert("Błąd: Upewnij się, że nie jesteś w trybie Incognito.");
                 });
             },
             
             logout: () => {
                 auth.signOut().then(() => location.reload());
             },
+
+            // FUNKCJA ZAPISU NOWEGO NICKU
+            saveProfile: () => {
+                const n = document.getElementById('setup-nick-input').value.trim();
+                if(!n) return alert("Musisz podać swój Nick!");
+                
+                const forbidden = ["admin", "administrator", "redakcja", "facioyt", "facio"];
+                if (forbidden.includes(n.toLowerCase()) && auth.currentUser.uid !== ADMIN_UID) {
+                    return alert("Odmowa! Ten nick jest zarezerwowany dla Administracji.");
+                }
+
+                // Zapisujemy do Firebase
+                db.ref(`elk/users/${auth.currentUser.uid}/nick`).set(n).then(() => {
+                    currentNick = n;
+                    core.showMainApp(auth.currentUser);
+                }).catch(err => alert("Błąd zapisu: " + err.message));
+            },
+
+            // WSPÓLNA FUNKCJA POKAZUJĄCA STRONĘ (DLA CHECKAUTH I SAVEPROFILE)
+            showMainApp: (user) => {
+                document.getElementById('auth-overlay').classList.add('hidden');
+                document.getElementById('setup-overlay').classList.add('hidden');
+                document.getElementById('main-header').classList.remove('hidden');
+                document.getElementById('main-content').classList.remove('hidden');
+                document.getElementById('main-footer').classList.remove('hidden');
+
+                // Pokaż nick w nagłówku
+                document.getElementById('display-user-nick').innerText = currentNick;
+
+                if(user.uid === ADMIN_UID) {
+                    document.getElementById('admin-indicator').classList.remove('hidden');
+                    document.getElementById('btn-open-admin').classList.remove('hidden');
+                    document.getElementById('main-body').classList.add('admin-active');
+                }
+
+                if (!appInitialized) {
+                    core.initApp(); 
+                    appInitialized = true;
+                }
+            },
             
-            // SPRAWDZANIE ZALOGOWANIA Z KONSOLĄ
             checkAuth: () => {
-                console.log("[AUTH] Uruchamiam nasłuchiwanie statusu użytkownika...");
                 auth.onAuthStateChanged(user => {
                     if (user) {
-                        console.log("[AUTH] Wykryto zalogowanego użytkownika.");
-                        document.getElementById('auth-overlay').classList.add('hidden');
-                        document.getElementById('main-header').classList.remove('hidden');
-                        document.getElementById('main-content').classList.remove('hidden');
-                        document.getElementById('main-footer').classList.remove('hidden');
-
-                        if(user.uid === ADMIN_UID) {
-                            console.log("[AUTH] Rozpoznano Właściciela (Admina). Aktywuję panel.");
-                            document.getElementById('admin-indicator').classList.remove('hidden');
-                            document.getElementById('btn-open-admin').classList.remove('hidden');
-                            document.getElementById('main-body').classList.add('admin-active');
-                        }
-
-                        if (!appInitialized) {
-                            core.initApp(); 
-                            appInitialized = true;
-                        }
+                        // SPRAWDZAMY CZY UŻYTKOWNIK MA JUŻ NICK W BAZIE DANYCH
+                        db.ref(`elk/users/${user.uid}/nick`).once('value').then(snap => {
+                            if(snap.exists()) {
+                                // MA NICK -> Wpuszczamy do aplikacji
+                                currentNick = snap.val();
+                                core.showMainApp(user);
+                            } else {
+                                // NIE MA NICKU -> Pokazujemy ekran ustawiania nicku
+                                document.getElementById('auth-overlay').classList.add('hidden');
+                                document.getElementById('setup-overlay').classList.remove('hidden');
+                            }
+                        }).catch(err => {
+                            console.error("Błąd bazy danych (Prawdopodobnie brak reguł!): ", err.message);
+                            alert("Błąd bazy danych. Sprawdź reguły Firebase (Rules).");
+                        });
                     } else {
-                        console.log("[AUTH] Brak aktywnej sesji. Ekran logowania jest widoczny.");
                         document.getElementById('auth-overlay').classList.remove('hidden');
+                        document.getElementById('setup-overlay').classList.add('hidden');
                         document.getElementById('main-header').classList.add('hidden');
                         document.getElementById('main-content').classList.add('hidden');
                         document.getElementById('main-footer').classList.add('hidden');
@@ -785,19 +805,12 @@
                 });
             },
 
+            // DODAWANIE KOMENTARZA (POBIERA ZAPISANY NICK Z ZMIENNEJ)
             addComment: () => {
-                let n = document.getElementById('comm-nick').value.trim();
                 const t = document.getElementById('comm-text').value;
-                if(!n || !t) return alert("Wypełnij oba pola!");
-
-                const forbidden = ["admin", "administrator", "redakcja", "facioyt", "facio"];
-                if (forbidden.includes(n.toLowerCase())) {
-                    if (auth.currentUser && auth.currentUser.uid !== ADMIN_UID) {
-                        return alert("Odmowa! Nie możesz użyć nicku zarezerwowanego dla administracji.");
-                    }
-                }
+                if(!t) return alert("Napisz najpierw treść komentarza!");
                 
-                const data = { nick: n, text: t, date: new Date().toLocaleString('pl-PL'), ts: Date.now(), reacts: 0 };
+                const data = { nick: currentNick, text: t, date: new Date().toLocaleString('pl-PL'), ts: Date.now(), reacts: 0 };
                 let ref = currentReplyToId ? db.ref(`elk/comments/${currentOpenPostId}/${currentReplyToId}/replies`) : db.ref(`elk/comments/${currentOpenPostId}`);
                 ref.push(data).then((snap) => { 
                     if(!currentReplyToId) {
@@ -822,17 +835,17 @@
             },
 
             reportComment: (cid, text, nick, isReply = false, pId = null) => {
-                if(confirm("Zgłosić?")) reportsRef.push({ postId: currentOpenPostId, commentId: cid, parentId: pId, isReply, text, author: nick, date: new Date().toLocaleString('pl-PL') });
+                if(confirm("Zgłosić ten komentarz jako spam / obraźliwy?")) reportsRef.push({ postId: currentOpenPostId, commentId: cid, parentId: pId, isReply, text, author: nick, date: new Date().toLocaleString('pl-PL') });
             },
 
             reactComment: (cid, isReply = false, pId = null) => {
-                const key = `re_${cid}`; if(localStorage.getItem(key)) return alert("Już zareagowano!");
+                const key = `re_${cid}`; if(localStorage.getItem(key)) return alert("Już polubiono ten komentarz!");
                 let path = isReply ? `elk/comments/${currentOpenPostId}/${pId}/replies/${cid}/reacts` : `elk/comments/${currentOpenPostId}/${cid}/reacts`;
                 db.ref(path).transaction(c => (c || 0) + 1); localStorage.setItem(key, "1");
             },
 
             deleteComment: (cid, isReply, pId, postId) => {
-                if(!confirm("Usunąć?")) return;
+                if(!confirm("Na pewno usunąć ten komentarz?")) return;
                 const post = postId || currentOpenPostId;
                 let path = isReply ? `elk/comments/${post}/${pId}/replies/${cid}` : `elk/comments/${post}/${cid}`;
                 db.ref(path).remove();
