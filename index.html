@@ -283,7 +283,7 @@
     </main>
 
     <script>
-        // ======= OSTATECZNA KONFIGURACJA DISCORD + FIREBASE =======
+   // ======= 1. KONFIGURACJA (STAŁE) =======
         const firebaseConfig = {
             apiKey: "AIzaSyCb5QmZdwWwa9LafqqGZvGW-6vblkab32M",
             authDomain: "mzk-by-facio.firebaseapp.com",
@@ -295,46 +295,32 @@
             measurementId: "G-EE72F501ZR"
         };
 
-        // TUTAJ WKLEJ SWOJE NOWE UID (ZOBACZYSZ JE W KONSOLI F12 PO ZALOGOWANIU)
+        // WAŻNE: Tu wkleisz swoje ID z konsoli F12 po pierwszym zalogowaniu!
         const ADMIN_UID = "discord:TWÓJ_NUMER_ID_Z_KONSOLI"; 
         const IMGBB_API_KEY = "19570ba1fa4dc27bd0ba974b4eb2e253";
-
-        // TWÓJ WYGENEROWANY LINK DISCORD
         const DISCORD_LOGIN_URL = "https://discord.com/oauth2/authorize?client_id=1498418325502558328&response_type=code&redirect_uri=https%3A%2F%2Felk-backend.vercel.app%2Fapi%2Fauth&scope=identify";
 
+        // ======= 2. INICJALIZACJA =======
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
-        
+
+        // Referencje do bazy
+        const postsRef = db.ref('elk/posts');
+        const adsRef = db.ref('elk/ads');
+        const settingsRef = db.ref('elk/settings');
+        const reportsRef = db.ref('elk/reports');
+        const commentsRootRef = db.ref('elk/comments');
+
+        // Zmienne globalne
+        let allData = [], allAds = [], currentTab = 'all', showLimit = 6;
+        let editId = null, adEditId = null, currentEditImages = [];
+        let currentOpenPostId = null, currentReplyToId = null;
+        let adIndices = { left: 0, right: 0 };
         let currentNick = "Użytkownik Discorda"; 
         let appInitialized = false;
 
-        // ======= OSTATECZNA KONFIGURACJA DISCORD + FIREBASE =======
-        const firebaseConfig = {
-            apiKey: "AIzaSyCb5QmZdwWwa9LafqqGZvGW-6vblkab32M",
-            authDomain: "mzk-by-facio.firebaseapp.com",
-            databaseURL: "https://mzk-by-facio-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "mzk-by-facio",
-            storageBucket: "mzk-by-facio.firebasestorage.app",
-            messagingSenderId: "676970411647",
-            appId: "1:676970411647:web:26137e7242c0db7c83714a",
-            measurementId: "G-EE72F501ZR"
-        };
-
-        // TUTAJ WKLEJ SWOJE NOWE UID (ZOBACZYSZ JE W KONSOLI F12 PO ZALOGOWANIU)
-        const ADMIN_UID = "discord:TWÓJ_NUMER_ID_Z_KONSOLI"; 
-        const IMGBB_API_KEY = "19570ba1fa4dc27bd0ba974b4eb2e253";
-
-        // TWÓJ WYGENEROWANY LINK DISCORD
-        const DISCORD_LOGIN_URL = "https://discord.com/oauth2/authorize?client_id=1498418325502558328&response_type=code&redirect_uri=https%3A%2F%2Felk-backend.vercel.app%2Fapi%2Fauth&scope=identify";
-
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const auth = firebase.auth();
-        
-        let currentNick = "Użytkownik Discorda"; 
-        let appInitialized = false;
-
+        // ======= 3. GŁÓWNA LOGIKA (CORE) =======
         window.core = {
             login: () => {
                 console.log("[LOGOWANIE] Przekierowanie do Discord...");
@@ -353,22 +339,16 @@
                 const customToken = urlParams.get('token');
                 const discordNick = urlParams.get('nick');
 
-                // 1. Jeśli wracamy z serwera Vercel z tokenem:
                 if (customToken) {
-                    console.log("[AUTH] Wykryto token z Discorda, logowanie...");
                     auth.signInWithCustomToken(customToken).then(() => {
                         if (discordNick) currentNick = decodeURIComponent(discordNick);
                         window.history.replaceState({}, document.title, window.location.pathname);
-                    }).catch(err => console.error("Błąd Custom Token:", err));
+                    }).catch(err => console.error("Błąd Tokena:", err));
                 }
 
-                // 2. Słuchacz stanu logowania:
                 auth.onAuthStateChanged(user => {
                     if (user) {
-                        console.log("Zalogowano pomyślnie!");
-                        console.log("Twoje nowe UID Discorda to: ", user.uid); // Skopiuj to do ADMIN_UID!
-
-                        // Sprawdź czy mamy nick w bazie, jeśli nie - zapisz ten z Discorda
+                        console.log("Twoje nowe UID Discorda to: ", user.uid);
                         db.ref(`elk/users/${user.uid}/nick`).once('value').then(snap => {
                             if (snap.exists()) {
                                 currentNick = snap.val();
@@ -388,70 +368,10 @@
 
             showMainApp: (user) => {
                 document.getElementById('auth-overlay').classList.add('hidden');
-                document.getElementById('main-header').classList.remove('hidden');
-                document.getElementById('main-content').classList.remove('hidden');
-                document.getElementById('main-footer').classList.remove('hidden');
-
-                document.getElementById('display-user-nick').innerText = currentNick;
-
-                if(user.uid === ADMIN_UID) {
-                    document.getElementById('admin-indicator').classList.remove('hidden');
-                    document.getElementById('btn-open-admin').classList.remove('hidden');
-                    document.getElementById('main-body').classList.add('admin-active');
-                }
-
-                if (!appInitialized) {
-                    core.initApp(); 
-                    appInitialized = true;
-                }
-            },
-        
-        // ZMIENNA PRZECHOWUJĄCA ZAPISANY NICK
-        let currentNick = "Użytkownik"; 
-
-        window.core = {
-            login: () => {
-                auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-                .then(() => {
-                    const provider = new firebase.auth.GoogleAuthProvider();
-                    return auth.signInWithPopup(provider);
-                })
-                .catch(err => {
-                    console.error("[BŁĄD LOGOWANIA]:", err.message);
-                    alert("Błąd: Upewnij się, że nie jesteś w trybie Incognito.");
-                });
-            },
-            
-            logout: () => {
-                auth.signOut().then(() => location.reload());
-            },
-
-            // FUNKCJA ZAPISU NOWEGO NICKU
-            saveProfile: () => {
-                const n = document.getElementById('setup-nick-input').value.trim();
-                if(!n) return alert("Musisz podać swój Nick!");
-                
-                const forbidden = ["admin", "administrator", "redakcja", "facioyt", "facio"];
-                if (forbidden.includes(n.toLowerCase()) && auth.currentUser.uid !== ADMIN_UID) {
-                    return alert("Odmowa! Ten nick jest zarezerwowany dla Administracji.");
-                }
-
-                // Zapisujemy do Firebase
-                db.ref(`elk/users/${auth.currentUser.uid}/nick`).set(n).then(() => {
-                    currentNick = n;
-                    core.showMainApp(auth.currentUser);
-                }).catch(err => alert("Błąd zapisu: " + err.message));
-            },
-
-            // WSPÓLNA FUNKCJA POKAZUJĄCA STRONĘ (DLA CHECKAUTH I SAVEPROFILE)
-            showMainApp: (user) => {
-                document.getElementById('auth-overlay').classList.add('hidden');
                 document.getElementById('setup-overlay').classList.add('hidden');
                 document.getElementById('main-header').classList.remove('hidden');
                 document.getElementById('main-content').classList.remove('hidden');
                 document.getElementById('main-footer').classList.remove('hidden');
-
-                // Pokaż nick w nagłówku
                 document.getElementById('display-user-nick').innerText = currentNick;
 
                 if(user.uid === ADMIN_UID) {
@@ -464,34 +384,6 @@
                     core.initApp(); 
                     appInitialized = true;
                 }
-            },
-            
-            checkAuth: () => {
-                auth.onAuthStateChanged(user => {
-                    if (user) {
-                        // SPRAWDZAMY CZY UŻYTKOWNIK MA JUŻ NICK W BAZIE DANYCH
-                        db.ref(`elk/users/${user.uid}/nick`).once('value').then(snap => {
-                            if(snap.exists()) {
-                                // MA NICK -> Wpuszczamy do aplikacji
-                                currentNick = snap.val();
-                                core.showMainApp(user);
-                            } else {
-                                // NIE MA NICKU -> Pokazujemy ekran ustawiania nicku
-                                document.getElementById('auth-overlay').classList.add('hidden');
-                                document.getElementById('setup-overlay').classList.remove('hidden');
-                            }
-                        }).catch(err => {
-                            console.error("Błąd bazy danych (Prawdopodobnie brak reguł!): ", err.message);
-                            alert("Błąd bazy danych. Sprawdź reguły Firebase (Rules).");
-                        });
-                    } else {
-                        document.getElementById('auth-overlay').classList.remove('hidden');
-                        document.getElementById('setup-overlay').classList.add('hidden');
-                        document.getElementById('main-header').classList.add('hidden');
-                        document.getElementById('main-content').classList.add('hidden');
-                        document.getElementById('main-footer').classList.add('hidden');
-                    }
-                });
             },
 
             initApp: () => {
@@ -511,8 +403,7 @@
                     const data = snap.val(); allAds = [];
                     const zones = { left: document.getElementById('ad-l-zone'), right: document.getElementById('ad-r-zone') };
                     const adAdminList = document.getElementById('admin-ads-list');
-                    if (zones.left) zones.left.innerHTML = ""; 
-                    if (zones.right) zones.right.innerHTML = ""; 
+                    if (zones.left) zones.left.innerHTML = ""; if (zones.right) zones.right.innerHTML = ""; 
                     if (adAdminList) adAdminList.innerHTML = "";
                     if(data) {
                         Object.entries(data).forEach(([id, ad]) => {
@@ -527,65 +418,30 @@
                             if(first) first.classList.add('active');
                             else zones[s].innerHTML = `<div class="no-ad-placeholder">Brak reklamy (${s})</div>`;
                         });
-                    } else {
-                        if (zones.left) zones.left.innerHTML = '<div class="no-ad-placeholder">Brak reklamy (Lewa)</div>';
-                        if (zones.right) zones.right.innerHTML = '<div class="no-ad-placeholder">Brak reklamy (Prawa)</div>';
                     }
                 });
 
                 settingsRef.on('value', snap => {
                     const d = snap.val(); if(!d) return;
-                    const txtAbout = document.getElementById('txt-about');
-                    const txtRedaction = document.getElementById('txt-redaction');
-                    const txtPrivacy = document.getElementById('txt-privacy');
-                    const txtCoop = document.getElementById('txt-coop');
-                    if(txtAbout) txtAbout.innerText = DOMPurify.sanitize(d.about) || "Portal informacyjny...";
-                    if(txtRedaction) txtRedaction.innerText = DOMPurify.sanitize(d.redaction) || "Brak danych.";
-                    if(txtPrivacy) txtPrivacy.innerText = DOMPurify.sanitize(d.privacy) || "Brak danych.";
-                    if(txtCoop) txtCoop.innerText = DOMPurify.sanitize(d.coop) || "Brak danych.";
-                });
-
-                reportsRef.on('value', s => {
-                    const c = s.val() ? Object.keys(s.val()).length : 0;
-                    const el = document.getElementById('notif-count');
-                    if(el) { el.innerText = c; el.classList.toggle('hidden', c === 0); }
+                    document.getElementById('txt-about').innerText = DOMPurify.sanitize(d.about) || "Portal informacyjny...";
+                    document.getElementById('txt-redaction').innerText = DOMPurify.sanitize(d.redaction) || "Brak danych.";
+                    document.getElementById('txt-privacy').innerText = DOMPurify.sanitize(d.privacy) || "Brak danych.";
+                    document.getElementById('txt-coop').innerText = DOMPurify.sanitize(d.coop) || "Brak danych.";
                 });
 
                 core.initNotifications();
                 setInterval(core.rotateAds, 5000);
             },
 
-            toggleNotifMenu: () => { document.getElementById('notif-dropdown').classList.toggle('hidden'); },
-
-            loadNotifications: () => {
-                const notifs = JSON.parse(localStorage.getItem('my_notifs') || "[]");
-                const list = document.getElementById('notif-list');
-                if(!list) return;
-                list.innerHTML = "";
-                let unreadCount = 0;
-
-                if (notifs.length === 0) {
-                    list.innerHTML = '<div class="p-6 text-center text-[10px] uppercase font-bold text-slate-500">Brak powiadomień</div>';
-                } else {
-                    notifs.forEach(n => {
-                        if (!n.read) unreadCount++;
-                        const bgClass = n.read ? 'opacity-50' : 'bg-white/5';
-                        const dot = n.read ? '' : '<div class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></div>';
-                        let icon = '<i class="fa-solid fa-info-circle text-blue-500"></i>';
-                        if (n.type === 'like') icon = '<i class="fa-solid fa-heart text-red-500"></i>';
-                        if (n.type === 'reply') icon = '<i class="fa-solid fa-reply text-green-500"></i>';
-
-                        list.innerHTML += `
-                            <div onclick="core.clickNotif(${n.id}, '${n.postId}')" class="flex items-center gap-3 p-4 border-b border-white/5 cursor-pointer hover:bg-white/10 transition ${bgClass}">
-                                <div class="text-lg w-6 text-center">${icon}</div>
-                                <div class="flex-1 text-[11px] text-slate-200 leading-tight">${DOMPurify.sanitize(n.msg)}</div>
-                                ${dot}
-                            </div>
-                        `;
-                    });
-                }
-                const badge = document.getElementById('global-notif-count');
-                if(badge) { badge.innerText = unreadCount; badge.classList.toggle('hidden', unreadCount === 0); }
+            // --- Pomocnicze funkcje (Powiadomienia, Toast, Ads) ---
+            showToast: (msg, type = 'info') => {
+                const container = document.getElementById('toast-container');
+                const t = document.createElement('div');
+                t.className = `toast toast-${type}`;
+                t.innerText = msg;
+                container.appendChild(t);
+                setTimeout(() => t.classList.add('show'), 100);
+                setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 500); }, 5000);
             },
 
             addNotification: (msg, type, postId) => {
@@ -596,270 +452,45 @@
                 core.loadNotifications();
             },
 
+            loadNotifications: () => {
+                const notifs = JSON.parse(localStorage.getItem('my_notifs') || "[]");
+                const list = document.getElementById('notif-list');
+                if(!list) return;
+                list.innerHTML = "";
+                let unreadCount = 0;
+                if (notifs.length === 0) {
+                    list.innerHTML = '<div class="p-6 text-center text-[10px] uppercase font-bold text-slate-500">Brak powiadomień</div>';
+                } else {
+                    notifs.forEach(n => {
+                        if (!n.read) unreadCount++;
+                        list.innerHTML += `<div onclick="core.clickNotif(${n.id}, '${n.postId}')" class="flex items-center gap-3 p-4 border-b border-white/5 cursor-pointer hover:bg-white/10 transition ${n.read ? 'opacity-50' : 'bg-white/5'}">
+                            <div class="flex-1 text-[11px] text-slate-200">${DOMPurify.sanitize(n.msg)}</div>
+                            ${n.read ? '' : '<div class="w-2 h-2 rounded-full bg-blue-500"></div>'}
+                        </div>`;
+                    });
+                }
+                const badge = document.getElementById('global-notif-count');
+                badge.innerText = unreadCount; badge.classList.toggle('hidden', unreadCount === 0);
+            },
+
             clickNotif: (id, postId) => {
                 const notifs = JSON.parse(localStorage.getItem('my_notifs') || "[]");
                 const notif = notifs.find(n => n.id === id);
-                if (notif) {
-                    notif.read = true;
-                    localStorage.setItem('my_notifs', JSON.stringify(notifs));
-                    core.loadNotifications();
-                }
+                if (notif) { notif.read = true; localStorage.setItem('my_notifs', JSON.stringify(notifs)); core.loadNotifications(); }
+                if (postId) { const p = allData.find(x => x.id === postId); if (p) core.showFull(p); }
                 document.getElementById('notif-dropdown').classList.add('hidden');
-                if (postId) {
-                    const postData = allData.find(x => x.id === postId);
-                    if (postData) core.showFull(postData);
-                }
-            },
-
-            clearNotifs: () => {
-                localStorage.setItem('my_notifs', "[]");
-                core.loadNotifications();
-            },
-
-            showToast: (msg, type = 'info') => {
-                const container = document.getElementById('toast-container');
-                if(!container) return;
-                const t = document.createElement('div');
-                t.className = `toast toast-${type}`;
-                t.innerText = msg;
-                container.appendChild(t);
-                setTimeout(() => t.classList.add('show'), 100);
-                setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 500); }, 5000);
             },
 
             initNotifications: () => {
                 const lastExit = parseInt(localStorage.getItem('user_last_exit') || Date.now());
-                let notifiedPosts = []; 
                 postsRef.on('child_added', snap => {
-                    const post = snap.val();
-                    const pid = snap.key;
-                    if(post.ts > lastExit && !notifiedPosts.includes(pid)) {
-                        notifiedPosts.push(pid);
-                        core.addNotification(`Nowa wiadomość: ${post.title}`, 'info', pid);
-                    }
+                    if(snap.val().ts > lastExit) core.addNotification(`Nowa wiadomość: ${snap.val().title}`, 'info', snap.key);
                 });
-
-                const myComms = JSON.parse(localStorage.getItem('my_comments') || "[]");
-                myComms.forEach(item => {
-                    db.ref(`elk/comments/${item.pId}/${item.cId}`).on('value', snap => {
-                        const data = snap.val();
-                        if(!data) return;
-                        if(data.reacts > (item.rCount || 0)) {
-                            item.rCount = data.reacts; 
-                            core.saveMyComms(myComms); 
-                            core.addNotification(`Ktoś polubił Twój komentarz!`, 'like', item.pId);
-                        }
-                        const reps = data.replies ? Object.keys(data.replies).length : 0;
-                        if(reps > (item.repCount || 0)) {
-                            item.repCount = reps; 
-                            core.saveMyComms(myComms); 
-                            core.addNotification(`Ktoś odpowiedział na Twój komentarz!`, 'reply', item.pId);
-                        }
-                    });
-                });
-                window.addEventListener('beforeunload', () => { localStorage.setItem('user_last_exit', Date.now().toString()); });
-                core.loadNotifications(); 
+                window.addEventListener('beforeunload', () => localStorage.setItem('user_last_exit', Date.now().toString()));
+                core.loadNotifications();
             },
 
-            saveMyComms: (arr) => localStorage.setItem('my_comments', JSON.stringify(arr)),
-
-            parseMarkdown: (text) => {
-                if(!text) return "";
-                let html = DOMPurify.sanitize(text); 
-                html = html.replace(/^#\s+(.*)$/gm, '<span class="md-h1">$1</span>').replace(/^###\s+(.*)$/gm, '<span class="md-h3">$1</span>').replace(/^-#\s+(.*)$/gm, '<span class="md-small">$1</span>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/__(.*?)__/g, '<span class="md-u">$1</span>').replace(/\*(.*?)\*/g, '<em>$1</em>');
-                return html;
-            },
-
-            previewNewFiles: () => {
-                const files = document.getElementById('in-files').files;
-                core.renderEditImages(files);
-            },
-
-            switchTab: (tabId, btn) => {
-                currentTab = tabId;
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                window.scrollTo(0, 0);
-                core.filterPosts();
-            },
-
-            setAdminTab: (tab) => {
-                const sections = ['new', 'comms', 'notifs', 'ads', 'settings'];
-                sections.forEach(s => {
-                    const el = document.getElementById(`admin-${s}-section`);
-                    if(el) el.classList.toggle('hidden', tab !== s);
-                });
-                document.querySelectorAll('#view-admin .tab-btn').forEach(b => b.classList.remove('active'));
-                const btn = document.getElementById(`btn-adm-${tab}`);
-                if(btn) btn.classList.add('active');
-                if(tab === 'comms') core.loadAllCommentsAdmin();
-                if(tab === 'settings') core.loadSettingsInAdmin();
-            },
-
-            goHome: () => {
-                document.getElementById('view-home').classList.remove('hidden');
-                document.getElementById('search-area').classList.remove('hidden');
-                document.getElementById('view-article').classList.add('hidden');
-                document.getElementById('view-admin').classList.add('hidden');
-                document.getElementById('view-legal').classList.add('hidden');
-                core.cancelEdit(); core.cancelReply();
-                currentOpenPostId = null; window.scrollTo(0,0);
-            },
-
-            openAdmin: () => {
-                if(auth.currentUser && auth.currentUser.uid === ADMIN_UID) {
-                    document.getElementById('view-home').classList.add('hidden');
-                    document.getElementById('search-area').classList.add('hidden');
-                    document.getElementById('view-admin').classList.remove('hidden');
-                    core.loadReports();
-                } else { 
-                    alert("Odmowa dostępu! Tylko właściciel może otworzyć ten panel."); 
-                }
-            },
-
-            showLegal: (type) => {
-                const titles = { redaction: "Redakcja", privacy: "Polityka Prywatności", coop: "Współpraca" };
-                const content = document.getElementById(`txt-${type}`).innerText;
-                document.getElementById('legal-title').innerText = titles[type];
-                document.getElementById('legal-body').innerText = content;
-                document.getElementById('view-home').classList.add('hidden');
-                document.getElementById('search-area').classList.add('hidden');
-                document.getElementById('view-article').classList.add('hidden');
-                document.getElementById('view-admin').classList.add('hidden');
-                document.getElementById('view-legal').classList.remove('hidden');
-                window.scrollTo(0,0);
-            },
-
-            saveSettings: () => {
-                const data = {
-                    about: document.getElementById('set-about').value,
-                    redaction: document.getElementById('set-redaction').value,
-                    privacy: document.getElementById('set-privacy').value,
-                    coop: document.getElementById('set-coop').value
-                };
-                settingsRef.set(data).then(() => alert("Zapisano w chmurze!"));
-            },
-
-            loadSettingsInAdmin: () => {
-                settingsRef.once('value', s => {
-                    const d = s.val(); if(!d) return;
-                    document.getElementById('set-about').value = d.about || "";
-                    document.getElementById('set-redaction').value = d.redaction || "";
-                    document.getElementById('set-privacy').value = d.privacy || "";
-                    document.getElementById('set-coop').value = d.coop || "";
-                });
-            },
-
-            publishAd: async () => {
-                const side = document.getElementById('ad-side').value;
-                const file = document.getElementById('ad-file').files[0];
-                const target = document.getElementById('ad-target').value;
-                if(!target) return alert("Podaj link!");
-                if(!adEditId && !file) return alert("Wybierz zdjęcie!");
-                document.getElementById('loader').style.display = 'flex';
-                
-                let imgUrl = adEditId ? allAds.find(x => x.id === adEditId).img : "";
-                
-                if(file) {
-                    const fd = new FormData(); 
-                    fd.append("image", file);
-                    const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
-                    const d = await r.json(); 
-                    if(d.success) imgUrl = d.data.url;
-                }
-
-                const data = { side, img: imgUrl, link: target, ts: Date.now() };
-                const act = adEditId ? adsRef.child(adEditId).update(data) : adsRef.push(data);
-                act.then(() => { core.cancelAdEdit(); document.getElementById('loader').style.display = 'none'; });
-            },
-
-            editAd: (id) => {
-                const ad = allAds.find(x => x.id === id); adEditId = id;
-                document.getElementById('ad-side').value = ad.side;
-                document.getElementById('ad-target').value = ad.link;
-                document.getElementById('ad-mode-title').innerText = "Edytuj Reklamę";
-                document.getElementById('cancel-ad-edit-btn').classList.remove('hidden');
-            },
-
-            deleteAd: (id) => confirm("Usunąć?") && adsRef.child(id).remove(),
-            cancelAdEdit: () => { 
-                adEditId = null; document.getElementById('ad-target').value = ""; 
-                document.getElementById('ad-mode-title').innerText = "Zarządzaj Reklamami";
-                document.getElementById('cancel-ad-edit-btn').classList.add('hidden');
-            },
-
-            renderEditImages: (newFiles = []) => {
-                const container = document.getElementById('edit-images-preview'); container.innerHTML = "";
-                currentEditImages.forEach((url, index) => {
-                    container.innerHTML += `<div class="preview-wrapper"><img src="${url}"><div class="preview-del" onclick="core.removeImageFromEdit(${index})">x</div></div>`;
-                });
-                Array.from(newFiles).forEach(file => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const div = document.createElement('div'); div.className = "preview-wrapper opacity-50";
-                        div.innerHTML = `<img src="${e.target.result}"><div class="absolute bottom-0 left-0 bg-blue-500 text-[8px] px-1 font-bold">LOKALNE</div>`;
-                        container.appendChild(div);
-                    };
-                    reader.readAsDataURL(file);
-                });
-            },
-
-            publish: async () => {
-                const t = document.getElementById('in-title').value;
-                const c = document.getElementById('in-content').value;
-                const cat = document.getElementById('in-category').value;
-                const a = document.getElementById('in-author').value || "Redakcja";
-                const customDate = document.getElementById('in-date').value;
-                const files = document.getElementById('in-files').files;
-                if(!t || !c) return alert("Wypełnij pola!");
-                
-                document.getElementById('loader').style.display = 'flex';
-                let newUrls = [];
-                
-                if(files.length > 0) {
-                    for(let f of files) {
-                        const fd = new FormData(); 
-                        fd.append("image", f);
-                        const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
-                        const d = await r.json(); 
-                        if(d.success) newUrls.push(d.data.url);
-                    }
-                }
-
-                const finalImgs = [...currentEditImages, ...newUrls];
-                const now = new Date().toLocaleString('pl-PL');
-                let data = { title: t, content: c, author: a, category: cat, images: finalImgs };
-                if(editId) {
-                    const old = allData.find(x => x.id === editId);
-                    data.date = customDate || old.date; data.ts = old.ts; data.likes = old.likes || 0;
-                } else { data.date = customDate || now; data.ts = Date.now(); data.likes = 0; }
-                const act = editId ? postsRef.child(editId).update(data) : postsRef.push(data);
-                act.then(() => location.reload());
-            },
-
-            editMode: (id) => {
-                const p = allData.find(x => x.id === id); editId = id; 
-                currentEditImages = p.images ? [...p.images] : [];
-                document.getElementById('in-title').value = p.title;
-                document.getElementById('in-author').value = p.author;
-                document.getElementById('in-content').value = p.content;
-                document.getElementById('in-date').value = p.date;
-                document.getElementById('admin-mode-title').innerText = "Edytuj";
-                document.getElementById('cancel-edit-btn').classList.remove('hidden');
-                core.renderEditImages();
-            },
-
-            cancelEdit: () => {
-                editId = null; currentEditImages = [];
-                document.getElementById('in-title').value = ""; document.getElementById('in-content').value = "";
-                document.getElementById('admin-mode-title').innerText = "Nowy Wpis";
-                document.getElementById('cancel-edit-btn').classList.add('hidden');
-                document.getElementById('edit-images-preview').innerHTML = "";
-            },
-
-            deletePost: (id) => confirm("Usunąć?") && postsRef.child(id).remove(),
-            showAllPosts: () => { showLimit = 999; core.renderPosts(allData); document.getElementById('more-container').classList.add('hidden'); window.scrollTo(0,0); },
-
+            // --- Logika Artykułów i Komentarzy ---
             filterPosts: () => {
                 const term = document.getElementById('search-input').value.toLowerCase();
                 let f = allData;
@@ -873,107 +504,22 @@
                 const toShow = isSearch ? items : items.slice(0, showLimit);
                 toShow.forEach(v => {
                     const card = document.createElement('div'); card.className = "card glass p-6 rounded-2xl cursor-pointer mb-4 post-anim";
-                    card.innerHTML = `<div class="flex gap-5 flex-col md:flex-row">${v.images?.[0] ? `<img src="${v.images[0]}" class="w-full md:w-28 h-28 object-cover rounded-xl">` : ''}<div><span class="category-tag">${DOMPurify.sanitize(v.category || 'Wydarzenia')}</span><h2 class="font-black text-xl">${DOMPurify.sanitize(v.title)}</h2><div class="flex gap-3 mt-4"><span class="author-badge">${DOMPurify.sanitize(v.author)}</span><span class="text-[10px] text-red-500"><i class="fa-solid fa-heart"></i> ${v.likes || 0}</span></div></div></div>`;
+                    card.innerHTML = `<div class="flex gap-5 flex-col md:flex-row">${v.images?.[0] ? `<img src="${v.images[0]}" class="w-full md:w-28 h-28 object-cover rounded-xl">` : ''}<div><span class="category-tag">${v.category}</span><h2 class="font-black text-xl">${v.title}</h2><div class="flex gap-3 mt-4"><span class="author-badge">${v.author}</span></div></div></div>`;
                     card.onclick = () => core.showFull(v);
                     container.appendChild(card);
                 });
-                const moreCont = document.getElementById('more-container');
-                if(moreCont) moreCont.classList.toggle('hidden', isSearch || items.length <= showLimit);
+                document.getElementById('more-container').classList.toggle('hidden', isSearch || items.length <= showLimit);
             },
 
-            likePost: () => {
-                const key = `liked_${currentOpenPostId}`; 
-                if(localStorage.getItem(key)) return alert("Już polubiono!");
-                const p = allData.find(x => x.id === currentOpenPostId);
-                const newLikes = (p.likes || 0) + 1;
-                postsRef.child(currentOpenPostId).update({ likes: newLikes }).then(() => {
-                    localStorage.setItem(key, "1"); 
-                    document.getElementById('main-like-btn').classList.add('liked');
-                    document.getElementById('like-count').innerText = newLikes;
-                });
-            },
-
-            // DODAWANIE KOMENTARZA (POBIERA ZAPISANY NICK Z ZMIENNEJ)
-            addComment: () => {
-                const t = document.getElementById('comm-text').value;
-                if(!t) return alert("Napisz najpierw treść komentarza!");
-                
-                const data = { nick: currentNick, text: t, date: new Date().toLocaleString('pl-PL'), ts: Date.now(), reacts: 0 };
-                let ref = currentReplyToId ? db.ref(`elk/comments/${currentOpenPostId}/${currentReplyToId}/replies`) : db.ref(`elk/comments/${currentOpenPostId}`);
-                ref.push(data).then((snap) => { 
-                    if(!currentReplyToId) {
-                        const myComms = JSON.parse(localStorage.getItem('my_comments') || "[]");
-                        myComms.push({ pId: currentOpenPostId, cId: snap.key, rCount: 0, repCount: 0 });
-                        core.saveMyComms(myComms);
-                    }
-                    document.getElementById('comm-text').value = ""; 
-                    core.cancelReply(); 
-                });
-            },
-
-            setReply: (cid, nick) => {
-                currentReplyToId = cid; document.getElementById('replying-to-info').classList.remove('hidden');
-                document.getElementById('target-nick').innerText = DOMPurify.sanitize(nick);
-            },
-            cancelReply: () => { currentReplyToId = null; document.getElementById('replying-to-info').classList.add('hidden'); },
-
-            toggleReplies: (cid) => {
-                const el = document.getElementById(`replies-${cid}`);
-                if(el) el.style.display = el.style.display === "block" ? "none" : "block";
-            },
-
-            reportComment: (cid, text, nick, isReply = false, pId = null) => {
-                if(confirm("Zgłosić ten komentarz jako spam / obraźliwy?")) reportsRef.push({ postId: currentOpenPostId, commentId: cid, parentId: pId, isReply, text, author: nick, date: new Date().toLocaleString('pl-PL') });
-            },
-
-            reactComment: (cid, isReply = false, pId = null) => {
-                const key = `re_${cid}`; if(localStorage.getItem(key)) return alert("Już polubiono ten komentarz!");
-                let path = isReply ? `elk/comments/${currentOpenPostId}/${pId}/replies/${cid}/reacts` : `elk/comments/${currentOpenPostId}/${cid}/reacts`;
-                db.ref(path).transaction(c => (c || 0) + 1); localStorage.setItem(key, "1");
-            },
-
-            deleteComment: (cid, isReply, pId, postId) => {
-                if(!confirm("Na pewno usunąć ten komentarz?")) return;
-                const post = postId || currentOpenPostId;
-                let path = isReply ? `elk/comments/${post}/${pId}/replies/${cid}` : `elk/comments/${post}/${cid}`;
-                db.ref(path).remove();
-            },
-
-            dismissReport: (rid) => reportsRef.child(rid).remove(),
-
-            loadReports: () => {
-                reportsRef.on('value', snap => {
-                    const container = document.getElementById('reports-list'); container.innerHTML = "";
-                    if(!snap.val()) return;
-                    Object.entries(snap.val()).forEach(([rid, r]) => {
-                        container.innerHTML += `<div class="notif-card report-highlight"><p class="text-[10px] text-red-500 font-bold">${DOMPurify.sanitize(r.author)}:</p><p class="text-sm italic my-2">"${DOMPurify.sanitize(r.text)}"</p><div class="flex gap-2"><button onclick="core.deleteComment('${r.commentId}', ${r.isReply}, '${r.parentId}', '${r.postId}'); core.dismissReport('${rid}')" class="bg-red-600 px-3 py-1 rounded text-[9px] font-bold">USUŃ</button><button onclick="core.dismissReport('${rid}')" class="bg-slate-700 px-3 py-1 rounded text-[9px] font-bold">ODRZUĆ</button></div></div>`;
-                    });
-                });
-            },
-
-            loadAllCommentsAdmin: () => {
-                commentsRootRef.on('value', snap => {
-                    const container = document.getElementById('all-comms-list'); container.innerHTML = "";
-                    if(!snap.val()) return;
-                    Object.entries(snap.val()).forEach(([postId, comms]) => {
-                        Object.entries(comms).forEach(([cid, c]) => {
-                            container.innerHTML += `<div class="notif-card">
-                                <p class="text-[10px] text-blue-400 font-bold">${DOMPurify.sanitize(c.nick)} (ID Posta: ${postId}):</p>
-                                <p class="text-xs my-1">${DOMPurify.sanitize(c.text)}</p>
-                                <button onclick="core.deleteComment('${cid}', false, null, '${postId}')" class="text-red-500 text-[9px] font-bold">USUŃ KOMENTARZ</button>
-                            </div>`;
-                            if(c.replies) {
-                                Object.entries(c.replies).forEach(([rid, r]) => {
-                                    container.innerHTML += `<div class="notif-card ml-12 border-l-2 border-blue-600/30 bg-blue-600/5">
-                                        <p class="text-[10px] text-blue-300 font-bold italic">ODPOWIEDŹ OD: ${DOMPurify.sanitize(r.nick)}</p>
-                                        <p class="text-xs my-1">${DOMPurify.sanitize(r.text)}</p>
-                                        <button onclick="core.deleteComment('${rid}', true, '${cid}', '${postId}')" class="text-red-400 text-[9px] font-bold">USUŃ ODPOWIEDŹ</button>
-                                    </div>`;
-                                });
-                            }
-                        });
-                    });
-                });
+            showFull: (data) => {
+                currentOpenPostId = data.id;
+                document.getElementById('view-home').classList.add('hidden'); 
+                document.getElementById('search-area').classList.add('hidden');
+                document.getElementById('view-article').classList.remove('hidden');
+                document.getElementById('like-count').innerText = data.likes || 0;
+                core.loadComments(data.id);
+                document.getElementById('article-content').innerHTML = `<h1 class="text-4xl font-black mb-4">${data.title}</h1><div class="flex gap-4 mb-8"><span class="author-badge">${data.author}</span><span class="text-xs opacity-40">${data.date}</span></div><div class="text-slate-300 white-pre mb-10">${core.parseMarkdown(data.content)}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">${(data.images||[]).map(i=>`<img src="${i}" class="w-full rounded-3xl">`).join('')}</div>`;
+                window.scrollTo(0,0);
             },
 
             loadComments: (postId) => {
@@ -981,34 +527,48 @@
                     const list = document.getElementById('comments-list'); list.innerHTML = "";
                     if(!snap.val()) return;
                     Object.entries(snap.val()).sort((a,b) => b[1].ts - a[1].ts).forEach(([cid, c]) => {
-                        let reps = ""; 
-                        if(c.replies) {
-                            Object.entries(c.replies).forEach(([rid, r]) => {
-                                reps += `<div class="reply-item"><button onclick="core.deleteComment('${rid}', true, '${cid}')" class="del-comm-btn">Usuń</button><span class="font-black text-blue-400 text-[11px]">${DOMPurify.sanitize(r.nick)}</span><p class="text-xs">${DOMPurify.sanitize(r.text)}</p><div class="flex gap-3 mt-1"><span onclick="core.reactComment('${rid}', true, '${cid}')" class="comm-react-btn scale-75"><i class="fa-solid fa-heart"></i> ${r.reacts || 0}</span><span onclick="core.reportComment('${rid}', '${DOMPurify.sanitize(r.text)}', '${DOMPurify.sanitize(r.nick)}', true, '${cid}')" class="report-btn">Zgłoś</span></div></div>`;
-                            });
-                        }
-                        list.innerHTML += `<div class="comment-item"><button onclick="core.deleteComment('${cid}', false)" class="del-comm-btn">Usuń</button><span class="font-black text-blue-400 text-xs">${DOMPurify.sanitize(c.nick)}</span><p class="text-sm">${DOMPurify.sanitize(c.text)}</p><div class="flex gap-4 mt-2"><span onclick="core.reactComment('${cid}')" class="comm-react-btn"><i class="fa-solid fa-heart"></i> ${c.reacts || 0}</span><span onclick="core.setReply('${cid}', '${DOMPurify.sanitize(c.nick)}')" class="reply-btn">Odpowiedz</span><span onclick="core.reportComment('${cid}', '${DOMPurify.sanitize(c.text)}', '${DOMPurify.sanitize(c.nick)}')" class="report-btn">Zgłoś</span>${c.replies ? `<span onclick="core.toggleReplies('${cid}')" class="toggle-replies">Pokaż odpowiedzi</span>`:''}</div><div id="replies-${cid}" class="replies-container">${reps}</div></div>`;
+                        list.innerHTML += `<div class="comment-item">
+                            <button onclick="core.deleteComment('${cid}')" class="del-comm-btn">Usuń</button>
+                            <span class="font-black text-blue-400 text-xs">${DOMPurify.sanitize(c.nick)}</span>
+                            <p class="text-sm">${DOMPurify.sanitize(c.text)}</p>
+                        </div>`;
                     });
                 });
             },
 
-            showFull: (data) => {
-                currentOpenPostId = data.id;
-                document.getElementById('view-home').classList.add('hidden'); document.getElementById('search-area').classList.add('hidden');
-                document.getElementById('view-article').classList.remove('hidden');
-                
-                const isLiked = localStorage.getItem(`liked_${data.id}`) ? 'liked' : '';
-                document.getElementById('main-like-btn').className = `like-btn flex items-center gap-2 bg-white/5 px-6 py-3 rounded-full border border-white/5 transition ${isLiked}`;
-                document.getElementById('like-count').innerText = data.likes || 0;
+            addComment: () => {
+                const t = document.getElementById('comm-text').value;
+                if(!t) return alert("Napisz treść!");
+                const data = { nick: currentNick, text: t, ts: Date.now(), date: new Date().toLocaleString() };
+                db.ref(`elk/comments/${currentOpenPostId}`).push(data).then(() => {
+                    document.getElementById('comm-text').value = "";
+                });
+            },
 
-                core.loadComments(data.id);
-                document.getElementById('article-content').innerHTML = `<h1 class="text-4xl font-black mb-4">${DOMPurify.sanitize(data.title)}</h1><div class="flex gap-4 mb-8"><span class="author-badge">${DOMPurify.sanitize(data.author)}</span><span class="text-xs opacity-40">${DOMPurify.sanitize(data.date)}</span></div><div class="text-slate-300 text-lg white-pre border-l-4 border-blue-600 pl-6 mb-10">${core.parseMarkdown(data.content)}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">${(data.images||[]).map(i=>`<img src="${i}" class="w-full rounded-3xl">`).join('')}</div>`;
+            // --- Funkcje Admina i Inne ---
+            openAdmin: () => {
+                document.getElementById('view-home').classList.add('hidden');
+                document.getElementById('search-area').classList.add('hidden');
+                document.getElementById('view-admin').classList.remove('hidden');
+            },
+
+            goHome: () => {
+                document.getElementById('view-home').classList.remove('hidden');
+                document.getElementById('search-area').classList.remove('hidden');
+                document.getElementById('view-article').classList.add('hidden');
+                document.getElementById('view-admin').classList.add('hidden');
                 window.scrollTo(0,0);
             },
 
+            parseMarkdown: (text) => {
+                if(!text) return "";
+                return DOMPurify.sanitize(text)
+                    .replace(/^# (.*$)/gm, '<h1 class="md-h1">$1</h1>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            },
+
             rotateAds: () => {
-                const sides = ['left', 'right'];
-                sides.forEach(s => {
+                ['left', 'right'].forEach(s => {
                     const container = document.getElementById(`ad-${s[0]}-zone`);
                     if (!container) return;
                     const boxes = container.querySelectorAll('.ad-box');
@@ -1021,9 +581,8 @@
             }
         };
 
-        // URUCHOMIENIE SPRAWDZANIA STANU LOGOWANIA NA STARCIE
+        // Start aplikacji
         core.checkAuth();
-        
     </script>
 </body>
 </html>
