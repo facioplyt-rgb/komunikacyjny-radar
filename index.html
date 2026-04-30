@@ -316,15 +316,37 @@
         let appInitialized = false; // Flaga blokująca podwójne uruchomienie
 
         window.core = {
-            // LOGOWANIE - STABILNA METODA POPUP
+           // LOGOWANIE - WYMUSZENIE ZAPISU SESJI I ZMIANY EKRANU
             login: () => {
-                console.log("[LOGOWANIE] Uruchamiam okienko Google...");
-                const provider = new firebase.auth.GoogleAuthProvider();
-                auth.signInWithPopup(provider).then((result) => {
+                console.log("[LOGOWANIE] Ustawiam twardą pamięć sesji...");
+                auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+                .then(() => {
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    return auth.signInWithPopup(provider);
+                })
+                .then((result) => {
                     console.log("[LOGOWANIE] Sukces! Zalogowano jako:", result.user.email);
-                }).catch(err => {
+                    
+                    // Ręczne, natychmiastowe zdjęcie blokady po poprawnym logowaniu:
+                    document.getElementById('auth-overlay').classList.add('hidden');
+                    document.getElementById('main-header').classList.remove('hidden');
+                    document.getElementById('main-content').classList.remove('hidden');
+                    document.getElementById('main-footer').classList.remove('hidden');
+
+                    if(result.user.uid === ADMIN_UID) {
+                        document.getElementById('admin-indicator').classList.remove('hidden');
+                        document.getElementById('btn-open-admin').classList.remove('hidden');
+                        document.getElementById('main-body').classList.add('admin-active');
+                    }
+
+                    if (!appInitialized) {
+                        core.initApp(); 
+                        appInitialized = true;
+                    }
+                })
+                .catch(err => {
                     console.error("[BŁĄD LOGOWANIA]:", err.message);
-                    alert("Błąd logowania: " + err.message);
+                    alert("Błąd: Przeglądarka zablokowała zapisywanie sesji. Otwórz stronę w zwykłym Chrome.");
                 });
             },
             
