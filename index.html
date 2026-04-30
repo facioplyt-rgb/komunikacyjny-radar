@@ -5,16 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ełk Nasze Wiadomości - MZK by Facio</title>
     
-    <!-- STYLE I CZCIONKI -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     
-    <!-- BIBLIOTEKI FIREBASE -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
 
-    <!-- ZABEZPIECZENIE PRZED XSS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
 
     <style>
@@ -43,37 +40,24 @@
         .ad-container { position: fixed; top: 100px; width: 140px; min-height: 50px; z-index: 40; display: block; }
         .ad-left { left: 10px; } .ad-right { right: 10px; }
         .no-ad-placeholder { font-size: 10px; font-weight: 900; color: rgba(255,255,255,0.2); text-transform: uppercase; border: 2px dashed rgba(255,255,255,0.05); padding: 20px 10px; text-align: center; border-radius: 12px; }
-        .report-btn { font-size: 9px; font-weight: 900; color: #ef4444; text-transform: uppercase; cursor: pointer; opacity: 0.6; margin-left: auto; }
-        .reply-btn { font-size: 9px; font-weight: 900; color: var(--main); text-transform: uppercase; cursor: pointer; opacity: 0.6; }
-        .comm-react-btn { font-size: 10px; font-weight: 700; display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; cursor: pointer; transition: 0.2s; }
-        .comm-react-btn.liked { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
-        .replies-container { margin-left: 20px; border-left: 1px dashed rgba(255,255,255,0.1); padding-left: 15px; margin-top: 10px; display: none; }
-        .reply-item { background: rgba(255,255,255,0.01); padding: 8px 12px; border-radius: 8px; margin-bottom: 5px; font-size: 13px; border: 1px solid rgba(255,255,255,0.02); position: relative; }
-        .toggle-replies { font-size: 9px; font-weight: 800; color: #64748b; cursor: pointer; text-transform: uppercase; margin-top: 5px; display: inline-block; }
-        .notif-badge { background: #ef4444; color: white; font-size: 10px; padding: 2px 6px; border-radius: 50px; margin-left: 5px; font-weight: 900; }
-        .notif-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 12px; margin-bottom: 10px; }
-        .report-highlight { background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.1); }
-        .preview-wrapper { position: relative; width: 60px; height: 60px; }
-        .preview-wrapper img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
-        .preview-del { position: absolute; -top: 5px; -right: 5px; background: red; color: white; width: 15px; height: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; }
         .md-h1 { font-size: 2.25rem; font-weight: 900; display: block; margin: 1rem 0; color: white; line-height: 1.2; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
         .md-h3 { font-size: 1.5rem; font-weight: 700; display: block; margin: 0.75rem 0; color: #cbd5e1; }
         .md-small { font-size: 0.85rem; opacity: 0.7; display: block; line-height: 1.4; color: #94a3b8; }
         .md-u { text-decoration: underline; text-underline-offset: 3px; }
         .tab-btn { padding: 10px 20px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border-radius: 12px; cursor: pointer; transition: 0.3s; border: 1px solid rgba(255,255,255,0.05); color: #64748b; }
         .tab-btn.active { background: var(--main); color: white; border-color: var(--main); box-shadow: 0 4px 15px rgba(0,98,255,0.3); }
+        .tab-btn:hover:not(.active) { background: rgba(255,255,255,0.05); color: white; }
         @media (max-width: 1279px) { .ad-container { position: static; width: 100%; max-width: 500px; margin: 0 auto 20px auto; padding: 0 10px; } .ad-box { height: 150px; } }
         footer { border-top: 1px solid rgba(255,255,255,0.05); padding: 40px 0; background: rgba(0,0,0,0.2); width: 100%; margin-top: 20px; }
     </style>
 </head>
 <body id="main-body">
 
-    <!-- EKRAN LOGOWANIA DISCORD -->
     <div id="auth-overlay" class="fixed inset-0 bg-[#0b0f1a] z-[100] flex flex-col items-center justify-center text-center p-6">
         <h1 class="text-4xl font-black italic mb-2 uppercase text-white">EŁK <span class="text-blue-500">NASZE</span> WIADOMOŚCI</h1>
-        <p class="text-slate-400 mb-8 text-sm">Zaloguj się kontem Discord, aby przeglądać i komentować.</p>
-        <button onclick="core.login()" class="bg-[#5865F2] text-white px-8 py-4 rounded-full font-black uppercase text-sm tracking-widest flex items-center gap-3 hover:bg-blue-500 transition shadow-xl">
-            <i class="fa-brands fa-discord text-xl"></i> Zaloguj przez Discord
+        <p class="text-slate-400 mb-8 text-sm">Zaloguj się przez Discord, aby przeglądać portal.</p>
+        <button onclick="core.login()" class="bg-[#5865F2] text-white px-8 py-4 rounded-full font-black uppercase text-sm tracking-widest flex items-center gap-3 hover:scale-105 transition shadow-2xl">
+            <i class="fa-brands fa-discord"></i> Zaloguj przez Discord
         </button>
     </div>
 
@@ -82,7 +66,6 @@
     <div class="ad-container ad-right" id="ad-r-zone"></div>
     <div id="loader"><div class="animate-spin text-4xl text-blue-500"><i class="fa-solid fa-circle-notch"></i></div></div>
 
-    <!-- NAGŁÓWEK -->
     <header class="sticky top-0 z-50 glass border-b border-white/5 mb-8 hidden" id="main-header">
         <div class="max-w-6xl mx-auto px-4 h-16 flex justify-between items-center">
             <h1 onclick="core.goHome()" class="text-xl font-black italic cursor-pointer uppercase">EŁK <span class="text-blue-500">NASZE</span> WIADOMOŚCI</h1>
@@ -111,7 +94,6 @@
     </header>
 
     <main class="max-w-5xl mx-auto px-4 min-h-screen hidden" id="main-content">
-        <!-- WYSZUKIWARKA -->
         <div id="search-area" class="mb-8 space-y-6">
             <div class="relative">
                 <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
@@ -125,7 +107,6 @@
             </div>
         </div>
 
-        <!-- LISTA WPISÓW -->
         <div id="view-home" class="pb-5">
             <div id="news-container" class="space-y-4">
                 <div class="text-center py-20 text-slate-600 italic tracking-widest uppercase text-xs">Wczytywanie bazy...</div>
@@ -135,21 +116,17 @@
             </div>
         </div>
 
-        <!-- WIDOK ARTYKUŁU -->
         <div id="view-article" class="hidden pb-20">
             <button onclick="core.goHome()" class="mb-8 text-slate-400 font-bold flex items-center gap-2 hover:text-white transition uppercase text-xs tracking-widest"><i class="fa-solid fa-arrow-left"></i> Wstecz</button>
             <div id="article-content"></div>
-            
             <div id="article-interaction" class="mt-12 pt-12 border-t border-white/10">
                 <div class="flex items-center gap-6 mb-10">
                     <div id="main-like-btn" onclick="core.likePost()" class="like-btn flex items-center gap-2 bg-white/5 px-6 py-3 rounded-full border border-white/5 transition">
                         <i class="fa-solid fa-heart text-xl"></i><span id="like-count" class="font-black">0</span>
                     </div>
                 </div>
-
                 <h3 class="text-xl font-black uppercase italic mb-6">Komentarze</h3>
                 <div id="comments-list" class="space-y-4 mb-8"></div>
-                
                 <div id="comment-box-anchor" class="glass p-6 rounded-[24px] space-y-4 border border-blue-500/20">
                     <div id="replying-to-info" class="hidden flex justify-between items-center bg-blue-500/10 p-2 rounded-lg border border-blue-500/20">
                         <span class="text-[10px] font-bold uppercase">Odpowiadasz użytkownikowi: <span id="target-nick" class="text-blue-400"></span></span>
@@ -162,19 +139,8 @@
             </div>
         </div>
 
-        <!-- LEGAL -->
-        <div id="view-legal" class="hidden pb-20">
-            <button onclick="core.goHome()" class="mb-8 text-slate-400 font-bold flex items-center gap-2 hover:text-white transition uppercase text-xs tracking-widest"><i class="fa-solid fa-arrow-left"></i> Wróć do strony głównej</button>
-            <div class="glass p-10 rounded-[40px] border border-blue-500/10 shadow-2xl">
-                <h2 id="legal-title" class="text-3xl font-black uppercase italic mb-6 text-blue-500 tracking-tighter"></h2>
-                <div id="legal-body" class="text-slate-300 leading-relaxed white-pre text-lg"></div>
-            </div>
-        </div>
-
-        <!-- PANEL ADMINA -->
         <div id="view-admin" class="hidden pb-20">
-            <button onclick="core.goHome()" class="mb-6 text-blue-500 font-bold flex items-center gap-2 hover:text-white transition uppercase text-[10px] tracking-widest"><i class="fa-solid fa-house"></i> Powrót do strony głównej</button>
-
+            <button onclick="core.goHome()" class="mb-6 text-blue-500 font-bold flex items-center gap-2 hover:text-white transition uppercase text-[10px] tracking-widest"><i class="fa-solid fa-house"></i> Powrót</button>
             <div class="flex flex-wrap gap-4 mb-8">
                 <button onclick="core.setAdminTab('new')" id="btn-adm-new" class="tab-btn active">Wpisy</button>
                 <button onclick="core.setAdminTab('comms')" id="btn-adm-comms" class="tab-btn">Komentarze</button>
@@ -184,62 +150,57 @@
             </div>
 
             <div id="admin-new-section" class="max-w-xl mx-auto glass p-8 rounded-[30px] shadow-2xl">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 id="admin-mode-title" class="text-xl font-bold italic uppercase tracking-tighter">Nowy Wpis</h2>
-                    <button onclick="core.cancelEdit()" id="cancel-edit-btn" class="hidden text-red-500 text-[10px] font-bold uppercase border border-red-500/30 px-3 py-1 rounded-full">Anuluj</button>
-                </div>
+                <div class="flex justify-between items-center mb-6"><h2 id="admin-mode-title" class="text-xl font-bold italic uppercase tracking-tighter">Nowy Wpis</h2><button onclick="core.cancelEdit()" id="cancel-edit-btn" class="hidden text-red-500 text-[10px] font-bold uppercase border border-red-500/30 px-3 py-1 rounded-full">Anuluj</button></div>
                 <div class="space-y-4">
                     <input type="text" id="in-title" placeholder="Tytuł wiadomości" class="input-dark">
                     <input type="text" id="in-author" placeholder="Autor" class="input-dark">
                     <div class="grid grid-cols-2 gap-4">
-                        <select id="in-category" class="input-dark bg-slate-900">
-                            <option value="Wydarzenia">Wydarzenia</option><option value="Aktualizacje">Aktualizacje</option><option value="Informacje">Informacje</option>
-                        </select>
+                        <select id="in-category" class="input-dark bg-slate-900"><option value="Wydarzenia">Wydarzenia</option><option value="Aktualizacje">Aktualizacje</option><option value="Informacje">Informacje</option></select>
                         <input type="text" id="in-date" placeholder="Data (puste = dziś)" class="input-dark text-xs">
                     </div>
                     <textarea id="in-content" rows="10" placeholder="Treść..." class="input-dark"></textarea>
-                    
-                    <div class="p-4 bg-white/5 rounded-xl border border-white/10">
-                        <input type="file" id="in-files" onchange="core.previewNewFiles()" multiple accept="image/*" class="text-xs mb-3">
-                        <div id="edit-images-preview" class="flex flex-wrap gap-2"></div>
-                    </div>
+                    <div class="p-4 bg-white/5 rounded-xl border border-white/10"><input type="file" id="in-files" onchange="core.previewNewFiles()" multiple accept="image/*" class="text-xs mb-3"><div id="edit-images-preview" class="flex flex-wrap gap-2"></div></div>
                     <button onclick="core.publish()" id="publish-btn" class="w-full bg-blue-600 p-4 rounded-xl font-bold uppercase tracking-widest">Opublikuj</button>
                     <div id="admin-list" class="mt-10 space-y-2"></div>
                 </div>
             </div>
-
-            <div id="admin-comms-section" class="hidden max-w-2xl mx-auto space-y-4"><h2 class="text-xl font-bold italic uppercase tracking-tighter mb-6">Komentarze i Odpowiedzi</h2><div id="all-comms-list"></div></div>
-            <div id="admin-notifs-section" class="hidden max-w-2xl mx-auto space-y-4"><h2 class="text-xl font-bold italic uppercase tracking-tighter mb-6 text-red-500">Zgłoszenia</h2><div id="reports-list"></div></div>
+            <div id="admin-comms-section" class="hidden max-w-2xl mx-auto space-y-4"><h2 class="text-xl font-bold italic uppercase mb-6">Moderacja</h2><div id="all-comms-list"></div></div>
+            <div id="admin-notifs-section" class="hidden max-w-2xl mx-auto space-y-4"><h2 class="text-xl font-bold italic uppercase mb-6 text-red-500">Zgłoszenia</h2><div id="reports-list"></div></div>
             <div id="admin-ads-section" class="hidden max-w-xl mx-auto glass p-8 rounded-[30px] space-y-8">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 id="ad-mode-title" class="text-xl font-bold italic uppercase tracking-tighter">Zarządzaj Reklamami</h2>
-                    <button onclick="core.cancelAdEdit()" id="cancel-ad-edit-btn" class="hidden text-red-500 text-[10px] font-bold uppercase border border-red-500/30 px-3 py-1 rounded-full">Anuluj</button>
-                </div>
+                <div class="flex justify-between items-center mb-6"><h2 id="ad-mode-title" class="text-xl font-bold italic uppercase">Reklamy</h2><button onclick="core.cancelAdEdit()" id="cancel-ad-edit-btn" class="hidden text-red-500 text-[10px] font-bold">Anuluj</button></div>
                 <div class="p-6 border border-white/10 rounded-2xl space-y-4 bg-white/5">
                     <select id="ad-side" class="input-dark bg-slate-900 text-sm"><option value="left">Lewa strona</option><option value="right">Prawa strona</option></select>
                     <input type="file" id="ad-file" accept="image/*" class="text-xs">
-                    <input type="text" id="ad-target" placeholder="Link docelowy (URL)" class="input-dark text-sm">
-                    <button onclick="core.publishAd()" id="ad-publish-btn" class="bg-blue-600 w-full py-3 rounded-lg font-bold text-xs uppercase tracking-widest">Zapisz Reklamę</button>
+                    <input type="text" id="ad-target" placeholder="Link (URL)" class="input-dark text-sm">
+                    <button onclick="core.publishAd()" id="ad-publish-btn" class="bg-blue-600 w-full py-3 rounded-lg font-bold text-xs uppercase">Zapisz Reklamę</button>
                 </div>
                 <div id="admin-ads-list" class="space-y-3"></div>
             </div>
             <div id="admin-settings-section" class="hidden max-w-xl mx-auto glass p-8 rounded-[30px] space-y-6">
-                <h2 class="text-xl font-bold italic uppercase tracking-tighter">Ustawienia Serwisu (Chmura)</h2>
-                <div class="space-y-4">
-                    <div><label class="text-[10px] font-bold text-blue-400 uppercase">O Serwisie (Stopka):</label><textarea id="set-about" rows="3" class="input-dark text-sm"></textarea></div>
-                    <div><label class="text-[10px] font-bold text-blue-400 uppercase">Redakcja:</label><textarea id="set-redaction" rows="3" class="input-dark text-sm"></textarea></div>
-                    <div><label class="text-[10px] font-bold text-blue-400 uppercase">Polityka Prywatności:</label><textarea id="set-privacy" rows="3" class="input-dark text-sm"></textarea></div>
-                    <div><label class="text-[10px] font-bold text-blue-400 uppercase">Współpraca:</label><textarea id="set-coop" rows="3" class="input-dark text-sm"></textarea></div>
-                    <button onclick="core.saveSettings()" class="bg-blue-600 w-full py-4 rounded-xl font-bold uppercase tracking-widest">Zapisz ustawienia w chmurze</button>
+                <h2 class="text-xl font-bold italic uppercase">Chmura Settings</h2>
+                <div class="space-y-4 text-xs font-bold uppercase text-blue-400">
+                    <div>Stopka:<textarea id="set-about" rows="3" class="input-dark mt-2"></textarea></div>
+                    <div>Redakcja:<textarea id="set-redaction" rows="3" class="input-dark mt-2"></textarea></div>
+                    <div>Prywatność:<textarea id="set-privacy" rows="3" class="input-dark mt-2"></textarea></div>
+                    <div>Współpraca:<textarea id="set-coop" rows="3" class="input-dark mt-2"></textarea></div>
+                    <button onclick="core.saveSettings()" class="bg-blue-600 w-full py-4 rounded-xl font-black text-white">Zapisz w Firebase</button>
                 </div>
+            </div>
+        </div>
+
+        <div id="view-legal" class="hidden pb-20">
+            <button onclick="core.goHome()" class="mb-8 text-slate-400 font-bold flex items-center gap-2 uppercase text-xs"><i class="fa-solid fa-arrow-left"></i> Wróć</button>
+            <div class="glass p-10 rounded-[40px] border border-blue-500/10">
+                <h2 id="legal-title" class="text-3xl font-black uppercase italic mb-6 text-blue-500"></h2>
+                <div id="legal-body" class="text-slate-300 leading-relaxed white-pre text-lg"></div>
             </div>
         </div>
     </main>
 
-    <footer id="main-footer" class="max-w-full hidden border-t border-white/5 mt-10">
-        <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-sm px-4 py-10">
-            <div><h4 class="font-black uppercase mb-4 text-blue-500">O Serwisie</h4><p id="txt-about" class="text-slate-400 leading-relaxed"></p></div>
-            <div><h4 class="font-black uppercase mb-4">Informacje</h4>
+    <footer id="main-footer" class="max-w-full hidden border-t border-white/5 py-10 mt-10">
+        <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 px-4 text-sm">
+            <div><h4 class="font-black uppercase mb-4 text-blue-500">O Serwisie</h4><p id="txt-about" class="text-slate-400"></p></div>
+            <div><h4 class="font-black uppercase mb-4 text-slate-300">Informacje</h4>
                 <ul class="text-slate-400 space-y-2">
                     <li><a href="javascript:void(0)" onclick="core.showLegal('redaction')" class="hover:text-white">Redakcja</a></li>
                     <li><a href="javascript:void(0)" onclick="core.showLegal('privacy')" class="hover:text-white">Polityka Prywatności</a></li>
@@ -247,14 +208,14 @@
                 </ul>
                 <div class="hidden" id="legal-data-store"><span id="txt-redaction"></span><span id="txt-privacy"></span><span id="txt-coop"></span></div>
             </div>
-            <div><h4 class="font-black uppercase mb-4">Social Media</h4>
+            <div><h4 class="font-black uppercase mb-4">Linki</h4>
                 <div class="flex gap-4 text-slate-400 text-xl">
                     <a href="https://www.tiktok.com/@diamentowy337" target="_blank" class="hover:text-pink-500"><i class="fa-brands fa-tiktok"></i></a>
                     <a href="http://www.youtube.com/@Diamentowy_337" target="_blank" class="hover:text-red-500"><i class="fa-brands fa-youtube"></i></a>
                 </div>
             </div>
         </div>
-        <div class="text-center pb-10 text-[10px] text-slate-600 uppercase">facio® &copy; 2024 Wszystkie prawa zastrzeżone</div>
+        <div class="text-center pt-10 text-[10px] text-slate-700 font-bold uppercase tracking-[4px]">facio® &copy; 2024 Wszystkie prawa zastrzeżone</div>
     </footer>
 
     <script>
@@ -265,12 +226,13 @@
             projectId: "mzk-by-facio",
             storageBucket: "mzk-by-facio.firebasestorage.app",
             messagingSenderId: "676970411647",
-            appId: "1:676970411647:web:26137e7242c0db7c83714a",
-            measurementId: "G-EE72F501ZR"
+            appId: "1:676970411647:web:26137e7242c0db7c83714a"
         };
 
-        const ADMIN_NICK = "facioyt"; 
+        const ADMIN_NICK = "Facio"; // TWOJA ZMIANA: ADMIN PO NICKU FACIO
         const IMGBB_API_KEY = "19570ba1fa4dc27bd0ba974b4eb2e253";
+        // NAPRAWIONE CLIENT ID:
+        const DISCORD_CLIENT_ID = "1498418325502558328";
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
@@ -290,8 +252,7 @@
 
         window.core = {
             login: () => {
-                // UPEWNIJ SIĘ ŻE TEN CLIENT ID JEST POPRAWNY W PANELU DISCORD
-                window.location.href = "https://discord.com/oauth2/authorize?client_id=1230198651811659796&response_type=code&redirect_uri=https%3A%2F%2Felk-backend.vercel.app%2Fapi%2Fauth&scope=identify";
+                window.location.href = `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&response_type=code&redirect_uri=https%3A%2F%2Felk-backend.vercel.app%2Fapi%2Fauth&scope=identify`;
             },
 
             logout: () => {
@@ -321,7 +282,8 @@
                         document.getElementById('main-footer').classList.remove('hidden');
                         document.getElementById('comm-nick').value = savedNick || "Użytkownik";
 
-                        if(savedNick === ADMIN_NICK) {
+                        // Weryfikacja Admina (Nick bez względu na wielkość liter)
+                        if(savedNick && savedNick.toLowerCase() === ADMIN_NICK.toLowerCase()) {
                             document.getElementById('admin-indicator').classList.remove('hidden');
                             document.getElementById('btn-open-admin').classList.remove('hidden');
                             document.getElementById('main-body').classList.add('admin-active');
@@ -343,7 +305,7 @@
                     if(data) {
                         Object.entries(data).sort((a,b) => b[1].ts - a[1].ts).forEach(([id, v]) => {
                             allData.push({ id, ...v });
-                            if(admList) admList.innerHTML += `<div class="flex justify-between bg-white/5 p-2 rounded-xl mb-1 text-[10px]"><span>${DOMPurify.sanitize(v.title)}</span><div class="flex gap-2"><button onclick="core.editMode('${id}')" class="text-amber-500">EDYTUJ</button><button onclick="core.deletePost('${id}')" class="text-red-500">USUŃ</button></div></div>`;
+                            if(admList) admList.innerHTML += `<div class="flex justify-between bg-white/5 p-2 rounded-xl text-[10px]"><span>${v.title}</span><div class="flex gap-2"><button onclick="core.editMode('${id}')" class="text-amber-500">EDYTUJ</button><button onclick="core.deletePost('${id}')" class="text-red-500">USUŃ</button></div></div>`;
                         });
                     }
                     core.filterPosts();
@@ -353,19 +315,16 @@
                     const data = snap.val(); allAds = [];
                     const zones = { left: document.getElementById('ad-l-zone'), right: document.getElementById('ad-r-zone') };
                     if(zones.left) zones.left.innerHTML = ""; if(zones.right) zones.right.innerHTML = "";
-                    const adAdminList = document.getElementById('admin-ads-list'); if(adAdminList) adAdminList.innerHTML = "";
                     if(data) {
                         Object.entries(data).forEach(([id, ad]) => {
                             allAds.push({ id, ...ad });
                             const html = `<a href="${DOMPurify.sanitize(ad.link)}" target="_blank" class="ad-box"><img src="${ad.img}"></a>`;
                             if (zones[ad.side]) zones[ad.side].innerHTML += html;
-                            if (adAdminList) adAdminList.innerHTML += `<div class="flex items-center gap-3 bg-white/5 p-2 rounded-lg mb-1"><img src="${ad.img}" class="w-10 h-10 object-cover rounded"><div class="flex-1 text-[10px] truncate"><b>${ad.side}</b><br>${DOMPurify.sanitize(ad.link)}</div><button onclick="core.deleteAd('${id}')" class="text-red-500 text-[9px]">USUŃ</button></div>`;
                         });
                         ['left', 'right'].forEach(s => {
-                            if (!zones[s]) return;
-                            const first = zones[s].querySelector('.ad-box');
+                            const first = zones[s]?.querySelector('.ad-box');
                             if(first) first.classList.add('active');
-                            else zones[s].innerHTML = `<div class="no-ad-placeholder">Brak reklamy (${s})</div>`;
+                            else zones[s].innerHTML = `<div class="no-ad-placeholder">BRAK REKLAMY (${s})</div>`;
                         });
                     }
                 });
@@ -388,29 +347,18 @@
                 setInterval(core.rotateAds, 5000);
             },
 
-            parseMarkdown: (text) => {
-                if(!text) return "";
-                let html = DOMPurify.sanitize(text);
-                return html.replace(/^#\s+(.*)$/gm, '<span class="md-h1">$1</span>')
-                           .replace(/^###\s+(.*)$/gm, '<span class="md-h3">$1</span>')
-                           .replace(/^-#\s+(.*)$/gm, '<span class="md-small">$1</span>')
-                           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                           .replace(/__(.*?)__/g, '<span class="md-u">$1</span>')
-                           .replace(/\*(.*?)\*/g, '<em>$1</em>');
-            },
-
-            // POWIADOMIENIA
+            // POWIADOMIENIA I SYSTEM TOASTÓW
             toggleNotifMenu: () => document.getElementById('notif-dropdown').classList.toggle('hidden'),
             loadNotifications: () => {
                 const notifs = JSON.parse(localStorage.getItem('my_notifs') || "[]");
                 const list = document.getElementById('notif-list'); if(!list) return;
-                list.innerHTML = notifs.length === 0 ? '<div class="p-6 text-center text-[10px] font-bold text-slate-500">BRAK POWIADOMIEŃ</div>' : "";
+                list.innerHTML = notifs.length === 0 ? '<div class="p-6 text-center text-[10px] uppercase font-bold text-slate-500">Brak powiadomień</div>' : "";
                 let unread = 0;
                 notifs.forEach(n => {
                     if (!n.read) unread++;
                     list.innerHTML += `<div onclick="core.clickNotif(${n.id}, '${n.postId}')" class="flex items-center gap-3 p-4 border-b border-white/5 cursor-pointer hover:bg-white/10 transition ${n.read ? 'opacity-50' : 'bg-white/5'}">
-                        <div class="flex-1 text-[11px] leading-tight">${DOMPurify.sanitize(n.msg)}</div>
-                        ${n.read ? '' : '<div class="w-2 h-2 rounded-full bg-blue-500"></div>'}
+                        <div class="flex-1 text-[11px] text-slate-200 leading-tight">${DOMPurify.sanitize(n.msg)}</div>
+                        ${n.read ? '' : '<div class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></div>'}
                     </div>`;
                 });
                 const badge = document.getElementById('global-notif-count');
@@ -444,11 +392,21 @@
                 core.loadNotifications();
             },
 
-            // RENDEROWANIE I FILTROWANIE
+            // FUNKCJE RENDEROWANIA I MARKDOWN
+            parseMarkdown: (text) => {
+                if(!text) return "";
+                let html = DOMPurify.sanitize(text);
+                return html.replace(/^#\s+(.*)$/gm, '<span class="md-h1">$1</span>')
+                           .replace(/^###\s+(.*)$/gm, '<span class="md-h3">$1</span>')
+                           .replace(/^-#\s+(.*)$/gm, '<span class="md-small">$1</span>')
+                           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                           .replace(/__(.*?)__/g, '<span class="md-u">$1</span>')
+                           .replace(/\*(.*?)\*/g, '<em>$1</em>');
+            },
             switchTab: (tabId, btn) => {
                 currentTab = tabId;
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active'); window.scrollTo(0, 0); core.filterPosts();
+                btn.classList.add('active'); core.filterPosts();
             },
             filterPosts: () => {
                 const term = document.getElementById('search-input').value.toLowerCase();
@@ -462,7 +420,7 @@
                 const toShow = isSearch ? items : items.slice(0, showLimit);
                 toShow.forEach(v => {
                     const card = document.createElement('div'); card.className = "card glass p-6 rounded-2xl cursor-pointer mb-4 post-anim";
-                    card.innerHTML = `<div class="flex gap-5 flex-col md:flex-row">${v.images?.[0] ? `<img src="${v.images[0]}" class="w-32 h-32 object-cover rounded-xl">` : ''}<div><span class="category-tag">${v.category || 'Wydarzenia'}</span><h2 class="font-black text-xl">${v.title}</h2><div class="flex gap-3 mt-4 items-center"><span class="author-badge">${v.author}</span><span class="text-[10px] text-red-500 font-black"><i class="fa-solid fa-heart"></i> ${v.likes || 0}</span></div></div></div>`;
+                    card.innerHTML = `<div class="flex gap-5 flex-col md:flex-row">${v.images?.[0] ? `<img src="${v.images[0]}" class="w-32 h-32 object-cover rounded-xl">` : ''}<div><span class="category-tag">${v.category}</span><h2 class="font-black text-xl">${v.title}</h2><div class="flex gap-3 mt-4 items-center"><span class="author-badge">${v.author}</span><span class="text-[10px] text-red-500 font-black"><i class="fa-solid fa-heart"></i> ${v.likes || 0}</span></div></div></div>`;
                     card.onclick = () => core.showFull(v); container.appendChild(card);
                 });
                 document.getElementById('more-container').classList.toggle('hidden', isSearch || items.length <= showLimit);
@@ -480,11 +438,11 @@
                 window.scrollTo(0,0);
             },
 
-            // ADMIN
+            // ADMIN I ZAKŁADKI
             openAdmin: () => {
-                if(localStorage.getItem('user_nick') !== ADMIN_NICK) return alert("Błąd uprawnień!");
+                if(localStorage.getItem('user_nick')?.toLowerCase() !== ADMIN_NICK.toLowerCase()) return alert("Błąd uprawnień!");
                 ['view-home', 'search-area', 'view-article', 'view-legal'].forEach(id => document.getElementById(id).classList.add('hidden'));
-                document.getElementById('view-admin').classList.remove('hidden'); core.loadReports();
+                document.getElementById('view-admin').classList.remove('hidden');
             },
             setAdminTab: (tab) => {
                 ['new', 'comms', 'notifs', 'ads', 'settings'].forEach(s => document.getElementById(`admin-${s}-section`).classList.toggle('hidden', s !== tab));
@@ -510,7 +468,7 @@
                 const act = editId ? postsRef.child(editId).update(data) : postsRef.push(data);
                 act.then(() => location.reload());
             },
-            deletePost: (id) => confirm("Usunąć wpis?") && postsRef.child(id).remove(),
+            deletePost: (id) => confirm("Usunąć?") && postsRef.child(id).remove(),
             editMode: (id) => {
                 const p = allData.find(x => x.id === id); editId = id;
                 document.getElementById('in-title').value = p.title;
@@ -534,7 +492,7 @@
                 const res = await r.json();
                 if(res.success) adsRef.push({ side, img: res.data.url, link: target, ts: Date.now() }).then(() => location.reload());
             },
-            deleteAd: (id) => confirm("Usunąć reklamę?") && adsRef.child(id).remove(),
+            deleteAd: (id) => confirm("Usunąć?") && adsRef.child(id).remove(),
             rotateAds: () => {
                 ['left', 'right'].forEach(s => {
                     const boxes = document.getElementById(`ad-${s[0]}-zone`)?.querySelectorAll('.ad-box');
@@ -546,7 +504,7 @@
                 });
             },
 
-            // KOMENTARZE I RAPORTY
+            // KOMENTARZE I RESZTA
             loadComments: (pid) => {
                 db.ref(`elk/comments/${pid}`).on('value', snap => {
                     const list = document.getElementById('comments-list'); list.innerHTML = "";
@@ -578,17 +536,13 @@
                 let ref = currentReplyToId ? db.ref(`elk/comments/${currentOpenPostId}/${currentReplyToId}/replies`) : db.ref(`elk/comments/${currentOpenPostId}`);
                 ref.push(data).then(() => { document.getElementById('comm-text').value = ""; core.cancelReply(); });
             },
-            reportComment: (cid, text, nick) => confirm("Zgłosić ten komentarz?") && reportsRef.push({ postId: currentOpenPostId, commentId: cid, text, nick, ts: Date.now() }),
+            reportComment: (cid, text, nick) => confirm("Zgłosić?") && reportsRef.push({ postId: currentOpenPostId, commentId: cid, text, nick, ts: Date.now() }),
             loadReports: () => {
                 reportsRef.on('value', snap => {
                     const container = document.getElementById('reports-list'); container.innerHTML = "";
                     if(!snap.val()) return;
                     Object.entries(snap.val()).forEach(([rid, r]) => {
-                        container.innerHTML += `<div class="notif-card report-highlight">
-                            <p class="text-[10px] text-red-500 font-bold uppercase">${r.nick}:</p>
-                            <p class="text-xs italic my-1">"${r.text}"</p>
-                            <button onclick="core.dismissReport('${rid}')" class="bg-slate-700 px-3 py-1 rounded text-[9px] font-bold">USUŃ RAPORT</button>
-                        </div>`;
+                        container.innerHTML += `<div class="notif-card report-highlight"><p class="text-[10px] text-red-500 font-bold uppercase">${r.nick}:</p><p class="text-xs italic my-1">"${r.text}"</p><button onclick="core.dismissReport('${rid}')" class="bg-slate-700 px-3 py-1 rounded text-[9px] font-bold">USUŃ RAPORT</button></div>`;
                     });
                 });
             },
@@ -604,7 +558,7 @@
                 document.getElementById('set-coop').value = d.coop || "";
             }),
 
-            // RESZTA
+            // SYSTEMOWE
             goHome: () => {
                 ['view-home', 'search-area', 'main-header', 'main-footer', 'main-content'].forEach(id => document.getElementById(id)?.classList.remove('hidden'));
                 ['view-article', 'view-admin', 'view-legal', 'auth-overlay'].forEach(id => document.getElementById(id)?.classList.add('hidden'));
@@ -613,12 +567,11 @@
             showLegal: (t) => {
                 core.goHome(); ['view-home', 'search-area'].forEach(id => document.getElementById(id).classList.add('hidden'));
                 document.getElementById('view-legal').classList.remove('hidden');
-                const titles = { redaction: "Redakcja", privacy: "Polityka Prywatności", coop: "Współpraca" };
-                document.getElementById('legal-title').innerText = titles[t];
+                document.getElementById('legal-title').innerText = t;
                 document.getElementById('legal-body').innerText = document.getElementById(`txt-${t}`).innerText;
             },
             cancelReply: () => { currentReplyToId = null; document.getElementById('replying-to-info').classList.add('hidden'); },
-            setReply: (cid, nick) => { currentReplyToId = cid; document.getElementById('replying-to-info').classList.remove('hidden'); document.getElementById('target-nick').innerText = nick; },
+            setReply: (cid, nick) => { currentReplyToId = cid; document.getElementById('replying-to-info').classList.remove('hidden'); document.getElementById('target-nick').innerText = nick; document.getElementById('comm-text').focus(); },
             previewNewFiles: () => core.renderEditImages(document.getElementById('in-files').files),
             renderEditImages: (files = []) => {
                 const cont = document.getElementById('edit-images-preview'); cont.innerHTML = "";
