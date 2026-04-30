@@ -110,15 +110,22 @@
     </main>
 
     <script>
-        // ======= TWOJE DANE KONFIGURACYJNE =======
+       // ======= TWOJE POPRAWNE DANE KONFIGURACYJNE =======
         const firebaseConfig = {
-            apiKey: "AIzaSyCb5QmZdwWwa9LafqqGZvGW-6vblkab32M", 
+            apiKey: "AIzaSyCb5QmZdwWwa9LafqqGZvGW-6vblkab32M",
             authDomain: "mzk-by-facio.firebaseapp.com",
             databaseURL: "https://mzk-by-facio-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "mzk-by-facio",
-            appId: "1:676970411647:web:76137e7242c8db7c83714a"
+            storageBucket: "mzk-by-facio.firebasestorage.app",
+            messagingSenderId: "676970411647",
+            appId: "1:676970411647:web:26137e7242c0db7c83714a",
+            measurementId: "G-EE72F501ZR"
         };
+
+        // ======= TU WKLEJ SWOJE UID =======
         const ADMIN_UID = "wXo2D56goYaId2IY7iUkcWs5tAG3"; 
+        
+        // ======= KLUCZ IMGBB =======
         const IMGBB_API_KEY = "19570ba1fa4dc27bd0ba974b4eb2e253";
 
         firebase.initializeApp(firebaseConfig);
