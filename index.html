@@ -49,6 +49,7 @@
         .tab-btn:hover:not(.active) { background: rgba(255,255,255,0.05); color: white; }
         @media (max-width: 1279px) { .ad-container { position: static; width: 100%; max-width: 500px; margin: 0 auto 20px auto; padding: 0 10px; } .ad-box { height: 150px; } }
         footer { border-top: 1px solid rgba(255,255,255,0.05); padding: 40px 0; background: rgba(0,0,0,0.2); width: 100%; margin-top: 20px; }
+        .cursor-pointer { cursor: pointer; }
     </style>
 </head>
 <body id="main-body">
@@ -164,7 +165,7 @@
                     </div>
                     <textarea id="in-content" rows="10" placeholder="Treść..." class="input-dark"></textarea>
                     <div class="p-4 bg-white/5 rounded-xl border border-white/10"><input type="file" id="in-files" onchange="core.previewNewFiles()" multiple accept="image/*" class="text-xs mb-3"><div id="edit-images-preview" class="flex flex-wrap gap-2"></div></div>
-                    <button onclick="core.publish()" id="publish-btn" class="w-full bg-blue-600 p-4 rounded-xl font-bold uppercase tracking-widest">Opublikuj</button>
+                    <button onclick="core.publish()" id="publish-btn" class="w-full bg-blue-600 p-4 rounded-xl font-bold uppercase tracking-widest hover:bg-blue-500 transition">Opublikuj</button>
                     <div id="admin-list" class="mt-10 space-y-2"></div>
                 </div>
             </div>
@@ -176,7 +177,7 @@
                     <select id="ad-side" class="input-dark bg-slate-900 text-sm"><option value="left">Lewa strona</option><option value="right">Prawa strona</option></select>
                     <input type="file" id="ad-file" accept="image/*" class="text-xs">
                     <input type="text" id="ad-target" placeholder="Link (URL)" class="input-dark text-sm">
-                    <button onclick="core.publishAd()" id="ad-publish-btn" class="bg-blue-600 w-full py-3 rounded-lg font-bold text-xs uppercase">Zapisz Reklamę</button>
+                    <button onclick="core.publishAd()" id="ad-publish-btn" class="bg-blue-600 w-full py-3 rounded-lg font-bold text-xs uppercase hover:bg-blue-500 transition">Zapisz Reklamę</button>
                 </div>
                 <div id="admin-ads-list" class="space-y-3"></div>
             </div>
@@ -187,7 +188,7 @@
                     <div>Redakcja:<textarea id="set-redaction" rows="3" class="input-dark mt-2"></textarea></div>
                     <div>Prywatność:<textarea id="set-privacy" rows="3" class="input-dark mt-2"></textarea></div>
                     <div>Współpraca:<textarea id="set-coop" rows="3" class="input-dark mt-2"></textarea></div>
-                    <button onclick="core.saveSettings()" class="bg-blue-600 w-full py-4 rounded-xl font-black text-white">Zapisz w Firebase</button>
+                    <button onclick="core.saveSettings()" class="bg-blue-600 w-full py-4 rounded-xl font-black text-white hover:bg-blue-500 transition">Zapisz w Firebase</button>
                 </div>
             </div>
         </div>
@@ -465,25 +466,50 @@
                 if(tab === 'comms') core.loadAllCommentsAdmin();
                 if(tab === 'settings') core.loadSettingsInAdmin();
             },
+            
+            // PONIŻEJ ULEPSZONA FUNKCJA Z TRY...CATCH
             publish: async () => {
                 const t = document.getElementById('in-title').value;
                 const c = document.getElementById('in-content').value;
                 const cat = document.getElementById('in-category').value;
                 const a = document.getElementById('in-author').value || "Redakcja";
                 const files = document.getElementById('in-files').files;
+                
                 if(!t || !c) return alert("Wypełnij pola!");
+                
                 document.getElementById('loader').style.display = 'flex';
-                let newUrls = [];
-                for(let f of files) {
-                    const fd = new FormData(); fd.append("image", f);
-                    const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
-                    const res = await r.json(); if(res.success) newUrls.push(res.data.url);
+                
+                try {
+                    let newUrls = [];
+                    for(let f of files) {
+                        const fd = new FormData(); fd.append("image", f);
+                        const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
+                        const res = await r.json(); 
+                        if(res.success) {
+                            newUrls.push(res.data.url);
+                        } else {
+                            alert("Błąd serwera zdjęć ImgBB: " + (res.error?.message || "Nieznany błąd"));
+                            document.getElementById('loader').style.display = 'none';
+                            return;
+                        }
+                    }
+                    
+                    const data = { title: t, content: c, author: a, category: cat, images: [...currentEditImages, ...newUrls], ts: editId ? allData.find(x => x.id === editId).ts : Date.now(), date: document.getElementById('in-date').value || new Date().toLocaleString(), likes: editId ? allData.find(x => x.id === editId).likes : 0 };
+                    
+                    const act = editId ? postsRef.child(editId).update(data) : postsRef.push(data);
+                    
+                    act.then(() => location.reload()).catch(err => {
+                        alert("Błąd Firebase (Masz źle ustawione 'Rules' w konsoli!): " + err.message);
+                        document.getElementById('loader').style.display = 'none';
+                    });
+                    
+                } catch (err) {
+                    alert("Wystąpił błąd skryptu/internetu: " + err.message);
+                    document.getElementById('loader').style.display = 'none';
                 }
-                const data = { title: t, content: c, author: a, category: cat, images: [...currentEditImages, ...newUrls], ts: editId ? allData.find(x => x.id === editId).ts : Date.now(), date: document.getElementById('in-date').value || new Date().toLocaleString(), likes: editId ? allData.find(x => x.id === editId).likes : 0 };
-                const act = editId ? postsRef.child(editId).update(data) : postsRef.push(data);
-                act.then(() => location.reload());
             },
-            deletePost: (id) => confirm("Usunąć?") && postsRef.child(id).remove(),
+            
+            deletePost: (id) => confirm("Usunąć?") && postsRef.child(id).remove().catch(e => alert("Błąd bazy: " + e.message)),
             editMode: (id) => {
                 const p = allData.find(x => x.id === id); editId = id;
                 document.getElementById('in-title').value = p.title;
@@ -501,10 +527,23 @@
                 const target = document.getElementById('ad-target').value;
                 if(!file || !target) return alert("Podaj link i plik!");
                 document.getElementById('loader').style.display = 'flex';
-                const fd = new FormData(); fd.append("image", file);
-                const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
-                const res = await r.json();
-                if(res.success) adsRef.push({ side, img: res.data.url, link: target, ts: Date.now() }).then(() => location.reload());
+                
+                try {
+                    const fd = new FormData(); fd.append("image", file);
+                    const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
+                    const res = await r.json();
+                    if(res.success) {
+                        adsRef.push({ side, img: res.data.url, link: target, ts: Date.now() })
+                            .then(() => location.reload())
+                            .catch(e => { alert("Błąd bazy Firebase: " + e.message); document.getElementById('loader').style.display = 'none'; });
+                    } else {
+                        alert("Błąd wgrywania zdjęcia reklamy!");
+                        document.getElementById('loader').style.display = 'none';
+                    }
+                } catch (err) {
+                    alert("Błąd: " + err.message);
+                    document.getElementById('loader').style.display = 'none';
+                }
             },
             deleteAd: (id) => confirm("Usunąć?") && adsRef.child(id).remove(),
             rotateAds: () => {
@@ -550,12 +589,18 @@
                 if(!t) return;
                 const data = { nick: n, text: t, ts: Date.now(), date: new Date().toLocaleString() };
                 let ref = currentReplyToId ? db.ref(`elk/comments/${currentOpenPostId}/${currentReplyToId}/replies`) : db.ref(`elk/comments/${currentOpenPostId}`);
-                ref.push(data).then(() => { document.getElementById('comm-text').value = ""; core.cancelReply(); });
+                
+                ref.push(data)
+                   .then(() => { document.getElementById('comm-text').value = ""; core.cancelReply(); })
+                   .catch(e => alert("Błąd podczas wysyłania komentarza: " + e.message));
             },
             
             reportComment: (cid, text, nick) => {
                 if (!localStorage.getItem('fb_token')) return core.showLoginOverlay();
-                confirm("Zgłosić ten komentarz do sprawdzenia?") && reportsRef.push({ postId: currentOpenPostId, commentId: cid, text, nick, ts: Date.now() });
+                if (confirm("Zgłosić ten komentarz do sprawdzenia?")) {
+                    reportsRef.push({ postId: currentOpenPostId, commentId: cid, text, nick, ts: Date.now() })
+                        .catch(e => alert("Błąd bazy podczas zgłoszenia: " + e.message));
+                }
             },
 
             loadReports: () => {
@@ -569,7 +614,11 @@
             },
             dismissReport: (rid) => reportsRef.child(rid).remove(),
 
-            saveSettings: () => settingsRef.set({ about: document.getElementById('set-about').value, redaction: document.getElementById('set-redaction').value, privacy: document.getElementById('set-privacy').value, coop: document.getElementById('set-coop').value }).then(() => alert("Zapisano!")),
+            saveSettings: () => {
+                settingsRef.set({ about: document.getElementById('set-about').value, redaction: document.getElementById('set-redaction').value, privacy: document.getElementById('set-privacy').value, coop: document.getElementById('set-coop').value })
+                    .then(() => alert("Zapisano!"))
+                    .catch(e => alert("Błąd zapisu ustawień: " + e.message));
+            },
             loadSettingsInAdmin: () => settingsRef.once('value', s => {
                 const d = s.val(); if(!d) return;
                 document.getElementById('set-about').value = d.about || "";
@@ -599,14 +648,16 @@
 
             likePost: () => {
                 if (!localStorage.getItem('fb_token')) return core.showLoginOverlay();
-                
                 if(localStorage.getItem(`liked_${currentOpenPostId}`)) return;
-                postsRef.child(currentOpenPostId).child('likes').transaction(l => (l || 0) + 1);
-                localStorage.setItem(`liked_${currentOpenPostId}`, "1");
                 
-                document.getElementById('main-like-btn').classList.add('liked');
-                let countElem = document.getElementById('like-count');
-                countElem.innerText = parseInt(countElem.innerText) + 1;
+                postsRef.child(currentOpenPostId).child('likes').transaction(l => (l || 0) + 1)
+                    .then(() => {
+                        localStorage.setItem(`liked_${currentOpenPostId}`, "1");
+                        document.getElementById('main-like-btn').classList.add('liked');
+                        let countElem = document.getElementById('like-count');
+                        countElem.innerText = parseInt(countElem.innerText) + 1;
+                    })
+                    .catch(e => alert("Błąd zapisu polubienia (sprawdź Rules w Firebase!): " + e.message));
             }
         };
 
