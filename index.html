@@ -50,6 +50,22 @@
         @media (max-width: 1279px) { .ad-container { position: static; width: 100%; max-width: 500px; margin: 0 auto 20px auto; padding: 0 10px; } .ad-box { height: 150px; } }
         footer { border-top: 1px solid rgba(255,255,255,0.05); padding: 40px 0; background: rgba(0,0,0,0.2); width: 100%; margin-top: 20px; }
         .cursor-pointer { cursor: pointer; }
+
+        /* --- DODATKI: BARDZIEJ PROFESJONALNY WYGLĄD (NIC NIE USUWANE) --- */
+        body { background: #070a13; } /* Nieco głębsze, bardziej nasycone ciemne tło */
+        .glass { box-shadow: 0 10px 40px -10px rgba(0,0,0,0.6); } /* Ekskluzywny miękki cień dla paneli */
+        .card { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); } /* Lepsze odcięcie wpisów od tła */
+        .input-dark { box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); } /* Wewnętrzna głębia dla pół tekstowych */
+        h1.italic { 
+            background: linear-gradient(to right, #ffffff, #e2e8f0); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+        } /* Profesjonalny gradient głównego tekstu EŁK */
+        h1.italic span { 
+            background: linear-gradient(to right, #3b82f6, #60a5fa); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+        } /* Jasniejszy gradient dla słowa NASZE */
     </style>
 </head>
 <body id="main-body">
@@ -126,7 +142,7 @@
             <div id="article-content"></div>
             <div id="article-interaction" class="mt-12 pt-12 border-t border-white/10">
                 <div class="flex items-center gap-6 mb-10">
-                    <div id="main-like-btn" onclick="core.likePost()" class="like-btn cursor-pointer flex items-center gap-2 bg-white/5 px-6 py-3 rounded-full border border-white/5 transition hover:scale-105">
+                    <div id="main-like-btn" onclick="core.likePost()" class="like-btn cursor-pointer flex items-center gap-2 bg-white/5 px-6 py-3 rounded-full border border-white/5 transition hover:scale-105 shadow-xl">
                         <i class="fa-solid fa-heart text-xl"></i><span id="like-count" class="font-black">0</span>
                     </div>
                 </div>
@@ -437,7 +453,7 @@
                 const toShow = isSearch ? items : items.slice(0, showLimit);
                 toShow.forEach(v => {
                     const card = document.createElement('div'); card.className = "card glass p-6 rounded-2xl cursor-pointer mb-4 post-anim";
-                    card.innerHTML = `<div class="flex gap-5 flex-col md:flex-row">${v.images?.[0] ? `<img src="${v.images[0]}" class="w-32 h-32 object-cover rounded-xl">` : ''}<div><span class="category-tag">${v.category}</span><h2 class="font-black text-xl">${v.title}</h2><div class="flex gap-3 mt-4 items-center"><span class="author-badge">${v.author}</span><span class="text-[10px] text-red-500 font-black"><i class="fa-solid fa-heart"></i> ${v.likes || 0}</span></div></div></div>`;
+                    card.innerHTML = `<div class="flex gap-5 flex-col md:flex-row">${v.images?.[0] ? `<img src="${v.images[0]}" class="w-32 h-32 object-cover rounded-xl shadow-lg">` : ''}<div><span class="category-tag">${v.category}</span><h2 class="font-black text-xl">${v.title}</h2><div class="flex gap-3 mt-4 items-center"><span class="author-badge">${v.author}</span><span class="text-[10px] text-red-500 font-black"><i class="fa-solid fa-heart"></i> ${v.likes || 0}</span></div></div></div>`;
                     card.onclick = () => core.showFull(v); container.appendChild(card);
                 });
                 document.getElementById('more-container').classList.toggle('hidden', isSearch || items.length <= showLimit);
@@ -450,7 +466,7 @@
                 document.getElementById('view-article').classList.remove('hidden');
                 document.getElementById('article-content').innerHTML = `<h1 class="text-4xl font-black mb-4">${data.title}</h1><div class="flex gap-4 mb-8"><span class="author-badge">${data.author}</span><span class="text-xs opacity-40">${data.date}</span></div><div class="text-slate-300 text-lg white-pre border-l-4 border-blue-600 pl-6 mb-10 leading-relaxed">${core.parseMarkdown(data.content)}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">${(data.images||[]).map(i=>`<img src="${i}" class="w-full rounded-3xl shadow-2xl">`).join('')}</div>`;
                 const isLiked = localStorage.getItem(`liked_${data.id}`) ? 'liked' : '';
-                document.getElementById('main-like-btn').className = `like-btn cursor-pointer flex items-center gap-2 bg-white/5 px-6 py-3 rounded-full border border-white/5 transition hover:scale-105 ${isLiked}`;
+                document.getElementById('main-like-btn').className = `like-btn cursor-pointer flex items-center gap-2 bg-white/5 px-6 py-3 rounded-full border border-white/5 transition hover:scale-105 shadow-xl ${isLiked}`;
                 document.getElementById('like-count').innerText = data.likes || 0;
                 window.scrollTo(0,0);
             },
@@ -467,7 +483,6 @@
                 if(tab === 'settings') core.loadSettingsInAdmin();
             },
             
-            // PONIŻEJ ULEPSZONA FUNKCJA Z TRY...CATCH
             publish: async () => {
                 const t = document.getElementById('in-title').value;
                 const c = document.getElementById('in-content').value;
@@ -557,6 +572,7 @@
                 });
             },
 
+            // PONIŻEJ ULEPSZONE ŁADOWANIE KOMENTARZY Z LUBIENIEM (NIC NIE USUWANE Z HTML, TYLKO DODANE)
             loadComments: (pid) => {
                 db.ref(`elk/comments/${pid}`).on('value', snap => {
                     const list = document.getElementById('comments-list'); list.innerHTML = "";
@@ -565,20 +581,43 @@
                         let reps = "";
                         if(c.replies) {
                             Object.entries(c.replies).forEach(([rid, r]) => {
-                                reps += `<div class="reply-item"><span class="font-black text-blue-400 text-[11px] uppercase">${r.nick}</span><p class="text-xs my-1">${DOMPurify.sanitize(r.text)}</p></div>`;
+                                const rLikes = r.likes || 0;
+                                const rLikedClass = localStorage.getItem(`liked_comm_${rid}`) ? "text-red-500" : "text-slate-500 hover:text-red-400";
+                                reps += `<div class="reply-item pl-4 mt-2 border-l-2 border-white/5"><span class="font-black text-blue-400 text-[11px] uppercase">${r.nick}</span><p class="text-xs my-1">${DOMPurify.sanitize(r.text)}</p>
+                                <div class="flex gap-4 mt-1"><span onclick="core.likeComment('${cid}', '${rid}')" class="text-[9px] font-bold cursor-pointer uppercase transition flex items-center gap-1 ${rLikedClass}"><i class="fa-solid fa-heart"></i> ${rLikes}</span></div>
+                                </div>`;
                             });
                         }
+                        const cLikes = c.likes || 0;
+                        const cLikedClass = localStorage.getItem(`liked_comm_${cid}`) ? "text-red-500" : "text-slate-400 hover:text-red-400";
                         list.innerHTML += `<div class="comment-item">
                             <span class="font-black text-blue-400 text-xs uppercase">${c.nick}</span>
                             <p class="text-sm my-1">${DOMPurify.sanitize(c.text)}</p>
-                            <div class="flex gap-4 mt-2">
+                            <div class="flex gap-4 mt-2 items-center">
+                                <span onclick="core.likeComment('${cid}')" class="text-[10px] font-bold cursor-pointer uppercase transition flex items-center gap-1 ${cLikedClass}"><i class="fa-solid fa-heart"></i> ${cLikes}</span>
                                 <span onclick="core.setReply('${cid}', '${c.nick}')" class="text-[10px] font-bold text-slate-400 cursor-pointer hover:text-blue-400 uppercase">Odpowiedz</span>
                                 <span onclick="core.reportComment('${cid}', '${c.text}', '${c.nick}')" class="text-[10px] font-bold text-slate-400 cursor-pointer hover:text-red-400 uppercase">Zgłoś</span>
                             </div>
-                            <div class="replies-container" style="display:block">${reps}</div>
+                            <div class="replies-container mt-2" style="display:block">${reps}</div>
                         </div>`;
                     });
                 });
+            },
+            
+            // NOWA FUNKCJA LAJKOWANIA KOMENTARZY (ZABEZPIECZONA LOGOWANIEM)
+            likeComment: (cid, rid = null) => {
+                if (!localStorage.getItem('fb_token')) return core.showLoginOverlay();
+                
+                const likeKey = rid ? `liked_comm_${rid}` : `liked_comm_${cid}`;
+                if(localStorage.getItem(likeKey)) return;
+                
+                const refPath = rid ? `elk/comments/${currentOpenPostId}/${cid}/replies/${rid}/likes` : `elk/comments/${currentOpenPostId}/${cid}/likes`;
+                
+                db.ref(refPath).transaction(l => (l || 0) + 1)
+                    .then(() => {
+                        localStorage.setItem(likeKey, "1");
+                    })
+                    .catch(e => alert("Błąd zapisu polubienia komentarza: " + e.message));
             },
             
             addComment: () => {
