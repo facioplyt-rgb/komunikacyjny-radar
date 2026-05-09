@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ełk Nasze Wiadomości</title>
+    <title>Ełk Nasze Wiadomości - Serwis Informacyjny</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
@@ -14,43 +14,32 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
 
     <style>
-        /* KLASYCZNY JASNY MOTYW - NORMALNE CZCIONKI */
+        /* KLASYCZNY JASNY MOTYW */
         body { 
             background: #f4f6f8; 
             color: #1a1a1a; 
             font-family: Arial, Helvetica, sans-serif; 
             scroll-behavior: smooth; 
             line-height: 1.6;
+            overflow-x: hidden; /* NAPRAWA: Zablokowanie przycinania i bocznego scrollowania na telefonach */
         }
 
-        /* 
-         * Poniższe reguły nadpisują klasy Tailwind (np. text-slate-300), 
-         * które są wpisane na sztywno w oryginalnym JS, 
-         * aby strona wyglądała naturalnie i jasno, bez zmieniania samego skryptu! 
-         */
+        /* Wymuszenie jasnych kolorów z oryginalnego skryptu JS */
         #main-content .text-white { color: #1a1a1a !important; }
         .text-slate-200, .text-slate-300, .text-slate-400, .text-slate-500, .text-slate-600 { color: #4a4a4a !important; }
         .bg-white\/5, .bg-\[\#161c2d\], .bg-\[\#0b0f1a\] { background-color: #ffffff !important; }
         .border-white\/5, .border-white\/10 { border-color: #e0e0e0 !important; }
         
-        .glass { 
-            background: #ffffff !important; 
-            border: 1px solid #e0e0e0 !important; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important; 
-            backdrop-filter: none !important; 
-            border-radius: 4px !important;
-        }
-        
-        .card { 
+        .glass, .card { 
             background: #ffffff !important; 
             border: 1px solid #d1d5db !important; 
             border-radius: 4px !important; 
-            box-shadow: none !important; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important; 
+            backdrop-filter: none !important; 
             transition: none !important;
         }
         .card:hover { border-color: #3b82f6 !important; transform: none !important; }
         
-        /* Pola tekstowe i formularze */
         .input-dark { 
             background: #ffffff !important; 
             border: 1px solid #ccc !important; 
@@ -63,55 +52,73 @@
         }
         .input-dark:focus { border-color: #3b82f6 !important; outline: none !important; }
         
-        /* Tekst i tagi */
-        h1, h2, h3, h4 { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important; font-style: normal !important; color: #111 !important; font-weight: bold !important; letter-spacing: normal !important; text-transform: none !important; }
+        h1, h2, h3, h4 { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important; font-style: normal !important; color: #111 !important; font-weight: bold !important; text-transform: none !important; }
         .author-badge { font-weight: bold; color: #555 !important; background: #eee !important; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
         .category-tag { font-size: 11px; font-weight: bold; padding: 3px 6px; border-radius: 3px; background: #e0f2fe !important; color: #0284c7 !important; border: 1px solid #bae6fd; text-transform: uppercase; }
         
-        /* Przyciski i akcje */
-        button { border-radius: 4px !important; text-transform: none !important; letter-spacing: normal !important; font-weight: normal !important; }
+        button { border-radius: 4px !important; text-transform: none !important; font-weight: normal !important; }
         .bg-blue-600 { background-color: #2563eb !important; color: white !important; }
         .bg-blue-600:hover { background-color: #1d4ed8 !important; }
-        .bg-slate-800 { background-color: #f1f5f9 !important; color: #333 !important; border: 1px solid #ccc !important; }
         
         .like-btn { background: #f9fafb !important; border: 1px solid #ddd !important; color: #333 !important; border-radius: 4px !important; box-shadow: none !important; padding: 8px 16px !important; font-weight: bold;}
         .like-btn.liked { color: #dc2626 !important; background: #fef2f2 !important; border-color: #fecaca !important; }
         
-        /* Komentarze */
         .comment-item { border-left: 4px solid #3b82f6 !important; background: #f8fafc !important; padding: 12px 15px; border-radius: 4px !important; border: 1px solid #e2e8f0; margin-bottom: 15px; }
         .reply-item { border-left: 2px solid #cbd5e1 !important; background: #ffffff !important; padding-left: 10px; margin-top: 8px; }
         .del-comm-btn { position: absolute; right: 10px; top: 10px; color: #ef4444; font-size: 10px; font-weight: bold; cursor: pointer; display: none; }
         body.admin-active .del-comm-btn { display: block; }
         
-        /* Inne */
-        .tab-btn { padding: 8px 16px; font-size: 13px; font-weight: bold; border-radius: 4px; cursor: pointer; background: #f1f5f9 !important; border: 1px solid #ccc !important; color: #333 !important; text-transform: none !important; letter-spacing: normal !important; margin-right: 4px;}
+        .tab-btn { padding: 8px 16px; font-size: 13px; font-weight: bold; border-radius: 4px; cursor: pointer; background: #f1f5f9 !important; border: 1px solid #ccc !important; color: #333 !important; margin-right: 4px;}
         .tab-btn.active { background: #2563eb !important; color: white !important; border-color: #2563eb !important; }
-        
-        .ad-box { width: 100%; background: #fff; border: 1px solid #ccc; overflow: hidden; display: none; margin-bottom: 15px; border-radius: 4px; padding: 4px; }
-        .ad-box.active { display: block; }
-        .ad-box img { width: 100%; height: auto; display: block; }
-        .no-ad-placeholder { font-size: 11px; color: #666; border: 1px dashed #ccc; padding: 20px 10px; text-align: center; background: #fafafa; }
-        .ad-container { position: fixed; top: 100px; width: 160px; z-index: 40; }
-        .ad-left { left: 10px; } .ad-right { right: 10px; }
-        @media (max-width: 1279px) { .ad-container { position: static; width: 100%; max-width: 728px; margin: 0 auto 20px auto; } }
         
         .toast { position: fixed; top: 20px; right: 20px; background: #fff; border: 1px solid #ccc; border-left: 4px solid #2563eb; color: #333; padding: 15px 20px; border-radius: 4px; transform: translateX(120%); transition: 0.3s; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .toast.show { transform: translateX(0); }
         
         .md-h1 { font-size: 1.5rem; font-weight: bold; display: block; margin: 1rem 0; color: #111; border-bottom: 1px solid #eee; padding-bottom: 5px; }
         .md-h3 { font-size: 1.25rem; font-weight: bold; display: block; margin: 0.75rem 0; color: #333; }
-        .md-small { font-size: 0.9rem; color: #666; display: block; line-height: 1.4; }
         
         #loader { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 9999; align-items: center; justify-content: center; }
-        
         #auth-overlay { background: rgba(255,255,255,0.95) !important; }
         #auth-overlay h1 { color: #111 !important; }
         #auth-overlay p { color: #555 !important; }
+
+        /* --- ZAAWANSOWANY SYSTEM REKLAM (MOBILE VS PC) --- */
+        .ad-box { width: 100%; background: #fff; border: 1px solid #ccc; display: none; margin-bottom: 15px; border-radius: 4px; padding: 4px; }
+        .ad-box.active { display: block; }
+        .ad-box img { width: 100%; height: auto; max-height: 400px; object-fit: cover; display: block; }
+        .no-ad-placeholder { font-size: 11px; color: #666; border: 1px dashed #ccc; padding: 20px 10px; text-align: center; background: #fafafa; margin-bottom: 15px; }
+        
+        /* Domyślnie dla PC (Przyklejone po bokach) */
+        .ad-container { position: fixed; top: 100px; width: 160px; z-index: 40; }
+        .ad-left { left: 10px; } 
+        .ad-right { right: 10px; }
+        
+        /* DLA TELEFONÓW I TABLETÓW (< 1280px) */
+        @media (max-width: 1279px) { 
+            /* Reklamy wskakują w treść strony (nad i pod), znikają z boków */
+            .ad-container { 
+                position: relative; 
+                top: 0; left: 0; right: 0; 
+                width: 100%; 
+                max-width: 100%; 
+                margin: 0 auto; 
+                display: block;
+            }
+            .ad-box img { max-height: 180px; } /* Niższe reklamy na telefonie, żeby nie zajmowały pół ekranu */
+            
+            /* Struktura pozwalająca wrzucić ad-left na górę, a ad-right na dół głównego contentu */
+            #main-content-wrapper { display: flex; flex-direction: column; }
+            #ad-l-zone { order: 1; margin-bottom: 20px; } /* Górna reklama */
+            #search-area { order: 2; }
+            #view-home { order: 3; }
+            #view-article { order: 4; }
+            #view-admin { order: 5; }
+            #ad-r-zone { order: 6; margin-top: 20px; } /* Dolna reklama */
+        }
     </style>
 </head>
 <body id="main-body">
 
-    <!-- Zwykły, jasny ekran logowania -->
     <div id="auth-overlay" class="hidden fixed inset-0 z-[100] flex flex-col items-center justify-center text-center p-6 transition-opacity">
         <button onclick="core.hideLoginOverlay()" class="absolute top-8 right-8 text-gray-500 hover:text-black text-2xl"><i class="fa-solid fa-xmark"></i></button>
         <h1 class="text-3xl font-bold mb-2 text-black">EŁK Wiadomości</h1>
@@ -122,11 +129,8 @@
     </div>
 
     <div id="toast-container"></div>
-    <div class="ad-container ad-left" id="ad-l-zone"></div>
-    <div class="ad-container ad-right" id="ad-r-zone"></div>
     <div id="loader"><div class="animate-spin text-3xl text-blue-600"><i class="fa-solid fa-circle-notch"></i></div></div>
 
-    <!-- Klasyczny Header -->
     <header class="bg-white border-b border-gray-300 sticky top-0 z-50 mb-6 shadow-sm" id="main-header">
         <div class="max-w-5xl mx-auto px-4 h-16 flex justify-between items-center">
             <h1 onclick="core.goHome()" class="text-2xl font-bold cursor-pointer text-blue-700">EŁK <span class="text-gray-800">Wiadomości</span></h1>
@@ -147,7 +151,6 @@
 
                 <div class="flex items-center gap-3 ml-2 border-l border-gray-300 pl-4" id="profile-section">
                     <button id="btn-login" onclick="core.login()" class="text-sm font-bold text-blue-600 hover:underline hidden">Zaloguj się</button>
-                    
                     <span id="user-profile-name" class="hidden text-sm font-bold text-gray-800"></span>
                     <button id="btn-logout" onclick="core.logout()" class="hidden text-xs text-gray-500 hover:text-red-500 hover:underline">Wyloguj</button>
                     <span id="admin-indicator" class="hidden text-[10px] bg-red-100 text-red-700 px-2 py-1 rounded font-bold border border-red-200">Admin</span>
@@ -159,137 +162,117 @@
 
     <main class="max-w-4xl mx-auto px-4 min-h-screen" id="main-content">
         
-        <!-- Klasyczna wyszukiwarka -->
-        <div id="search-area" class="mb-6 bg-white p-4 border border-gray-300 rounded">
-            <div class="relative mb-4">
-                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
-                <input type="text" id="search-input" oninput="core.filterPosts()" placeholder="Szukaj wiadomości..." class="input-dark pl-10">
-            </div>
-            <div class="flex flex-wrap gap-2 items-center">
-                <button onclick="core.switchTab('all', this)" class="tab-btn active">Wszystkie</button>
-                <button onclick="core.switchTab('Wydarzenia', this)" class="tab-btn">Wydarzenia</button>
-                <button onclick="core.switchTab('Aktualizacje', this)" class="tab-btn">Aktualizacje</button>
-                <button onclick="core.switchTab('Informacje', this)" class="tab-btn">Informacje</button>
-            </div>
-        </div>
-
-        <div id="view-home" class="pb-5">
-            <div id="news-container" class="space-y-4">
-                <div class="text-center py-10 text-gray-500 text-sm">Wczytywanie wiadomości...</div>
-            </div>
-            <div id="more-container" class="mt-6 hidden flex justify-center pb-10">
-                <button onclick="core.showAllPosts()" class="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 rounded font-bold text-sm">Pokaż starsze wpisy</button>
-            </div>
-        </div>
-
-        <div id="view-article" class="hidden pb-10">
-            <button onclick="core.goHome()" class="mb-4 text-blue-600 font-bold hover:underline flex items-center gap-2 text-sm"><i class="fa-solid fa-arrow-left"></i> Wstecz</button>
+        <!-- Dodany wrapper do poprawnego ułożenia reklam na mobile -->
+        <div id="main-content-wrapper">
             
-            <div class="bg-white border border-gray-300 p-6 rounded mb-6">
-                <div id="article-content"></div>
+            <!-- STREFA LEWA (Na PC z lewej, na Mobile NA GÓRZE strony) -->
+            <div class="ad-container ad-left" id="ad-l-zone"></div>
+
+            <div id="search-area" class="mb-6 bg-white p-4 border border-gray-300 rounded">
+                <div class="relative mb-4">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                    <input type="text" id="search-input" oninput="core.filterPosts()" placeholder="Szukaj wiadomości..." class="input-dark pl-10">
+                </div>
+                <div class="flex flex-wrap gap-2 items-center">
+                    <button onclick="core.switchTab('all', this)" class="tab-btn active">Wszystkie</button>
+                    <button onclick="core.switchTab('Wydarzenia', this)" class="tab-btn">Wydarzenia</button>
+                    <button onclick="core.switchTab('Aktualizacje', this)" class="tab-btn">Aktualizacje</button>
+                    <button onclick="core.switchTab('Informacje', this)" class="tab-btn">Informacje</button>
+                </div>
             </div>
-            
-            <div id="article-interaction" class="mt-6">
-                <div class="flex items-center gap-4 mb-6">
-                    <div id="main-like-btn" onclick="core.likePost()" class="like-btn cursor-pointer flex items-center gap-2">
-                        <i class="fa-solid fa-thumbs-up"></i> Polecam (<span id="like-count">0</span>)
+
+            <div id="view-home" class="pb-5">
+                <div id="news-container" class="space-y-4">
+                    <div class="text-center py-10 text-gray-500 text-sm">Wczytywanie wiadomości...</div>
+                </div>
+                <div id="more-container" class="mt-6 hidden flex justify-center pb-10">
+                    <button onclick="core.showAllPosts()" class="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 rounded font-bold text-sm">Pokaż starsze wpisy</button>
+                </div>
+            </div>
+
+            <div id="view-article" class="hidden pb-10">
+                <button onclick="core.goHome()" class="mb-4 text-blue-600 font-bold hover:underline flex items-center gap-2 text-sm"><i class="fa-solid fa-arrow-left"></i> Wstecz</button>
+                <div class="bg-white border border-gray-300 p-6 rounded mb-6"><div id="article-content"></div></div>
+                <div id="article-interaction" class="mt-6">
+                    <div class="flex items-center gap-4 mb-6"><div id="main-like-btn" onclick="core.likePost()" class="like-btn cursor-pointer flex items-center gap-2"><i class="fa-solid fa-thumbs-up"></i> Polecam (<span id="like-count">0</span>)</div></div>
+                    <h3 class="text-xl font-bold mb-4 text-gray-800 border-b border-gray-200 pb-2">Komentarze</h3>
+                    <div id="comments-list" class="space-y-3 mb-6"></div>
+                    <div id="comment-box-anchor" class="bg-gray-50 p-4 border border-gray-300 rounded space-y-3">
+                        <div id="replying-to-info" class="hidden flex justify-between items-center bg-blue-50 p-2 border border-blue-200 rounded text-sm text-blue-800"><span>Odpowiadasz użytkownikowi: <strong id="target-nick"></strong></span><button onclick="core.cancelReply()" class="text-red-600 font-bold hover:underline">Anuluj</button></div>
+                        <input type="text" id="comm-nick" readonly class="input-dark bg-gray-100 text-gray-500" placeholder="Musisz być zalogowany">
+                        <textarea id="comm-text" rows="3" placeholder="Dodaj swój komentarz..." class="input-dark"></textarea>
+                        <button onclick="core.addComment()" class="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700">Dodaj komentarz</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-admin" class="hidden pb-10">
+                <div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold text-gray-800">Panel Administratora</h2><button onclick="core.goHome()" class="text-blue-600 font-bold hover:underline text-sm">Powrót</button></div>
+                
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <button onclick="core.setAdminTab('new')" id="btn-adm-new" class="tab-btn active">Wpisy</button>
+                    <button onclick="core.setAdminTab('comms')" id="btn-adm-comms" class="tab-btn">Komentarze</button>
+                    <button onclick="core.setAdminTab('notifs')" id="btn-adm-notifs" class="tab-btn">Zgłoszenia <span id="notif-count" class="hidden text-white bg-red-500 rounded px-1 ml-1 text-xs">0</span></button>
+                    <button onclick="core.setAdminTab('ads')" id="btn-adm-ads" class="tab-btn">Reklamy</button>
+                    <button onclick="core.setAdminTab('settings')" id="btn-adm-settings" class="tab-btn">Ustawienia</button>
+                </div>
+
+                <div id="admin-new-section" class="bg-white border border-gray-300 p-6 rounded">
+                    <div class="flex justify-between items-center mb-4"><h3 id="admin-mode-title" class="text-lg font-bold">Nowy Wpis</h3><button onclick="core.cancelEdit()" id="cancel-edit-btn" class="hidden text-red-600 font-bold hover:underline text-sm">Anuluj edycję</button></div>
+                    <div class="space-y-4">
+                        <div><label class="block text-sm font-bold text-gray-700 mb-1">Tytuł</label><input type="text" id="in-title" class="input-dark"></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="block text-sm font-bold text-gray-700 mb-1">Autor</label><input type="text" id="in-author" class="input-dark"></div>
+                            <div><label class="block text-sm font-bold text-gray-700 mb-1">Kategoria</label><select id="in-category" class="input-dark"><option value="Wydarzenia">Wydarzenia</option><option value="Aktualizacje">Aktualizacje</option><option value="Informacje">Informacje</option></select></div>
+                        </div>
+                        <div><label class="block text-sm font-bold text-gray-700 mb-1">Data</label><input type="text" id="in-date" class="input-dark"></div>
+                        <div><label class="block text-sm font-bold text-gray-700 mb-1">Treść</label><textarea id="in-content" rows="10" class="input-dark"></textarea></div>
+                        <div class="p-3 border border-gray-300 bg-gray-50 rounded"><label class="block text-sm font-bold text-gray-700 mb-2">Zdjęcia</label><input type="file" id="in-files" onchange="core.previewNewFiles()" multiple accept="image/*" class="text-sm"><div id="edit-images-preview" class="flex flex-wrap gap-2 mt-2"></div></div>
+                        <button onclick="core.publish()" id="publish-btn" class="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700 w-full">Zapisz</button>
+                        <div class="mt-8 pt-4 border-t border-gray-200"><h4 class="font-bold text-gray-700 mb-3">Lista wpisów</h4><div id="admin-list" class="space-y-2"></div></div>
                     </div>
                 </div>
                 
-                <h3 class="text-xl font-bold mb-4 text-gray-800 border-b border-gray-200 pb-2">Komentarze</h3>
-                <div id="comments-list" class="space-y-3 mb-6"></div>
+                <div id="admin-comms-section" class="hidden bg-white border border-gray-300 p-6 rounded"><h3 class="text-lg font-bold mb-4">Wszystkie Komentarze</h3><div id="all-comms-list"></div></div>
+                <div id="admin-notifs-section" class="hidden bg-white border border-gray-300 p-6 rounded"><h3 class="text-lg font-bold mb-4 text-red-600">Raporty i Zgłoszenia</h3><div id="reports-list"></div></div>
                 
-                <div id="comment-box-anchor" class="bg-gray-50 p-4 border border-gray-300 rounded space-y-3">
-                    <div id="replying-to-info" class="hidden flex justify-between items-center bg-blue-50 p-2 border border-blue-200 rounded text-sm text-blue-800">
-                        <span>Odpowiadasz użytkownikowi: <strong id="target-nick"></strong></span>
-                        <button onclick="core.cancelReply()" class="text-red-600 font-bold hover:underline">Anuluj</button>
+                <div id="admin-ads-section" class="hidden bg-white border border-gray-300 p-6 rounded space-y-6">
+                    <div class="flex justify-between items-center"><h3 id="ad-mode-title" class="text-lg font-bold">Zarządzanie Reklamami</h3><button onclick="core.cancelAdEdit()" id="cancel-ad-edit-btn" class="hidden text-red-600 font-bold hover:underline text-sm">Anuluj</button></div>
+                    <div class="p-4 border border-gray-200 bg-gray-50 rounded space-y-3">
+                        <label class="block text-sm font-bold text-gray-700">Strona</label><select id="ad-side" class="input-dark"><option value="left">Lewa</option><option value="right">Prawa</option></select>
+                        <label class="block text-sm font-bold text-gray-700 mt-2">Plik Graficzny</label><input type="file" id="ad-file" accept="image/*" class="text-sm block">
+                        <label class="block text-sm font-bold text-gray-700 mt-2">Link Przekierowania</label><input type="text" id="ad-target" class="input-dark">
+                        <button onclick="core.publishAd()" id="ad-publish-btn" class="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700 mt-2 w-full">Dodaj Nową Reklamę</button>
                     </div>
-                    <input type="text" id="comm-nick" readonly class="input-dark bg-gray-100 text-gray-500" placeholder="Musisz być zalogowany">
-                    <textarea id="comm-text" rows="3" placeholder="Dodaj swój komentarz..." class="input-dark"></textarea>
-                    <button onclick="core.addComment()" class="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700">Dodaj komentarz</button>
+                    <div><h4 class="font-bold text-gray-700 mb-3 mt-4">Aktywne Reklamy</h4><div id="admin-ads-list" class="space-y-2"></div></div>
+                </div>
+                
+                <div id="admin-settings-section" class="hidden bg-white border border-gray-300 p-6 rounded space-y-4">
+                    <h3 class="text-lg font-bold mb-2">Ustawienia strony</h3>
+                    <div><label class="block text-sm font-bold text-gray-700 mb-1">O Serwisie (Stopka)</label><textarea id="set-about" rows="3" class="input-dark"></textarea></div>
+                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Redakcja</label><textarea id="set-redaction" rows="3" class="input-dark"></textarea></div>
+                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Polityka Prywatności</label><textarea id="set-privacy" rows="3" class="input-dark"></textarea></div>
+                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Współpraca</label><textarea id="set-coop" rows="3" class="input-dark"></textarea></div>
+                    <button onclick="core.saveSettings()" class="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700 w-full">Zapisz ustawienia</button>
                 </div>
             </div>
-        </div>
 
-        <div id="view-admin" class="hidden pb-10">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">Panel Administratora</h2>
-                <button onclick="core.goHome()" class="text-blue-600 font-bold hover:underline text-sm">Powrót do strony</button>
-            </div>
-            
-            <div class="flex flex-wrap gap-2 mb-6">
-                <button onclick="core.setAdminTab('new')" id="btn-adm-new" class="tab-btn active">Wpisy</button>
-                <button onclick="core.setAdminTab('comms')" id="btn-adm-comms" class="tab-btn">Komentarze</button>
-                <button onclick="core.setAdminTab('notifs')" id="btn-adm-notifs" class="tab-btn">Zgłoszenia <span id="notif-count" class="hidden text-white bg-red-500 rounded px-1 ml-1 text-xs">0</span></button>
-                <button onclick="core.setAdminTab('ads')" id="btn-adm-ads" class="tab-btn">Reklamy</button>
-                <button onclick="core.setAdminTab('settings')" id="btn-adm-settings" class="tab-btn">Ustawienia</button>
-            </div>
-
-            <div id="admin-new-section" class="bg-white border border-gray-300 p-6 rounded">
-                <div class="flex justify-between items-center mb-4"><h3 id="admin-mode-title" class="text-lg font-bold">Nowy Wpis</h3><button onclick="core.cancelEdit()" id="cancel-edit-btn" class="hidden text-red-600 font-bold hover:underline text-sm">Anuluj edycję</button></div>
-                <div class="space-y-4">
-                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Tytuł</label><input type="text" id="in-title" class="input-dark"></div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><label class="block text-sm font-bold text-gray-700 mb-1">Autor</label><input type="text" id="in-author" class="input-dark"></div>
-                        <div><label class="block text-sm font-bold text-gray-700 mb-1">Kategoria</label><select id="in-category" class="input-dark"><option value="Wydarzenia">Wydarzenia</option><option value="Aktualizacje">Aktualizacje</option><option value="Informacje">Informacje</option></select></div>
-                    </div>
-                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Data (opcjonalnie)</label><input type="text" id="in-date" class="input-dark"></div>
-                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Treść</label><textarea id="in-content" rows="10" class="input-dark"></textarea></div>
-                    
-                    <div class="p-3 border border-gray-300 bg-gray-50 rounded">
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Zdjęcia</label>
-                        <input type="file" id="in-files" onchange="core.previewNewFiles()" multiple accept="image/*" class="text-sm">
-                        <div id="edit-images-preview" class="flex flex-wrap gap-2 mt-2"></div>
-                    </div>
-                    
-                    <button onclick="core.publish()" id="publish-btn" class="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700 w-full">Zapisz</button>
-                    
-                    <div class="mt-8 pt-4 border-t border-gray-200">
-                        <h4 class="font-bold text-gray-700 mb-3">Lista wpisów</h4>
-                        <div id="admin-list" class="space-y-2"></div>
-                    </div>
+            <div id="view-legal" class="hidden pb-10">
+                <button onclick="core.goHome()" class="mb-4 text-blue-600 font-bold hover:underline flex items-center gap-2 text-sm"><i class="fa-solid fa-arrow-left"></i> Wróć</button>
+                <div class="bg-white border border-gray-300 p-8 rounded">
+                    <h2 id="legal-title" class="text-2xl font-bold mb-6 text-gray-800 border-b border-gray-200 pb-2"></h2>
+                    <div id="legal-body" class="text-gray-700 leading-relaxed white-pre"></div>
                 </div>
             </div>
-            
-            <div id="admin-comms-section" class="hidden"><div id="all-comms-list"></div></div>
-            <div id="admin-notifs-section" class="hidden"><div id="reports-list"></div></div>
-            
-            <div id="admin-ads-section" class="hidden bg-white border border-gray-300 p-6 rounded space-y-6">
-                <div class="flex justify-between items-center"><h3 id="ad-mode-title" class="text-lg font-bold">Reklamy</h3><button onclick="core.cancelAdEdit()" id="cancel-ad-edit-btn" class="hidden text-red-600 font-bold hover:underline text-sm">Anuluj</button></div>
-                <div class="p-4 border border-gray-200 bg-gray-50 rounded space-y-3">
-                    <label class="block text-sm font-bold text-gray-700">Strona</label><select id="ad-side" class="input-dark"><option value="left">Lewa</option><option value="right">Prawa</option></select>
-                    <label class="block text-sm font-bold text-gray-700 mt-2">Plik</label><input type="file" id="ad-file" accept="image/*" class="text-sm block">
-                    <label class="block text-sm font-bold text-gray-700 mt-2">Link</label><input type="text" id="ad-target" class="input-dark">
-                    <button onclick="core.publishAd()" id="ad-publish-btn" class="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700 mt-2 w-full">Zapisz reklamę</button>
-                </div>
-                <div id="admin-ads-list" class="space-y-2"></div>
-            </div>
-            
-            <div id="admin-settings-section" class="hidden bg-white border border-gray-300 p-6 rounded space-y-4">
-                <h3 class="text-lg font-bold mb-2">Ustawienia strony</h3>
-                <div><label class="block text-sm font-bold text-gray-700 mb-1">O Serwisie (Stopka)</label><textarea id="set-about" rows="3" class="input-dark"></textarea></div>
-                <div><label class="block text-sm font-bold text-gray-700 mb-1">Redakcja</label><textarea id="set-redaction" rows="3" class="input-dark"></textarea></div>
-                <div><label class="block text-sm font-bold text-gray-700 mb-1">Polityka Prywatności</label><textarea id="set-privacy" rows="3" class="input-dark"></textarea></div>
-                <div><label class="block text-sm font-bold text-gray-700 mb-1">Współpraca</label><textarea id="set-coop" rows="3" class="input-dark"></textarea></div>
-                <button onclick="core.saveSettings()" class="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700 w-full">Zapisz ustawienia</button>
-            </div>
-        </div>
 
-        <div id="view-legal" class="hidden pb-10">
-            <button onclick="core.goHome()" class="mb-4 text-blue-600 font-bold hover:underline flex items-center gap-2 text-sm"><i class="fa-solid fa-arrow-left"></i> Wróć</button>
-            <div class="bg-white border border-gray-300 p-8 rounded">
-                <h2 id="legal-title" class="text-2xl font-bold mb-6 text-gray-800 border-b border-gray-200 pb-2"></h2>
-                <div id="legal-body" class="text-gray-700 leading-relaxed white-pre"></div>
-            </div>
+            <!-- STREFA PRAWA (Na PC z prawej, na Mobile NA DOLE strony) -->
+            <div class="ad-container ad-right" id="ad-r-zone"></div>
         </div>
     </main>
 
-    <footer id="main-footer" class="bg-white border-t border-gray-300 py-8 mt-10">
+    <footer id="main-footer" class="bg-white border-t border-gray-300 py-8 mt-10 relative z-50">
         <div class="max-w-4xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
-            <div>
-                <h4 class="font-bold text-gray-800 mb-3">O Serwisie</h4>
-                <p id="txt-about" class="text-gray-600"></p>
-            </div>
+            <div><h4 class="font-bold text-gray-800 mb-3">O Serwisie</h4><p id="txt-about" class="text-gray-600"></p></div>
             <div>
                 <h4 class="font-bold text-gray-800 mb-3">Informacje</h4>
                 <ul class="space-y-2 text-blue-600">
@@ -312,7 +295,7 @@
         </div>
     </footer>
 
-    <!-- TWÓJ ORYGINALNY KOD JS - NIETKNIĘTY ZGODNIE Z PROŚBĄ -->
+    <!-- TWÓJ ORYGINALNY SKRYPT JS + NAPRAWY DLA PANELU ADMINA -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyCb5QmZdwWwa9LafqqGZvGW-6vblkab32M",
@@ -423,17 +406,28 @@
                 adsRef.on('value', snap => {
                     const data = snap.val(); allAds = [];
                     const zones = { left: document.getElementById('ad-l-zone'), right: document.getElementById('ad-r-zone') };
+                    const adminAdsList = document.getElementById('admin-ads-list'); // DODANO: Wyłapanie z HTML
                     if(zones.left) zones.left.innerHTML = ""; if(zones.right) zones.right.innerHTML = "";
+                    if(adminAdsList) adminAdsList.innerHTML = ""; // DODANO: Czyszczenie listy admina
+
                     if(data) {
                         Object.entries(data).forEach(([id, ad]) => {
                             allAds.push({ id, ...ad });
                             const html = `<a href="${DOMPurify.sanitize(ad.link)}" target="_blank" class="ad-box"><img src="${ad.img}"></a>`;
                             if (zones[ad.side]) zones[ad.side].innerHTML += html;
+                            
+                            // NAPRAWA: Zapewnia renderowanie usunięcia reklam w panelu admina
+                            if(adminAdsList) {
+                                adminAdsList.innerHTML += `<div class="flex justify-between items-center p-3 bg-gray-100 border border-gray-300 rounded">
+                                    <span class="text-sm font-bold text-gray-700">${ad.side.toUpperCase()} - Link: ${ad.link.substring(0,20)}...</span>
+                                    <button onclick="core.deleteAd('${id}')" class="text-red-600 font-bold hover:underline text-xs">USUŃ</button>
+                                </div>`;
+                            }
                         });
                         ['left', 'right'].forEach(s => {
                             const first = zones[s]?.querySelector('.ad-box');
                             if(first) first.classList.add('active');
-                            else zones[s].innerHTML = `<div class="no-ad-placeholder">BRAK REKLAMY (${s})</div>`;
+                            else if(zones[s]) zones[s].innerHTML = `<div class="no-ad-placeholder">BRAK REKLAMY (${s})</div>`;
                         });
                     }
                 });
@@ -527,7 +521,7 @@
                 const toShow = isSearch ? items : items.slice(0, showLimit);
                 toShow.forEach(v => {
                     const card = document.createElement('div'); card.className = "card glass p-6 rounded-2xl cursor-pointer mb-4 post-anim";
-                    card.innerHTML = `<div class="flex gap-5 flex-col md:flex-row">${v.images?.[0] ? `<img src="${v.images[0]}" class="w-32 h-32 object-cover rounded-xl shadow-lg">` : ''}<div><span class="category-tag">${v.category}</span><h2 class="font-black text-xl">${v.title}</h2><div class="flex gap-3 mt-4 items-center"><span class="author-badge">${v.author}</span><span class="text-[10px] text-red-500 font-black"><i class="fa-solid fa-heart"></i> ${v.likes || 0}</span></div></div></div>`;
+                    card.innerHTML = `<div class="flex gap-5 flex-col md:flex-row">${v.images?.[0] ? `<img src="${v.images[0]}" class="w-full md:w-32 h-40 md:h-32 object-cover rounded shadow-sm">` : ''}<div class="flex-1"><span class="category-tag">${v.category}</span><h2 class="font-black text-xl text-gray-800 mt-2">${v.title}</h2><div class="flex gap-3 mt-4 items-center justify-between"><div class="flex items-center gap-3"><span class="author-badge">${v.author}</span><span class="text-xs text-gray-500">${v.date}</span></div><span class="text-xs text-blue-600 font-bold"><i class="fa-solid fa-thumbs-up"></i> ${v.likes || 0}</span></div></div></div>`;
                     card.onclick = () => core.showFull(v); container.appendChild(card);
                 });
                 document.getElementById('more-container').classList.toggle('hidden', isSearch || items.length <= showLimit);
@@ -538,9 +532,9 @@
                 currentOpenPostId = data.id; core.loadComments(data.id);
                 document.getElementById('view-home').classList.add('hidden'); document.getElementById('search-area').classList.add('hidden');
                 document.getElementById('view-article').classList.remove('hidden');
-                document.getElementById('article-content').innerHTML = `<h1 class="text-4xl font-black mb-4">${data.title}</h1><div class="flex gap-4 mb-8"><span class="author-badge">${data.author}</span><span class="text-xs opacity-40">${data.date}</span></div><div class="text-slate-300 text-lg white-pre border-l-4 border-blue-600 pl-6 mb-10 leading-relaxed">${core.parseMarkdown(data.content)}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">${(data.images||[]).map(i=>`<img src="${i}" class="w-full rounded-3xl shadow-2xl">`).join('')}</div>`;
+                document.getElementById('article-content').innerHTML = `<h1 class="text-3xl md:text-4xl font-bold mb-4 text-gray-900">${data.title}</h1><div class="flex gap-4 mb-6 border-b border-gray-200 pb-4"><span class="author-badge">${data.author}</span><span class="text-sm text-gray-500">${data.date}</span></div><div class="text-gray-800 text-lg white-pre leading-relaxed mb-8">${core.parseMarkdown(data.content)}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">${(data.images||[]).map(i=>`<img src="${i}" class="w-full rounded shadow-sm">`).join('')}</div>`;
                 const isLiked = localStorage.getItem(`liked_${data.id}`) ? 'liked' : '';
-                document.getElementById('main-like-btn').className = `like-btn cursor-pointer flex items-center gap-2 bg-white/5 px-6 py-3 rounded-full border border-white/5 transition hover:scale-105 shadow-xl ${isLiked}`;
+                document.getElementById('main-like-btn').className = `like-btn cursor-pointer flex items-center gap-2 ${isLiked}`;
                 document.getElementById('like-count').innerText = data.likes || 0;
                 window.scrollTo(0,0);
             },
@@ -553,10 +547,29 @@
             setAdminTab: (tab) => {
                 ['new', 'comms', 'notifs', 'ads', 'settings'].forEach(s => document.getElementById(`admin-${s}-section`).classList.toggle('hidden', s !== tab));
                 document.querySelectorAll('#view-admin .tab-btn').forEach(b => b.classList.toggle('active', b.id === `btn-adm-${tab}`));
-                if(tab === 'comms') core.loadAllCommentsAdmin();
+                
+                // NAPRAWA: Te funkcje w końcu są prawidłowo wywoływane dla Panelu
+                if(tab === 'comms') { if(core.loadAllCommentsAdmin) core.loadAllCommentsAdmin(); }
                 if(tab === 'settings') core.loadSettingsInAdmin();
+                if(tab === 'notifs') core.loadReports(); 
             },
             
+            // NAPRAWA: Dodana brakująca funkcja pobierania WSZYSTKICH komentarzy dla zakładki "Komentarze"
+            loadAllCommentsAdmin: () => {
+                commentsRootRef.once('value', snap => {
+                    const list = document.getElementById('all-comms-list'); list.innerHTML = "";
+                    if(!snap.val()) { list.innerHTML = "<p class='text-sm text-gray-500'>Brak komentarzy w systemie.</p>"; return; }
+                    Object.entries(snap.val()).forEach(([postId, postComms]) => {
+                        Object.entries(postComms).forEach(([cid, c]) => {
+                            list.innerHTML += `<div class="p-3 bg-gray-50 border border-gray-200 rounded mb-2 flex justify-between items-center">
+                                <div><strong class="text-sm text-blue-600">${c.nick}</strong>: <span class="text-sm text-gray-700">${DOMPurify.sanitize(c.text)}</span></div>
+                                <button onclick="if(confirm('Usunąć komentarz?')) db.ref('elk/comments/${postId}/${cid}').remove().then(()=>core.loadAllCommentsAdmin())" class="text-red-600 font-bold hover:underline text-xs">USUŃ</button>
+                            </div>`;
+                        });
+                    });
+                });
+            },
+
             publish: async () => {
                 const t = document.getElementById('in-title').value;
                 const c = document.getElementById('in-content').value;
@@ -588,7 +601,7 @@
                     const act = editId ? postsRef.child(editId).update(data) : postsRef.push(data);
                     
                     act.then(() => location.reload()).catch(err => {
-                        alert("Błąd Firebase (Masz źle ustawione 'Rules' w konsoli!): " + err.message);
+                        alert("Błąd Firebase: " + err.message);
                         document.getElementById('loader').style.display = 'none';
                     });
                     
@@ -717,9 +730,14 @@
             loadReports: () => {
                 reportsRef.on('value', snap => {
                     const container = document.getElementById('reports-list'); container.innerHTML = "";
-                    if(!snap.val()) return;
+                    if(!snap.val()) { container.innerHTML = "<p class='text-sm text-gray-500'>Brak zgłoszeń.</p>"; return; }
                     Object.entries(snap.val()).forEach(([rid, r]) => {
-                        container.innerHTML += `<div class="notif-card report-highlight p-4 bg-white/5 border-l-4 border-red-500 rounded-lg"><p class="text-[10px] text-red-500 font-bold uppercase">${r.nick}:</p><p class="text-xs italic my-1">"${r.text}"</p><button onclick="core.dismissReport('${rid}')" class="bg-slate-700 px-3 py-1 rounded text-[9px] font-bold hover:bg-slate-600 transition">USUŃ RAPORT</button></div>`;
+                        // NAPRAWA: Zaktualizowany ładny wygląd w panelu admina
+                        container.innerHTML += `<div class="p-4 bg-red-50 border border-red-200 rounded mb-2">
+                            <p class="text-xs text-red-600 font-bold uppercase mb-1">Zgłoszenie na: ${r.nick}</p>
+                            <p class="text-sm text-gray-800 italic mb-2">"${r.text}"</p>
+                            <button onclick="core.dismissReport('${rid}')" class="bg-red-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-700">USUŃ ZGŁOSZENIE (Zakończ)</button>
+                        </div>`;
                     });
                 });
             },
@@ -754,7 +772,7 @@
             previewNewFiles: () => core.renderEditImages(document.getElementById('in-files').files),
             renderEditImages: (files = []) => {
                 const cont = document.getElementById('edit-images-preview'); cont.innerHTML = "";
-                currentEditImages.forEach(url => cont.innerHTML += `<div class="preview-wrapper"><img src="${url}" width="60" class="border border-gray-300"></div>`);
+                currentEditImages.forEach(url => cont.innerHTML += `<div class="preview-wrapper"><img src="${url}" width="60" class="border border-gray-300 rounded"></div>`);
             },
 
             likePost: () => {
@@ -768,7 +786,7 @@
                         let countElem = document.getElementById('like-count');
                         countElem.innerText = parseInt(countElem.innerText) + 1;
                     })
-                    .catch(e => alert("Błąd zapisu polubienia (sprawdź Rules w Firebase!): " + e.message));
+                    .catch(e => alert("Błąd zapisu polubienia: " + e.message));
             }
         };
 
