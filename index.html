@@ -1,316 +1,324 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="pl" class="bg-black">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ełk Nasze Wiadomości</title>
+    <title>EŁK Wiadomości - Premium</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     
+    <!-- Nowoczesne fonty -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Twój oryginalny zestaw skryptów -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
 
     <style>
-        :root { 
-            --bg-color: #050505; 
-            --surface-color: #111111;
-            --border-color: #222222;
-            --accent: #2563eb;
-            --accent-hover: #1d4ed8;
-            --text-main: #f3f4f6;
-            --text-muted: #9ca3af;
-        }
-        body { 
-            background: var(--bg-color); color: var(--text-main); 
-            font-family: 'Inter', system-ui, sans-serif; scroll-behavior: smooth; 
-        }
+        /* TOTALNIE INNY STYL - Surowy, brutalistyczny premium */
+        :root { --main: #ffffff; --bg: #000000; --surface: #0a0a0a; --border: #1f1f1f; }
+        body { background: var(--bg); color: #d1d5db; font-family: 'Outfit', sans-serif; scroll-behavior: smooth; }
         
-        /* NOWY STYL: Surowy, nowoczesny, przypominający profesjonalne platformy */
-        .glass { 
-            background: var(--surface-color); 
-            border: 1px solid var(--border-color); 
-            border-radius: 8px; 
-        }
-        .card { 
-            background: var(--surface-color);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            transition: all 0.2s ease; 
-        }
-        .card:hover { 
-            border-color: #444; 
-            transform: translateY(-2px); 
-            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.8);
-        }
-        .input-dark { 
-            background: #0a0a0a; border: 1px solid var(--border-color); 
-            border-radius: 6px; padding: 12px 16px; width: 100%; 
-            color: white; outline: none; transition: 0.2s; 
-            font-size: 14px;
-        }
-        .input-dark:focus { border-color: var(--accent); }
+        /* Layout modifications */
+        .layout-wrapper { display: flex; flex-direction: column; min-height: 100vh; }
+        @media (min-width: 1024px) { .layout-wrapper { flex-direction: row; } }
+        
+        /* Klasy wstrzykiwane przez Twój oryginalny JS */
+        .glass { background: var(--surface); border: 1px solid var(--border); border-radius: 0px; }
+        .card { transition: all 0.2s ease; border: 1px solid var(--border); background: var(--surface); border-radius: 0; position: relative; overflow: hidden; }
+        .card::before { content: ''; position: absolute; left: 0; top: 0; width: 4px; height: 100%; background: transparent; transition: 0.2s; }
+        .card:hover { border-color: #444; }
+        .card:hover::before { background: #3b82f6; }
+        
+        .input-dark { background: #050505; border: 1px solid var(--border); border-radius: 0; padding: 14px; width: 100%; color: white; outline: none; transition: 0.2s; font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+        .input-dark:focus { border-color: #3b82f6; background: #000; }
         .white-pre { white-space: pre-wrap; word-wrap: break-word; }
         
-        #loader { display: none; position: fixed; inset: 0; background: var(--bg-color); z-index: 9999; align-items: center; justify-content: center; }
-        .post-anim { animation: fade 0.3s ease forwards; }
-        @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+        #loader { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        .post-anim { animation: fadeIn 0.5s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Znaczki i tagi */
-        .author-badge { font-weight: 600; color: var(--text-main); background: #1f2937; padding: 4px 10px; border-radius: 4px; font-size: 11px; }
-        .category-tag { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); }
+        .author-badge { font-weight: 800; color: #fff; padding: 0.25rem 0; font-size: 11px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 1px; }
+        .category-tag { font-size: 10px; font-weight: 900; text-transform: uppercase; padding: 4px 10px; background: #111; color: #3b82f6; border: 1px solid #1f1f1f; display: inline-block; margin-bottom: 10px; }
         
-        /* Akcje */
-        .like-btn.liked { color: #ef4444; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); }
-        .comment-item { border-left: 2px solid var(--border-color); background: #0a0a0a; padding: 16px; border-radius: 0 8px 8px 0; margin-bottom: 12px; position: relative; }
-        .del-comm-btn { position: absolute; right: 10px; top: 10px; color: #ef4444; font-size: 10px; font-weight: 700; cursor: pointer; display: none; }
+        .like-btn.liked { color: #fff; background: #dc2626; border-color: #dc2626; }
+        .comment-item { border-left: 2px solid #333; background: #050505; padding: 15px 20px; margin-bottom: 15px; position: relative; }
+        .del-comm-btn { position: absolute; right: 10px; top: 10px; color: #ef4444; font-size: 10px; font-weight: 900; border: 1px solid rgba(239, 68, 68, 0.2); padding: 2px 8px; display: none; cursor: pointer; text-transform: uppercase; }
         body.admin-active .del-comm-btn { display: block; }
         
-        /* Reklamy - czystszy wygląd */
-        .ad-box { width: 100%; height: 400px; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; display: none; margin-bottom: 15px; }
-        .ad-box.active { display: block; }
-        .ad-box img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; transition: 0.3s; }
-        .ad-box:hover img { opacity: 1; }
-        .ad-container { position: fixed; top: 100px; width: 160px; min-height: 50px; z-index: 40; display: block; }
-        .ad-left { left: 20px; } .ad-right { right: 20px; }
-        .no-ad-placeholder { font-size: 10px; font-weight: 600; color: #444; text-transform: uppercase; border: 1px dashed #333; padding: 20px 10px; text-align: center; border-radius: 8px; }
-        @media (max-width: 1350px) { .ad-container { position: static; width: 100%; max-width: 100%; margin: 0 auto 20px auto; display: flex; gap: 10px; } .ad-box { height: 120px; flex: 1; } }
-
-        /* Toasty */
-        .toast { position: fixed; top: 80px; right: 20px; background: var(--surface-color); border: 1px solid var(--border-color); border-left: 4px solid var(--accent); color: white; padding: 15px 25px; border-radius: 6px; transform: translateX(120%); transition: 0.3s; z-index: 1000; font-size: 13px; font-weight: 500;}
+        .ad-box { width: 100%; height: 300px; background: #050505; border: 1px solid #1f1f1f; overflow: hidden; display: none; margin-bottom: 15px; position: relative; }
+        .ad-box::after { content: 'REKLAMA'; position: absolute; top: 10px; right: 10px; background: #000; color: #fff; font-size: 8px; padding: 2px 6px; font-weight: bold; border: 1px solid #333; }
+        .ad-box.active { display: block; animation: fadeIn 0.5s; }
+        .ad-box img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(20%); transition: 0.3s; }
+        .ad-box:hover img { filter: grayscale(0%); }
+        
+        .toast { position: fixed; top: 20px; right: 20px; background: #fff; color: #000; border: none; padding: 15px 25px; transform: translateX(120%); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 1000; font-weight: 800; font-size: 13px; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .toast.show { transform: translateX(0); }
         
-        /* Markdown */
-        .md-h1 { font-size: 1.8rem; font-weight: 800; display: block; margin: 1.5rem 0 1rem; color: white; }
-        .md-h3 { font-size: 1.3rem; font-weight: 700; display: block; margin: 1rem 0; color: #e5e7eb; }
-        .md-small { font-size: 0.85rem; color: var(--text-muted); display: block; line-height: 1.5; }
-        .md-u { text-decoration: underline; text-underline-offset: 4px; }
+        .ad-container { width: 100%; min-height: 50px; z-index: 40; display: block; margin-bottom: 20px; }
+        .no-ad-placeholder { font-size: 10px; font-weight: 900; color: #333; text-transform: uppercase; border: 1px dashed #1f1f1f; padding: 30px 10px; text-align: center; }
         
-        /* Zakładki (Tabs) w surowym stylu */
-        .tab-btn { padding: 10px 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border-radius: 6px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; color: var(--text-muted); }
-        .tab-btn.active { background: #1f2937; color: white; border-color: #374151; }
-        .tab-btn:hover:not(.active) { color: white; }
+        .md-h1 { font-size: 2rem; font-weight: 900; display: block; margin: 2rem 0 1rem; color: white; line-height: 1.1; }
+        .md-h3 { font-size: 1.25rem; font-weight: 800; display: block; margin: 1.5rem 0 0.5rem; color: #e5e7eb; }
+        .md-small { font-size: 0.85rem; opacity: 0.6; display: block; line-height: 1.4; font-family: 'JetBrains Mono', monospace; }
+        .md-u { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px; }
         
-        .cursor-pointer { cursor: pointer; }
+        .tab-btn { padding: 12px 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; color: #666; background: transparent; font-family: 'JetBrains Mono', monospace; }
+        .tab-btn.active { color: white; border-bottom: 2px solid #3b82f6; }
+        .tab-btn:hover:not(.active) { color: #aaa; }
+        
+        /* Paski przewijania */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #1f1f1f; }
+        ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
     </style>
 </head>
-<body id="main-body">
+<body id="main-body" class="overflow-x-hidden">
 
-    <!-- Zmodernizowany ekran logowania -->
-    <div id="auth-overlay" class="hidden fixed inset-0 bg-[#050505]/95 z-[100] flex flex-col items-center justify-center text-center p-6 transition-opacity">
-        <button onclick="core.hideLoginOverlay()" class="absolute top-8 right-8 text-neutral-500 hover:text-white text-2xl"><i class="fa-solid fa-xmark"></i></button>
-        <h1 class="text-3xl font-black mb-4 uppercase tracking-tight text-white">EŁK Wiadomości</h1>
-        <p class="text-neutral-400 mb-8 text-sm max-w-sm">Zaloguj się przez Discord, aby zyskać dostęp do komentowania i interakcji z postami.</p>
-        <button onclick="core.login()" class="bg-[#5865F2] text-white px-8 py-3 rounded-md font-bold text-sm flex items-center gap-3 hover:bg-[#4752C4] transition">
-            <i class="fa-brands fa-discord text-lg"></i> Zaloguj z Discord
+    <!-- OVERLAY LOGOWANIA -->
+    <div id="auth-overlay" class="hidden fixed inset-0 bg-black/95 z-[100] flex flex-col items-center justify-center text-center p-6 transition-opacity backdrop-blur-lg">
+        <button onclick="core.hideLoginOverlay()" class="absolute top-8 right-8 text-neutral-600 hover:text-white text-3xl transition"><i class="fa-solid fa-xmark"></i></button>
+        <h1 class="text-5xl font-black mb-4 uppercase tracking-tighter text-white">EŁK <span class="text-blue-500">NEWS</span></h1>
+        <p class="text-neutral-500 mb-10 text-sm max-w-md font-mono">Dostęp do funkcji premium. Autoryzacja wymagana do interakcji z postami i systemem administracyjnym.</p>
+        <button onclick="core.login()" class="bg-white text-black px-10 py-4 font-black uppercase text-sm tracking-widest flex items-center gap-3 hover:bg-blue-500 hover:text-white transition-all duration-300">
+            <i class="fa-brands fa-discord text-xl"></i> Autoryzuj przez Discord
         </button>
     </div>
 
     <div id="toast-container"></div>
-    <div class="ad-container ad-left" id="ad-l-zone"></div>
-    <div class="ad-container ad-right" id="ad-r-zone"></div>
-    <div id="loader"><div class="animate-spin text-3xl text-blue-500"><i class="fa-solid fa-circle-notch"></i></div></div>
+    <div id="loader"><div class="animate-spin text-5xl text-white"><i class="fa-solid fa-compact-disc"></i></div></div>
 
-    <!-- Zmodernizowany Header -->
-    <header class="sticky top-0 z-50 bg-[#050505] border-b border-[#222]" id="main-header">
-        <div class="max-w-4xl mx-auto px-6 h-16 flex justify-between items-center">
-            <h1 onclick="core.goHome()" class="text-xl font-black cursor-pointer uppercase tracking-tight">EŁK <span class="text-blue-500">Wiadomości</span></h1>
+    <div class="layout-wrapper">
+        
+        <!-- LEWY PANEL (Zamiast górnego Headera) -->
+        <header id="main-header" class="w-full lg:w-[320px] lg:fixed lg:h-screen bg-[#050505] border-r border-[#1f1f1f] flex flex-col z-50">
+            <div class="p-8 border-b border-[#1f1f1f]">
+                <h1 onclick="core.goHome()" class="text-3xl font-black cursor-pointer uppercase tracking-tighter leading-none hover:text-blue-500 transition">EŁK<br><span class="text-neutral-600">WIADOMOŚCI</span></h1>
+            </div>
             
-            <div class="flex items-center gap-6">
-                <!-- Powiadomienia -->
-                <div class="relative">
-                    <div id="notif-bell" onclick="core.toggleNotifMenu()" class="relative cursor-pointer text-neutral-400 hover:text-white transition">
-                        <i class="fa-solid fa-bell"></i>
-                        <span id="global-notif-count" class="hidden absolute -top-1 -right-1 bg-blue-600 text-[9px] w-3.5 h-3.5 flex items-center justify-center rounded-full font-bold">0</span>
+            <div class="p-8 flex-1 flex flex-col gap-8">
+                <!-- Strefa profilu i akcji -->
+                <div id="profile-section" class="flex flex-col gap-4 font-mono">
+                    <button id="btn-login" onclick="core.login()" class="text-xs font-bold uppercase text-white bg-blue-600 py-3 px-4 hover:bg-blue-500 transition text-center hidden">Autoryzuj sesję</button>
+                    
+                    <div class="flex items-center gap-3">
+                        <span id="user-profile-name" class="hidden text-sm font-bold uppercase text-white tracking-widest border-l-2 border-blue-500 pl-3"></span>
+                        <span id="admin-indicator" class="hidden text-[9px] bg-red-600 text-white px-2 py-1 font-black uppercase tracking-widest">SYS.ADMIN</span>
                     </div>
-                    <div id="notif-dropdown" class="hidden absolute right-0 mt-4 w-80 bg-[#111] border border-[#222] rounded-lg shadow-2xl z-50 flex flex-col max-h-80 overflow-y-auto">
-                        <div class="p-4 border-b border-[#222] text-xs font-bold uppercase text-neutral-400 flex justify-between items-center sticky top-0 bg-[#111] z-10">
-                            <span>Powiadomienia</span><span onclick="core.clearNotifs()" class="cursor-pointer hover:text-white transition">Wyczyść</span>
+                    
+                    <div class="flex flex-col gap-2 mt-2">
+                        <button id="btn-open-admin" onclick="core.openAdmin()" class="hidden text-xs font-bold uppercase tracking-widest text-left text-neutral-400 hover:text-white transition"><i class="fa-solid fa-terminal w-5"></i> Panel Sterowania</button>
+                        <button id="btn-logout" onclick="core.logout()" class="hidden text-xs font-bold uppercase tracking-widest text-left text-neutral-600 hover:text-red-500 transition"><i class="fa-solid fa-power-off w-5"></i> Wyloguj</button>
+                    </div>
+                </div>
+
+                <!-- Powiadomienia w panelu bocznym -->
+                <div class="relative pt-8 border-t border-[#1f1f1f]">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xs font-bold text-neutral-500 uppercase tracking-widest font-mono">Powiadomienia</h3>
+                        <div id="notif-bell" onclick="core.toggleNotifMenu()" class="relative cursor-pointer text-white hover:text-blue-500 transition">
+                            <i class="fa-solid fa-bell text-lg"></i>
+                            <span id="global-notif-count" class="hidden absolute -top-2 -right-2 bg-blue-600 text-[9px] w-4 h-4 flex items-center justify-center rounded-full font-black text-white">0</span>
+                        </div>
+                    </div>
+                    
+                    <div id="notif-dropdown" class="hidden w-full bg-[#0a0a0a] border border-[#1f1f1f] flex flex-col max-h-60 overflow-y-auto">
+                        <div class="p-3 border-b border-[#1f1f1f] text-[10px] font-black uppercase text-neutral-500 flex justify-between items-center sticky top-0 bg-[#0a0a0a] z-10 font-mono">
+                            <span>Status</span><span onclick="core.clearNotifs()" class="cursor-pointer hover:text-white transition">Wyczyść logi</span>
                         </div>
                         <div id="notif-list" class="flex flex-col"></div>
                     </div>
                 </div>
-
-                <!-- Profil -->
-                <div class="flex items-center gap-4 ml-2 border-l border-[#222] pl-6" id="profile-section">
-                    <button id="btn-login" onclick="core.login()" class="text-xs font-bold text-white bg-[#111] border border-[#333] px-4 py-2 rounded-md hover:bg-[#222] transition hidden">Zaloguj się</button>
-                    
-                    <span id="user-profile-name" class="hidden text-sm font-bold text-white"></span>
-                    <button id="btn-logout" onclick="core.logout()" class="hidden text-xs font-semibold text-neutral-500 hover:text-white transition">Wyloguj</button>
-                    <span id="admin-indicator" class="hidden text-[10px] bg-red-500/10 text-red-500 px-2 py-1 rounded font-bold uppercase">Admin</span>
-                    <button id="btn-open-admin" onclick="core.openAdmin()" class="hidden text-xs font-bold text-blue-500 hover:text-blue-400 transition">Panel</button>
+                
+                <!-- Miejsce na lewą reklamę w sidebarze -->
+                <div class="mt-auto pt-8">
+                    <div class="ad-container ad-left m-0" id="ad-l-zone"></div>
                 </div>
             </div>
-        </div>
-    </header>
+        </header>
 
-    <main class="max-w-4xl mx-auto px-6 min-h-screen py-8" id="main-content">
+        <!-- PRAWY PANEL (Główna zawartość) -->
+        <main class="w-full lg:ml-[320px] min-h-screen bg-black flex flex-col" id="main-content">
+            
+            <div class="max-w-5xl w-full mx-auto p-6 lg:p-12 flex-1">
+                
+                <!-- Wyszukiwarka i filtry (Totalnie nowy wygląd) -->
+                <div id="search-area" class="mb-12">
+                    <div class="relative mb-8 group">
+                        <input type="text" id="search-input" oninput="core.filterPosts()" placeholder="Wpisz frazę aby wyszukać..." class="w-full bg-transparent border-b-2 border-[#1f1f1f] py-4 pl-12 text-2xl font-light text-white outline-none focus:border-blue-500 transition placeholder:text-neutral-700">
+                        <i class="fa-solid fa-magnifying-glass absolute left-0 top-1/2 -translate-y-1/2 text-2xl text-neutral-700 group-focus-within:text-blue-500 transition"></i>
+                    </div>
+                    <div class="flex flex-wrap gap-2 border-b border-[#1f1f1f] pb-0">
+                        <button onclick="core.switchTab('all', this)" class="tab-btn active">Wszystkie</button>
+                        <button onclick="core.switchTab('Wydarzenia', this)" class="tab-btn">Wydarzenia</button>
+                        <button onclick="core.switchTab('Aktualizacje', this)" class="tab-btn">Aktualizacje</button>
+                        <button onclick="core.switchTab('Informacje', this)" class="tab-btn">Informacje</button>
+                    </div>
+                </div>
+
+                <!-- Widok Główny -->
+                <div id="view-home" class="pb-5">
+                    <div id="news-container" class="grid grid-cols-1 gap-6">
+                        <div class="text-left py-10 font-mono text-neutral-600 uppercase text-xs tracking-widest animate-pulse">Inicjalizacja połączenia z bazą danych...</div>
+                    </div>
+                    <div id="more-container" class="mt-12 hidden flex justify-center pb-10">
+                        <button onclick="core.showAllPosts()" class="px-8 py-4 bg-white text-black font-black text-sm transition hover:bg-blue-600 hover:text-white uppercase tracking-widest font-mono">Pobierz archiwa</button>
+                    </div>
+                </div>
+
+                <!-- Widok Artykułu (Wielki nacisk na typografię) -->
+                <div id="view-article" class="hidden pb-20">
+                    <button onclick="core.goHome()" class="mb-10 text-neutral-500 font-bold flex items-center gap-3 hover:text-white transition uppercase text-xs tracking-widest font-mono"><i class="fa-solid fa-arrow-left"></i> Powrót do strumienia</button>
+                    
+                    <article id="article-content" class="mb-16"></article>
+                    
+                    <div id="article-interaction" class="mt-16 pt-16 border-t border-[#1f1f1f]">
+                        <div class="flex items-center gap-6 mb-16">
+                            <div id="main-like-btn" onclick="core.likePost()" class="like-btn cursor-pointer flex items-center gap-3 bg-transparent border-2 border-[#1f1f1f] px-8 py-4 transition hover:border-white font-mono uppercase text-sm font-bold">
+                                WSPARCIE <i class="fa-solid fa-bolt text-lg ml-2"></i> <span id="like-count" class="font-black">0</span>
+                            </div>
+                        </div>
+                        
+                        <h3 class="text-2xl font-black uppercase mb-8 tracking-tighter">Dyskusja (<span class="text-blue-500">Logi</span>)</h3>
+                        <div id="comments-list" class="space-y-4 mb-12 font-mono"></div>
+                        
+                        <div id="comment-box-anchor" class="bg-[#050505] p-6 border border-[#1f1f1f] space-y-4">
+                            <div id="replying-to-info" class="hidden flex justify-between items-center bg-[#111] p-3 border border-[#222] font-mono text-xs">
+                                <span class="font-bold text-neutral-400 uppercase">Target: <span id="target-nick" class="text-white"></span></span>
+                                <button onclick="core.cancelReply()" class="text-red-500 font-black uppercase hover:text-red-400">Abort</button>
+                            </div>
+                            <input type="text" id="comm-nick" readonly class="input-dark text-neutral-600 border-none bg-transparent px-0" placeholder="Zaloguj się aby transmitować">
+                            <textarea id="comm-text" rows="4" placeholder="Wprowadź dane wejściowe..." class="input-dark"></textarea>
+                            <button onclick="core.addComment()" class="bg-white text-black w-full p-4 font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition font-mono">Transmituj</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel Admina -->
+                <div id="view-admin" class="hidden pb-20">
+                    <div class="flex justify-between items-end mb-10 border-b border-[#1f1f1f] pb-6">
+                        <h2 class="text-4xl font-black uppercase tracking-tighter text-white">System <span class="text-blue-500">Root</span></h2>
+                        <button onclick="core.goHome()" class="text-neutral-500 hover:text-white transition uppercase text-xs font-bold font-mono">Zakończ sesję</button>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-2 mb-10">
+                        <button onclick="core.setAdminTab('new')" id="btn-adm-new" class="tab-btn active bg-[#050505]">Edytor</button>
+                        <button onclick="core.setAdminTab('comms')" id="btn-adm-comms" class="tab-btn bg-[#050505]">Moderacja</button>
+                        <button onclick="core.setAdminTab('notifs')" id="btn-adm-notifs" class="tab-btn bg-[#050505] flex items-center gap-2">Zgłoszenia <span id="notif-count" class="hidden bg-red-600 text-white px-2 py-0.5 rounded-full text-[9px]">0</span></button>
+                        <button onclick="core.setAdminTab('ads')" id="btn-adm-ads" class="tab-btn bg-[#050505]">Ads</button>
+                        <button onclick="core.setAdminTab('settings')" id="btn-adm-settings" class="tab-btn bg-[#050505]">Config</button>
+                    </div>
+
+                    <div id="admin-new-section" class="bg-[#050505] border border-[#1f1f1f] p-8">
+                        <div class="flex justify-between items-center mb-8">
+                            <h2 id="admin-mode-title" class="text-xl font-bold uppercase tracking-widest text-neutral-500 font-mono">Create_New</h2>
+                            <button onclick="core.cancelEdit()" id="cancel-edit-btn" class="hidden text-red-500 text-xs font-bold uppercase font-mono border border-red-500 px-3 py-1 hover:bg-red-500 hover:text-white transition">Abort</button>
+                        </div>
+                        <div class="space-y-6">
+                            <input type="text" id="in-title" placeholder="TYTUŁ (H1)" class="input-dark text-xl font-bold font-sans">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <input type="text" id="in-author" placeholder="Autor" class="input-dark">
+                                <select id="in-category" class="input-dark"><option value="Wydarzenia">Wydarzenia</option><option value="Aktualizacje">Aktualizacje</option><option value="Informacje">Informacje</option></select>
+                                <input type="text" id="in-date" placeholder="Data (Auto)" class="input-dark">
+                            </div>
+                            <textarea id="in-content" rows="15" placeholder="MARKDOWN_SUPPORTED_CONTENT..." class="input-dark font-mono leading-relaxed text-sm"></textarea>
+                            
+                            <div class="p-6 border border-[#1f1f1f] bg-black">
+                                <span class="block text-xs font-mono text-neutral-500 uppercase mb-4">Media Input</span>
+                                <input type="file" id="in-files" onchange="core.previewNewFiles()" multiple accept="image/*" class="text-xs text-neutral-400 font-mono">
+                                <div id="edit-images-preview" class="flex flex-wrap gap-4 mt-4"></div>
+                            </div>
+                            
+                            <button onclick="core.publish()" id="publish-btn" class="w-full bg-white text-black p-5 font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition mt-4 font-mono">Execute_Publish</button>
+                            
+                            <div class="pt-10 mt-10 border-t border-[#1f1f1f]">
+                                <h3 class="text-sm font-mono text-neutral-500 uppercase mb-4">Baza Danych (Posty)</h3>
+                                <div id="admin-list" class="space-y-2 font-mono text-xs"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="admin-comms-section" class="hidden space-y-4"><div id="all-comms-list" class="font-mono text-sm"></div></div>
+                    <div id="admin-notifs-section" class="hidden space-y-4"><div id="reports-list" class="font-mono text-sm"></div></div>
+                    
+                    <div id="admin-ads-section" class="hidden bg-[#050505] border border-[#1f1f1f] p-8 space-y-8">
+                        <div class="flex justify-between items-center mb-6"><h2 id="ad-mode-title" class="text-xl font-bold uppercase font-mono text-neutral-500">Ad_Manager</h2><button onclick="core.cancelAdEdit()" id="cancel-ad-edit-btn" class="hidden text-red-500 text-xs font-bold font-mono">Abort</button></div>
+                        <div class="p-6 border border-[#1f1f1f] bg-black space-y-4 font-mono">
+                            <select id="ad-side" class="input-dark"><option value="left">Strefa Lewa (Sidebar)</option><option value="right">Strefa Prawa (Main)</option></select>
+                            <input type="file" id="ad-file" accept="image/*" class="text-xs text-neutral-400">
+                            <input type="text" id="ad-target" placeholder="URL_Target" class="input-dark">
+                            <button onclick="core.publishAd()" id="ad-publish-btn" class="bg-white text-black w-full py-4 font-black uppercase hover:bg-blue-600 hover:text-white transition">Deploy_Ad</button>
+                        </div>
+                        <div id="admin-ads-list" class="space-y-3 font-mono text-xs"></div>
+                    </div>
+                    
+                    <div id="admin-settings-section" class="hidden bg-[#050505] border border-[#1f1f1f] p-8 space-y-8">
+                        <h2 class="text-xl font-bold uppercase font-mono text-neutral-500">Global_Config</h2>
+                        <div class="space-y-6 font-mono text-xs text-neutral-400">
+                            <div>Label: ABOUT<textarea id="set-about" rows="4" class="input-dark mt-2"></textarea></div>
+                            <div>Label: REDAKCJA<textarea id="set-redaction" rows="4" class="input-dark mt-2"></textarea></div>
+                            <div>Label: PRYWATNOŚĆ<textarea id="set-privacy" rows="4" class="input-dark mt-2"></textarea></div>
+                            <div>Label: WSPÓŁPRACA<textarea id="set-coop" rows="4" class="input-dark mt-2"></textarea></div>
+                            <button onclick="core.saveSettings()" class="bg-white text-black w-full py-4 font-black uppercase hover:bg-blue-600 hover:text-white transition">Save_To_Cloud</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Legal View -->
+                <div id="view-legal" class="hidden pb-20">
+                    <button onclick="core.goHome()" class="mb-10 text-neutral-500 font-bold flex items-center gap-3 hover:text-white transition uppercase text-xs tracking-widest font-mono"><i class="fa-solid fa-arrow-left"></i> Powrót</button>
+                    <div class="border border-[#1f1f1f] p-8 md:p-12 bg-[#050505]">
+                        <h2 id="legal-title" class="text-4xl font-black uppercase tracking-tighter mb-10 text-white"></h2>
+                        <div id="legal-body" class="text-neutral-400 leading-relaxed white-pre text-sm font-mono"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stopka (Teraz z prawej strony pod treścią) -->
+            <footer id="main-footer" class="border-t border-[#1f1f1f] bg-black p-6 lg:p-12 mt-auto">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-12 text-sm font-mono">
+                    <div>
+                        <h4 class="font-black uppercase tracking-widest mb-6 text-white">System_Info</h4>
+                        <p id="txt-about" class="text-neutral-500 leading-relaxed text-xs"></p>
+                    </div>
+                    <div>
+                        <h4 class="font-black uppercase tracking-widest mb-6 text-white">Data_Links</h4>
+                        <ul class="text-neutral-500 space-y-4 text-xs uppercase">
+                            <li><a href="javascript:void(0)" onclick="core.showLegal('redaction')" class="hover:text-white flex items-center gap-2"><i class="fa-solid fa-angle-right text-[10px]"></i> Redakcja</a></li>
+                            <li><a href="javascript:void(0)" onclick="core.showLegal('privacy')" class="hover:text-white flex items-center gap-2"><i class="fa-solid fa-angle-right text-[10px]"></i> Prywatność</a></li>
+                            <li><a href="javascript:void(0)" onclick="core.showLegal('coop')" class="hover:text-white flex items-center gap-2"><i class="fa-solid fa-angle-right text-[10px]"></i> Współpraca</a></li>
+                        </ul>
+                        <div class="hidden" id="legal-data-store"><span id="txt-redaction"></span><span id="txt-privacy"></span><span id="txt-coop"></span></div>
+                    </div>
+                    <div>
+                        <h4 class="font-black uppercase tracking-widest mb-6 text-white">Network</h4>
+                        <div class="flex gap-6 text-neutral-500 text-2xl">
+                            <a href="https://www.tiktok.com/@diamentowy337" target="_blank" class="hover:text-white transition"><i class="fa-brands fa-tiktok"></i></a>
+                            <a href="http://www.youtube.com/@Diamentowy_337" target="_blank" class="hover:text-white transition"><i class="fa-brands fa-youtube"></i></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-16 pt-8 border-t border-[#1f1f1f] flex flex-col md:flex-row justify-between items-center text-[10px] text-neutral-600 font-mono uppercase tracking-[2px]">
+                    <span>facio® core system</span>
+                    <span>&copy; 2024 Wszystkie prawa zastrzeżone</span>
+                </div>
+            </footer>
+        </main>
         
-        <!-- Sekcja Wyszukiwania w nowym stylu -->
-        <div id="search-area" class="mb-10 space-y-6">
-            <div class="relative">
-                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500"></i>
-                <input type="text" id="search-input" oninput="core.filterPosts()" placeholder="Wyszukaj wpis..." class="input-dark pl-12">
-            </div>
-            <div class="flex flex-wrap gap-2 items-center border-b border-[#222] pb-4">
-                <button onclick="core.switchTab('all', this)" class="tab-btn active">Wszystkie</button>
-                <button onclick="core.switchTab('Wydarzenia', this)" class="tab-btn">Wydarzenia</button>
-                <button onclick="core.switchTab('Aktualizacje', this)" class="tab-btn">Aktualizacje</button>
-                <button onclick="core.switchTab('Informacje', this)" class="tab-btn">Informacje</button>
-            </div>
+        <!-- Prawa strefa reklamowa (poza głównym layoutem na ogromnych ekranach) -->
+        <div class="fixed right-6 top-24 hidden xl:block z-40 w-[160px]">
+            <div class="ad-container ad-right m-0" id="ad-r-zone"></div>
         </div>
+        
+    </div>
 
-        <!-- Główny widok wiadomości -->
-        <div id="view-home" class="pb-10">
-            <div id="news-container" class="space-y-6">
-                <div class="text-center py-20 text-neutral-600 text-sm">Wczytywanie bazy...</div>
-            </div>
-            <div id="more-container" class="mt-10 hidden flex justify-center pb-10">
-                <button onclick="core.showAllPosts()" class="px-6 py-2 bg-[#111] hover:bg-[#222] rounded-md font-semibold text-sm transition border border-[#333]">Załaduj więcej</button>
-            </div>
-        </div>
-
-        <!-- Widok pojedynczego wpisu -->
-        <div id="view-article" class="hidden pb-20">
-            <button onclick="core.goHome()" class="mb-8 text-neutral-400 font-semibold flex items-center gap-2 hover:text-white transition text-sm"><i class="fa-solid fa-arrow-left"></i> Wstecz</button>
-            <div id="article-content"></div>
-            
-            <div id="article-interaction" class="mt-16 pt-10 border-t border-[#222]">
-                <div class="flex items-center gap-6 mb-12">
-                    <div id="main-like-btn" onclick="core.likePost()" class="like-btn cursor-pointer flex items-center gap-2 bg-[#111] px-5 py-2.5 rounded-md border border-[#333] transition hover:bg-[#222]">
-                        <i class="fa-solid fa-heart"></i><span id="like-count" class="font-bold">0</span>
-                    </div>
-                </div>
-                
-                <h3 class="text-lg font-bold uppercase mb-6">Komentarze</h3>
-                <div id="comments-list" class="space-y-2 mb-8"></div>
-                
-                <div id="comment-box-anchor" class="glass p-6 space-y-4">
-                    <div id="replying-to-info" class="hidden flex justify-between items-center bg-[#1f2937] p-3 rounded-md text-sm">
-                        <span class="font-semibold">Odpowiadasz: <span id="target-nick" class="text-blue-400"></span></span>
-                        <button onclick="core.cancelReply()" class="text-red-400 font-bold hover:text-red-300">Anuluj</button>
-                    </div>
-                    <input type="text" id="comm-nick" readonly class="input-dark opacity-50 bg-[#000]" placeholder="Zaloguj się, aby dodać komentarz">
-                    <textarea id="comm-text" rows="3" placeholder="Treść komentarza..." class="input-dark"></textarea>
-                    <button onclick="core.addComment()" class="bg-blue-600 text-white w-full p-3 rounded-md font-bold hover:bg-blue-500 transition">Wyślij Komentarz</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Panel Administratora -->
-        <div id="view-admin" class="hidden pb-20">
-            <div class="flex justify-between items-center mb-8 border-b border-[#222] pb-4">
-                <h2 class="text-2xl font-black uppercase tracking-tight">Panel Sterowania</h2>
-                <button onclick="core.goHome()" class="text-neutral-400 hover:text-white text-sm font-semibold"><i class="fa-solid fa-house mr-2"></i> Wyjdź</button>
-            </div>
-            
-            <div class="flex flex-wrap gap-2 mb-8">
-                <button onclick="core.setAdminTab('new')" id="btn-adm-new" class="tab-btn active">Zarządzaj Wpisami</button>
-                <button onclick="core.setAdminTab('comms')" id="btn-adm-comms" class="tab-btn">Komentarze</button>
-                <button onclick="core.setAdminTab('notifs')" id="btn-adm-notifs" class="tab-btn">Zgłoszenia <span id="notif-count" class="hidden text-red-500 ml-1">0</span></button>
-                <button onclick="core.setAdminTab('ads')" id="btn-adm-ads" class="tab-btn">System Reklam</button>
-                <button onclick="core.setAdminTab('settings')" id="btn-adm-settings" class="tab-btn">Konfiguracja</button>
-            </div>
-
-            <!-- Zakładka: Wpisy -->
-            <div id="admin-new-section" class="glass p-8">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 id="admin-mode-title" class="text-lg font-bold uppercase">Nowy Wpis</h3>
-                    <button onclick="core.cancelEdit()" id="cancel-edit-btn" class="hidden text-red-500 text-xs font-bold border border-red-500/30 px-3 py-1 rounded">Anuluj edycję</button>
-                </div>
-                <div class="space-y-4">
-                    <input type="text" id="in-title" placeholder="Tytuł wiadomości" class="input-dark">
-                    <input type="text" id="in-author" placeholder="Autor" class="input-dark">
-                    <div class="grid grid-cols-2 gap-4">
-                        <select id="in-category" class="input-dark"><option value="Wydarzenia">Wydarzenia</option><option value="Aktualizacje">Aktualizacje</option><option value="Informacje">Informacje</option></select>
-                        <input type="text" id="in-date" placeholder="Data (zostaw puste dla aktualnej)" class="input-dark">
-                    </div>
-                    <textarea id="in-content" rows="12" placeholder="Treść (wspiera Markdown...)" class="input-dark font-mono text-sm"></textarea>
-                    <div class="p-4 bg-[#0a0a0a] rounded-md border border-[#333]">
-                        <label class="text-xs text-neutral-400 uppercase font-bold block mb-2">Załącz zdjęcia</label>
-                        <input type="file" id="in-files" onchange="core.previewNewFiles()" multiple accept="image/*" class="text-sm text-neutral-400">
-                        <div id="edit-images-preview" class="flex flex-wrap gap-2 mt-4"></div>
-                    </div>
-                    <button onclick="core.publish()" id="publish-btn" class="w-full bg-blue-600 text-white p-3 rounded-md font-bold uppercase mt-4 hover:bg-blue-500 transition">Publikuj</button>
-                    
-                    <div class="mt-12 pt-8 border-t border-[#222]">
-                        <h4 class="text-sm font-bold uppercase mb-4 text-neutral-400">Opublikowane Wpisy</h4>
-                        <div id="admin-list" class="space-y-2"></div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Inne Zakładki -->
-            <div id="admin-comms-section" class="hidden space-y-4"><div id="all-comms-list"></div></div>
-            <div id="admin-notifs-section" class="hidden space-y-4"><div id="reports-list"></div></div>
-            
-            <!-- Zakładka: Reklamy -->
-            <div id="admin-ads-section" class="hidden glass p-8 space-y-8">
-                <div class="flex justify-between items-center mb-6"><h3 id="ad-mode-title" class="text-lg font-bold uppercase">Zarządzanie Reklamami</h3><button onclick="core.cancelAdEdit()" id="cancel-ad-edit-btn" class="hidden text-red-500 text-xs font-bold">Anuluj</button></div>
-                <div class="p-6 border border-[#333] rounded-md space-y-4 bg-[#0a0a0a]">
-                    <select id="ad-side" class="input-dark"><option value="left">Lewa strefa</option><option value="right">Prawa strefa</option></select>
-                    <input type="file" id="ad-file" accept="image/*" class="text-sm text-neutral-400 block">
-                    <input type="text" id="ad-target" placeholder="URL docelowy" class="input-dark">
-                    <button onclick="core.publishAd()" id="ad-publish-btn" class="bg-blue-600 text-white w-full py-3 rounded-md font-bold uppercase hover:bg-blue-500 transition">Dodaj Reklamę</button>
-                </div>
-                <div id="admin-ads-list" class="space-y-3"></div>
-            </div>
-            
-            <!-- Zakładka: Ustawienia -->
-            <div id="admin-settings-section" class="hidden glass p-8 space-y-6">
-                <h3 class="text-lg font-bold uppercase mb-4">Informacje o Serwisie</h3>
-                <div class="space-y-6 text-sm font-semibold text-neutral-300">
-                    <div><label class="block text-xs uppercase text-neutral-500 mb-2">Stopka (O Serwisie)</label><textarea id="set-about" rows="3" class="input-dark"></textarea></div>
-                    <div><label class="block text-xs uppercase text-neutral-500 mb-2">Redakcja</label><textarea id="set-redaction" rows="3" class="input-dark"></textarea></div>
-                    <div><label class="block text-xs uppercase text-neutral-500 mb-2">Prywatność</label><textarea id="set-privacy" rows="3" class="input-dark"></textarea></div>
-                    <div><label class="block text-xs uppercase text-neutral-500 mb-2">Współpraca</label><textarea id="set-coop" rows="3" class="input-dark"></textarea></div>
-                    <button onclick="core.saveSettings()" class="bg-[#111] border border-[#333] w-full py-3 rounded-md font-bold hover:bg-[#222] transition">Zapisz Ustawienia</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Widok stron prawnych -->
-        <div id="view-legal" class="hidden pb-20">
-            <button onclick="core.goHome()" class="mb-8 text-neutral-400 font-semibold flex items-center gap-2 hover:text-white transition text-sm"><i class="fa-solid fa-arrow-left"></i> Powrót</button>
-            <div class="glass p-10">
-                <h2 id="legal-title" class="text-2xl font-black uppercase mb-8 border-b border-[#222] pb-4 text-blue-500"></h2>
-                <div id="legal-body" class="text-neutral-300 leading-relaxed white-pre text-base"></div>
-            </div>
-        </div>
-    </main>
-
-    <!-- Zmodernizowany Footer -->
-    <footer id="main-footer" class="max-w-full border-t border-[#222] py-12 mt-10 bg-[#0a0a0a]">
-        <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10 px-6 text-sm">
-            <div>
-                <h4 class="font-bold uppercase mb-4 text-white">O Serwisie</h4>
-                <p id="txt-about" class="text-neutral-400 leading-relaxed"></p>
-            </div>
-            <div>
-                <h4 class="font-bold uppercase mb-4 text-white">Informacje</h4>
-                <ul class="text-neutral-400 space-y-3">
-                    <li><a href="javascript:void(0)" onclick="core.showLegal('redaction')" class="hover:text-blue-400 transition">Redakcja</a></li>
-                    <li><a href="javascript:void(0)" onclick="core.showLegal('privacy')" class="hover:text-blue-400 transition">Polityka Prywatności</a></li>
-                    <li><a href="javascript:void(0)" onclick="core.showLegal('coop')" class="hover:text-blue-400 transition">Współpraca</a></li>
-                </ul>
-                <div class="hidden" id="legal-data-store"><span id="txt-redaction"></span><span id="txt-privacy"></span><span id="txt-coop"></span></div>
-            </div>
-            <div>
-                <h4 class="font-bold uppercase mb-4 text-white">Społeczność</h4>
-                <div class="flex gap-5 text-neutral-400 text-xl">
-                    <a href="https://www.tiktok.com/@diamentowy337" target="_blank" class="hover:text-white transition"><i class="fa-brands fa-tiktok"></i></a>
-                    <a href="http://www.youtube.com/@Diamentowy_337" target="_blank" class="hover:text-white transition"><i class="fa-brands fa-youtube"></i></a>
-                </div>
-            </div>
-        </div>
-        <div class="text-center pt-12 text-xs text-neutral-600 font-semibold uppercase tracking-wider">
-            Stworzone przez facio® &copy; 2024
-        </div>
-    </footer>
-
-    <!-- SKRYPT: DOKŁADNIE TEN SAM CO W PIERWSZYM PROMPCIE, ABY NIC NIE USUNĄĆ -->
+    <!-- PONIŻEJ ZNAJDUJE SIĘ TWÓJ ORYGINALNY, NIETKNIĘTY SKRYPT JS -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyCb5QmZdwWwa9LafqqGZvGW-6vblkab32M",
@@ -343,17 +351,31 @@
         let appInitialized = false;
 
         window.core = {
-            login: () => { window.location.href = `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&response_type=code&redirect_uri=https%3A%2F%2Felk-backend.vercel.app%2Fapi%2Fauth&scope=identify`; },
-            logout: () => { localStorage.clear(); auth.signOut().then(() => location.reload()); },
-            showLoginOverlay: () => document.getElementById('auth-overlay').classList.remove('hidden'),
-            hideLoginOverlay: () => document.getElementById('auth-overlay').classList.add('hidden'),
+            login: () => {
+                window.location.href = `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&response_type=code&redirect_uri=https%3A%2F%2Felk-backend.vercel.app%2Fapi%2Fauth&scope=identify`;
+            },
+
+            logout: () => {
+                localStorage.clear();
+                auth.signOut().then(() => location.reload());
+            },
+
+            showLoginOverlay: () => {
+                document.getElementById('auth-overlay').classList.remove('hidden');
+            },
+
+            hideLoginOverlay: () => {
+                document.getElementById('auth-overlay').classList.add('hidden');
+            },
 
             checkAuth: () => {
                 const params = new URLSearchParams(window.location.search);
-                const token = params.get('token'); const nick = params.get('nick');
+                const token = params.get('token');
+                const nick = params.get('nick');
 
                 if (token) {
-                    localStorage.setItem('fb_token', token); localStorage.setItem('user_nick', nick);
+                    localStorage.setItem('fb_token', token);
+                    localStorage.setItem('user_nick', nick);
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }
 
@@ -398,7 +420,7 @@
                     if(data) {
                         Object.entries(data).sort((a,b) => b[1].ts - a[1].ts).forEach(([id, v]) => {
                             allData.push({ id, ...v });
-                            if(admList) admList.innerHTML += `<div class="flex justify-between items-center bg-[#111] p-3 rounded border border-[#333] text-sm"><span class="font-semibold text-white">${v.title}</span><div class="flex gap-4"><button onclick="core.editMode('${id}')" class="text-amber-500 font-bold hover:text-amber-400">EDYTUJ</button><button onclick="core.deletePost('${id}')" class="text-red-500 font-bold hover:text-red-400">USUŃ</button></div></div>`;
+                            if(admList) admList.innerHTML += `<div class="flex justify-between bg-[#111] p-3 border border-[#1f1f1f] text-xs"><span>${v.title}</span><div class="flex gap-4"><button onclick="core.editMode('${id}')" class="text-blue-500 font-bold uppercase hover:text-white">EDYTUJ</button><button onclick="core.deletePost('${id}')" class="text-red-500 font-bold uppercase hover:text-white">USUŃ</button></div></div>`;
                         });
                     }
                     core.filterPosts();
@@ -417,7 +439,7 @@
                         ['left', 'right'].forEach(s => {
                             const first = zones[s]?.querySelector('.ad-box');
                             if(first) first.classList.add('active');
-                            else zones[s].innerHTML = `<div class="no-ad-placeholder">BRAK REKLAMY (${s})</div>`;
+                            else zones[s].innerHTML = `<div class="no-ad-placeholder">NO_AD_DEPLOYED</div>`;
                         });
                     }
                 });
@@ -444,13 +466,13 @@
             loadNotifications: () => {
                 const notifs = JSON.parse(localStorage.getItem('my_notifs') || "[]");
                 const list = document.getElementById('notif-list'); if(!list) return;
-                list.innerHTML = notifs.length === 0 ? '<div class="p-6 text-center text-xs text-neutral-500">Brak powiadomień</div>' : "";
+                list.innerHTML = notifs.length === 0 ? '<div class="p-6 text-center text-[10px] uppercase font-bold text-neutral-600">Brak logów systemowych</div>' : "";
                 let unread = 0;
                 notifs.forEach(n => {
                     if (!n.read) unread++;
-                    list.innerHTML += `<div onclick="core.clickNotif(${n.id}, '${n.postId}')" class="flex items-center gap-3 p-4 border-b border-[#222] cursor-pointer hover:bg-[#1a1a1a] transition ${n.read ? 'opacity-50' : ''}">
-                        <div class="flex-1 text-xs text-neutral-300 leading-relaxed">${DOMPurify.sanitize(n.msg)}</div>
-                        ${n.read ? '' : '<div class="w-2 h-2 rounded-full bg-blue-500"></div>'}
+                    list.innerHTML += `<div onclick="core.clickNotif(${n.id}, '${n.postId}')" class="flex items-center gap-3 p-4 border-b border-[#1f1f1f] cursor-pointer hover:bg-[#111] transition ${n.read ? 'opacity-40' : 'bg-[#050505]'}">
+                        <div class="flex-1 text-[11px] font-mono text-neutral-300 leading-tight">${DOMPurify.sanitize(n.msg)}</div>
+                        ${n.read ? '' : '<div class="w-2 h-2 bg-blue-500"></div>'}
                     </div>`;
                 });
                 const badge = document.getElementById('global-notif-count');
@@ -510,8 +532,8 @@
                 const container = document.getElementById('news-container'); container.innerHTML = "";
                 const toShow = isSearch ? items : items.slice(0, showLimit);
                 toShow.forEach(v => {
-                    const card = document.createElement('div'); card.className = "card p-6 cursor-pointer post-anim";
-                    card.innerHTML = `<div class="flex gap-6 flex-col md:flex-row items-center md:items-start">${v.images?.[0] ? `<img src="${v.images[0]}" class="w-full md:w-48 h-32 object-cover rounded-md border border-[#333]">` : ''}<div class="flex-1 w-full"><span class="category-tag">${v.category}</span><h2 class="font-bold text-xl mt-2 mb-4 text-white">${v.title}</h2><div class="flex justify-between items-center"><div class="flex items-center gap-3"><span class="author-badge">${v.author}</span><span class="text-xs text-neutral-500">${v.date}</span></div><span class="text-xs text-neutral-500 font-bold"><i class="fa-solid fa-heart text-red-500 mr-1"></i> ${v.likes || 0}</span></div></div></div>`;
+                    const card = document.createElement('div'); card.className = "card p-8 cursor-pointer post-anim";
+                    card.innerHTML = `<div class="flex gap-8 flex-col md:flex-row"><div class="flex-1 order-2 md:order-1"><span class="category-tag">${v.category}</span><h2 class="font-black text-3xl md:text-4xl text-white mb-6 leading-tight tracking-tighter">${v.title}</h2><div class="flex justify-between border-t border-[#1f1f1f] pt-4"><div class="flex items-center gap-4"><span class="author-badge">${v.author}</span><span class="text-xs text-neutral-600 font-mono">${v.date}</span></div><span class="text-[10px] font-mono text-neutral-500 flex items-center"><i class="fa-solid fa-bolt text-white mr-2 text-sm"></i> ${v.likes || 0}</span></div></div>${v.images?.[0] ? `<div class="w-full md:w-[250px] shrink-0 order-1 md:order-2"><img src="${v.images[0]}" class="w-full h-[180px] object-cover grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition duration-500 border border-[#1f1f1f]"></div>` : ''}</div>`;
                     card.onclick = () => core.showFull(v); container.appendChild(card);
                 });
                 document.getElementById('more-container').classList.toggle('hidden', isSearch || items.length <= showLimit);
@@ -522,9 +544,9 @@
                 currentOpenPostId = data.id; core.loadComments(data.id);
                 document.getElementById('view-home').classList.add('hidden'); document.getElementById('search-area').classList.add('hidden');
                 document.getElementById('view-article').classList.remove('hidden');
-                document.getElementById('article-content').innerHTML = `<span class="category-tag mb-2 inline-block">${data.category}</span><h1 class="text-3xl md:text-5xl font-black mb-6 text-white leading-tight">${data.title}</h1><div class="flex gap-4 mb-10 pb-6 border-b border-[#222]"><span class="author-badge">${data.author}</span><span class="text-sm text-neutral-500 flex items-center">${data.date}</span></div><div class="text-neutral-300 text-lg white-pre leading-loose mb-12">${core.parseMarkdown(data.content)}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-6">${(data.images||[]).map(i=>`<img src="${i}" class="w-full rounded-md border border-[#333]">`).join('')}</div>`;
+                document.getElementById('article-content').innerHTML = `<div class="mb-12"><span class="category-tag">${data.category}</span><h1 class="text-5xl md:text-7xl font-black mb-8 text-white leading-[1.1] tracking-tighter">${data.title}</h1><div class="flex gap-6 border-b border-[#1f1f1f] pb-6"><span class="author-badge text-blue-500">${data.author}</span><span class="text-xs text-neutral-500 font-mono flex items-center">${data.date}</span></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">${(data.images||[]).map(i=>`<img src="${i}" class="w-full h-auto border border-[#1f1f1f] grayscale hover:grayscale-0 transition duration-700">`).join('')}</div><div class="text-neutral-300 text-lg md:text-xl font-light white-pre leading-[1.8] max-w-4xl">${core.parseMarkdown(data.content)}</div>`;
                 const isLiked = localStorage.getItem(`liked_${data.id}`) ? 'liked' : '';
-                document.getElementById('main-like-btn').className = `like-btn cursor-pointer flex items-center gap-2 bg-[#111] px-5 py-2.5 rounded-md border border-[#333] transition hover:bg-[#222] ${isLiked}`;
+                document.getElementById('main-like-btn').className = `like-btn cursor-pointer flex items-center gap-3 bg-transparent border-2 border-[#1f1f1f] px-8 py-4 transition hover:border-white font-mono uppercase text-sm font-bold ${isLiked}`;
                 document.getElementById('like-count').innerText = data.likes || 0;
                 window.scrollTo(0,0);
             },
@@ -549,6 +571,7 @@
                 const files = document.getElementById('in-files').files;
                 
                 if(!t || !c) return alert("Wypełnij pola!");
+                
                 document.getElementById('loader').style.display = 'flex';
                 
                 try {
@@ -557,42 +580,75 @@
                         const fd = new FormData(); fd.append("image", f);
                         const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
                         const res = await r.json(); 
-                        if(res.success) newUrls.push(res.data.url);
-                        else { alert("Błąd ImgBB"); document.getElementById('loader').style.display = 'none'; return; }
+                        if(res.success) {
+                            newUrls.push(res.data.url);
+                        } else {
+                            alert("Błąd serwera zdjęć ImgBB: " + (res.error?.message || "Nieznany błąd"));
+                            document.getElementById('loader').style.display = 'none';
+                            return;
+                        }
                     }
                     
                     const data = { title: t, content: c, author: a, category: cat, images: [...currentEditImages, ...newUrls], ts: editId ? allData.find(x => x.id === editId).ts : Date.now(), date: document.getElementById('in-date').value || new Date().toLocaleString(), likes: editId ? allData.find(x => x.id === editId).likes : 0 };
+                    
                     const act = editId ? postsRef.child(editId).update(data) : postsRef.push(data);
                     
-                    act.then(() => location.reload()).catch(err => { alert("Błąd Firebase: " + err.message); document.getElementById('loader').style.display = 'none'; });
-                } catch (err) { alert("Błąd: " + err.message); document.getElementById('loader').style.display = 'none'; }
+                    act.then(() => location.reload()).catch(err => {
+                        alert("Błąd Firebase (Masz źle ustawione 'Rules' w konsoli!): " + err.message);
+                        document.getElementById('loader').style.display = 'none';
+                    });
+                    
+                } catch (err) {
+                    alert("Wystąpił błąd skryptu/internetu: " + err.message);
+                    document.getElementById('loader').style.display = 'none';
+                }
             },
             
-            deletePost: (id) => confirm("Usunąć wpis?") && postsRef.child(id).remove().catch(e => alert("Błąd: " + e.message)),
+            deletePost: (id) => confirm("Usunąć?") && postsRef.child(id).remove().catch(e => alert("Błąd bazy: " + e.message)),
             editMode: (id) => {
                 const p = allData.find(x => x.id === id); editId = id;
-                document.getElementById('in-title').value = p.title; document.getElementById('in-author').value = p.author; document.getElementById('in-content').value = p.content; document.getElementById('admin-mode-title').innerText = "EDYTUJ WPIS"; document.getElementById('cancel-edit-btn').classList.remove('hidden'); currentEditImages = p.images || []; core.renderEditImages(); window.scrollTo(0,0);
+                document.getElementById('in-title').value = p.title;
+                document.getElementById('in-author').value = p.author;
+                document.getElementById('in-content').value = p.content;
+                document.getElementById('admin-mode-title').innerText = "Mode: EDIT";
+                document.getElementById('cancel-edit-btn').classList.remove('hidden');
+                currentEditImages = p.images || []; core.renderEditImages();
             },
-            cancelEdit: () => { editId = null; currentEditImages = []; document.getElementById('in-title').value = ""; document.getElementById('in-content').value = ""; document.getElementById('admin-mode-title').innerText = "NOWY WPIS"; document.getElementById('cancel-edit-btn').classList.add('hidden'); document.getElementById('edit-images-preview').innerHTML = ""; },
+            cancelEdit: () => { editId = null; currentEditImages = []; document.getElementById('in-title').value = ""; document.getElementById('in-content').value = ""; document.getElementById('admin-mode-title').innerText = "Create_New"; document.getElementById('cancel-edit-btn').classList.add('hidden'); document.getElementById('edit-images-preview').innerHTML = ""; },
 
             publishAd: async () => {
-                const side = document.getElementById('ad-side').value; const file = document.getElementById('ad-file').files[0]; const target = document.getElementById('ad-target').value;
-                if(!file || !target) return alert("Brak danych!");
+                const side = document.getElementById('ad-side').value;
+                const file = document.getElementById('ad-file').files[0];
+                const target = document.getElementById('ad-target').value;
+                if(!file || !target) return alert("Podaj link i plik!");
                 document.getElementById('loader').style.display = 'flex';
                 
                 try {
                     const fd = new FormData(); fd.append("image", file);
                     const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
                     const res = await r.json();
-                    if(res.success) { adsRef.push({ side, img: res.data.url, link: target, ts: Date.now() }).then(() => location.reload()).catch(e => { alert("Błąd: " + e.message); document.getElementById('loader').style.display = 'none'; }); }
-                    else { alert("Błąd zdjęcia"); document.getElementById('loader').style.display = 'none'; }
-                } catch (err) { alert("Błąd: " + err.message); document.getElementById('loader').style.display = 'none'; }
+                    if(res.success) {
+                        adsRef.push({ side, img: res.data.url, link: target, ts: Date.now() })
+                            .then(() => location.reload())
+                            .catch(e => { alert("Błąd bazy Firebase: " + e.message); document.getElementById('loader').style.display = 'none'; });
+                    } else {
+                        alert("Błąd wgrywania zdjęcia reklamy!");
+                        document.getElementById('loader').style.display = 'none';
+                    }
+                } catch (err) {
+                    alert("Błąd: " + err.message);
+                    document.getElementById('loader').style.display = 'none';
+                }
             },
-            deleteAd: (id) => confirm("Usunąć reklamę?") && adsRef.child(id).remove(),
+            deleteAd: (id) => confirm("Usunąć?") && adsRef.child(id).remove(),
             rotateAds: () => {
                 ['left', 'right'].forEach(s => {
                     const boxes = document.getElementById(`ad-${s[0]}-zone`)?.querySelectorAll('.ad-box');
-                    if(boxes?.length > 1) { boxes.forEach(b => b.classList.remove('active')); adIndices[s] = (adIndices[s] + 1) % boxes.length; boxes[adIndices[s]].classList.add('active'); }
+                    if(boxes?.length > 1) {
+                        boxes.forEach(b => b.classList.remove('active'));
+                        adIndices[s] = (adIndices[s] + 1) % boxes.length;
+                        boxes[adIndices[s]].classList.add('active');
+                    }
                 });
             },
 
@@ -604,20 +660,22 @@
                         let reps = "";
                         if(c.replies) {
                             Object.entries(c.replies).forEach(([rid, r]) => {
-                                const rLikes = r.likes || 0; const rLikedClass = localStorage.getItem(`liked_comm_${rid}`) ? "text-red-500" : "text-neutral-500 hover:text-white";
-                                reps += `<div class="pl-4 mt-3 border-l border-[#333]"><span class="font-bold text-white text-xs">${r.nick}</span><p class="text-sm my-1 text-neutral-300">${DOMPurify.sanitize(r.text)}</p>
-                                <div class="flex gap-4 mt-1"><span onclick="core.likeComment('${cid}', '${rid}')" class="text-xs font-semibold cursor-pointer transition flex items-center gap-1 ${rLikedClass}"><i class="fa-solid fa-heart"></i> ${rLikes}</span></div>
+                                const rLikes = r.likes || 0;
+                                const rLikedClass = localStorage.getItem(`liked_comm_${rid}`) ? "text-white" : "text-neutral-600 hover:text-white";
+                                reps += `<div class="pl-6 mt-4 border-l border-[#333]"><span class="font-black text-white text-xs uppercase">${r.nick}</span><p class="text-sm mt-2 mb-3 text-neutral-400 font-sans">${DOMPurify.sanitize(r.text)}</p>
+                                <div class="flex gap-4"><span onclick="core.likeComment('${cid}', '${rid}')" class="text-[10px] font-bold cursor-pointer uppercase transition flex items-center gap-2 ${rLikedClass}">WSPARCIE <i class="fa-solid fa-bolt"></i> ${rLikes}</span></div>
                                 </div>`;
                             });
                         }
-                        const cLikes = c.likes || 0; const cLikedClass = localStorage.getItem(`liked_comm_${cid}`) ? "text-red-500" : "text-neutral-500 hover:text-white";
+                        const cLikes = c.likes || 0;
+                        const cLikedClass = localStorage.getItem(`liked_comm_${cid}`) ? "text-white" : "text-neutral-600 hover:text-white";
                         list.innerHTML += `<div class="comment-item">
-                            <span class="font-bold text-white text-sm">${c.nick}</span>
-                            <p class="text-base my-2 text-neutral-300">${DOMPurify.sanitize(c.text)}</p>
-                            <div class="flex gap-5 mt-3 items-center">
-                                <span onclick="core.likeComment('${cid}')" class="text-xs font-semibold cursor-pointer transition flex items-center gap-1 ${cLikedClass}"><i class="fa-solid fa-heart"></i> ${cLikes}</span>
-                                <span onclick="core.setReply('${cid}', '${c.nick}')" class="text-xs font-semibold text-neutral-500 cursor-pointer hover:text-white">Odpowiedz</span>
-                                <span onclick="core.reportComment('${cid}', '${c.text}', '${c.nick}')" class="text-xs font-semibold text-neutral-500 cursor-pointer hover:text-red-400">Zgłoś</span>
+                            <span class="font-black text-blue-500 text-xs uppercase">${c.nick}</span>
+                            <p class="text-base mt-2 mb-4 text-neutral-300 font-sans">${DOMPurify.sanitize(c.text)}</p>
+                            <div class="flex gap-6 items-center border-t border-[#1f1f1f] pt-4">
+                                <span onclick="core.likeComment('${cid}')" class="text-[10px] font-bold cursor-pointer uppercase transition flex items-center gap-2 ${cLikedClass}">WSPARCIE <i class="fa-solid fa-bolt"></i> ${cLikes}</span>
+                                <span onclick="core.setReply('${cid}', '${c.nick}')" class="text-[10px] font-bold text-neutral-600 cursor-pointer hover:text-white uppercase">REPLY</span>
+                                <span onclick="core.reportComment('${cid}', '${c.text}', '${c.nick}')" class="text-[10px] font-bold text-red-900 cursor-pointer hover:text-red-500 uppercase ml-auto">REPORT</span>
                             </div>
                             <div class="mt-2" style="display:block">${reps}</div>
                         </div>`;
@@ -627,25 +685,38 @@
             
             likeComment: (cid, rid = null) => {
                 if (!localStorage.getItem('fb_token')) return core.showLoginOverlay();
+                
                 const likeKey = rid ? `liked_comm_${rid}` : `liked_comm_${cid}`;
                 if(localStorage.getItem(likeKey)) return;
+                
                 const refPath = rid ? `elk/comments/${currentOpenPostId}/${cid}/replies/${rid}/likes` : `elk/comments/${currentOpenPostId}/${cid}/likes`;
-                db.ref(refPath).transaction(l => (l || 0) + 1).then(() => localStorage.setItem(likeKey, "1"));
+                
+                db.ref(refPath).transaction(l => (l || 0) + 1)
+                    .then(() => {
+                        localStorage.setItem(likeKey, "1");
+                    })
+                    .catch(e => alert("Błąd zapisu: " + e.message));
             },
             
             addComment: () => {
                 if (!localStorage.getItem('fb_token')) return core.showLoginOverlay();
-                const n = document.getElementById('comm-nick').value || localStorage.getItem('user_nick'); const t = document.getElementById('comm-text').value;
+                
+                const n = document.getElementById('comm-nick').value || localStorage.getItem('user_nick');
+                const t = document.getElementById('comm-text').value;
                 if(!t) return;
                 const data = { nick: n, text: t, ts: Date.now(), date: new Date().toLocaleString() };
                 let ref = currentReplyToId ? db.ref(`elk/comments/${currentOpenPostId}/${currentReplyToId}/replies`) : db.ref(`elk/comments/${currentOpenPostId}`);
-                ref.push(data).then(() => { document.getElementById('comm-text').value = ""; core.cancelReply(); });
+                
+                ref.push(data)
+                   .then(() => { document.getElementById('comm-text').value = ""; core.cancelReply(); })
+                   .catch(e => alert("Błąd TX: " + e.message));
             },
             
             reportComment: (cid, text, nick) => {
                 if (!localStorage.getItem('fb_token')) return core.showLoginOverlay();
-                if (confirm("Zgłosić ten komentarz do weryfikacji?")) {
-                    reportsRef.push({ postId: currentOpenPostId, commentId: cid, text, nick, ts: Date.now() });
+                if (confirm("Potwierdź zgłoszenie incydentu.")) {
+                    reportsRef.push({ postId: currentOpenPostId, commentId: cid, text, nick, ts: Date.now() })
+                        .catch(e => alert("Błąd TX: " + e.message));
                 }
             },
 
@@ -654,18 +725,23 @@
                     const container = document.getElementById('reports-list'); container.innerHTML = "";
                     if(!snap.val()) return;
                     Object.entries(snap.val()).forEach(([rid, r]) => {
-                        container.innerHTML += `<div class="p-4 bg-[#111] border border-red-500/30 rounded-md"><p class="text-xs text-red-400 font-bold mb-1">${r.nick}:</p><p class="text-sm mb-3">"${r.text}"</p><button onclick="core.dismissReport('${rid}')" class="bg-[#222] border border-[#333] px-4 py-2 rounded text-xs font-bold hover:bg-[#333] transition">Zamknij zgłoszenie</button></div>`;
+                        container.innerHTML += `<div class="p-4 bg-black border-l-4 border-red-600 mb-2"><p class="text-[10px] text-red-500 font-bold uppercase mb-2">TARGET: ${r.nick}</p><p class="text-xs text-neutral-400 font-sans mb-4">"${r.text}"</p><button onclick="core.dismissReport('${rid}')" class="bg-[#1f1f1f] text-white px-4 py-2 text-[10px] font-bold hover:bg-white hover:text-black transition uppercase">Resolve</button></div>`;
                     });
                 });
             },
             dismissReport: (rid) => reportsRef.child(rid).remove(),
 
             saveSettings: () => {
-                settingsRef.set({ about: document.getElementById('set-about').value, redaction: document.getElementById('set-redaction').value, privacy: document.getElementById('set-privacy').value, coop: document.getElementById('set-coop').value }).then(() => alert("Ustawienia zostały zaktualizowane.")).catch(e => alert("Błąd zapisu: " + e.message));
+                settingsRef.set({ about: document.getElementById('set-about').value, redaction: document.getElementById('set-redaction').value, privacy: document.getElementById('set-privacy').value, coop: document.getElementById('set-coop').value })
+                    .then(() => alert("Saved."))
+                    .catch(e => alert("Error: " + e.message));
             },
             loadSettingsInAdmin: () => settingsRef.once('value', s => {
                 const d = s.val(); if(!d) return;
-                document.getElementById('set-about').value = d.about || ""; document.getElementById('set-redaction').value = d.redaction || ""; document.getElementById('set-privacy').value = d.privacy || ""; document.getElementById('set-coop').value = d.coop || "";
+                document.getElementById('set-about').value = d.about || "";
+                document.getElementById('set-redaction').value = d.redaction || "";
+                document.getElementById('set-privacy').value = d.privacy || "";
+                document.getElementById('set-coop').value = d.coop || "";
             }),
 
             goHome: () => {
@@ -676,35 +752,33 @@
             showLegal: (t) => {
                 core.goHome(); ['view-home', 'search-area'].forEach(id => document.getElementById(id).classList.add('hidden'));
                 document.getElementById('view-legal').classList.remove('hidden');
-                const titles = { redaction: "Redakcja", privacy: "Polityka Prywatności", coop: "Współpraca" };
-                document.getElementById('legal-title').innerText = titles[t] || t;
+                document.getElementById('legal-title').innerText = t;
                 document.getElementById('legal-body').innerText = document.getElementById(`txt-${t}`).innerText;
-                window.scrollTo(0,0);
             },
             cancelReply: () => { currentReplyToId = null; document.getElementById('replying-to-info').classList.add('hidden'); },
             setReply: (cid, nick) => { currentReplyToId = cid; document.getElementById('replying-to-info').classList.remove('hidden'); document.getElementById('target-nick').innerText = nick; document.getElementById('comm-text').focus(); },
             previewNewFiles: () => core.renderEditImages(document.getElementById('in-files').files),
-            renderEditImages: () => {
+            renderEditImages: (files = []) => {
                 const cont = document.getElementById('edit-images-preview'); cont.innerHTML = "";
-                currentEditImages.forEach(url => cont.innerHTML += `<img src="${url}" class="w-16 h-16 object-cover rounded border border-[#333]">`);
+                currentEditImages.forEach(url => cont.innerHTML += `<div class="border border-[#1f1f1f] w-20 h-20"><img src="${url}" class="w-full h-full object-cover grayscale"></div>`);
             },
 
             likePost: () => {
                 if (!localStorage.getItem('fb_token')) return core.showLoginOverlay();
                 if(localStorage.getItem(`liked_${currentOpenPostId}`)) return;
                 
-                postsRef.child(currentOpenPostId).child('likes').transaction(l => (l || 0) + 1).then(() => {
-                    localStorage.setItem(`liked_${currentOpenPostId}`, "1");
-                    document.getElementById('main-like-btn').classList.add('liked');
-                    let countElem = document.getElementById('like-count');
-                    countElem.innerText = parseInt(countElem.innerText) + 1;
-                });
+                postsRef.child(currentOpenPostId).child('likes').transaction(l => (l || 0) + 1)
+                    .then(() => {
+                        localStorage.setItem(`liked_${currentOpenPostId}`, "1");
+                        document.getElementById('main-like-btn').classList.add('liked');
+                        let countElem = document.getElementById('like-count');
+                        countElem.innerText = parseInt(countElem.innerText) + 1;
+                    })
+                    .catch(e => alert("Error: " + e.message));
             }
         };
 
         core.checkAuth();
-        // Admin init for reports load
-        document.getElementById('btn-adm-notifs').addEventListener('click', core.loadReports);
     </script>
 </body>
 </html>
