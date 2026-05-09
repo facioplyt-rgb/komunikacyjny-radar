@@ -4,519 +4,330 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ełk Wiadomości - Serwis Informacyjny</title>
+    <title>Ełk Wiadomości</title>
     
-    <!-- Ikony & Fonty Google -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:ital,wght@0,300;0,700;0,900;1,300&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     
-    <!-- Firebase (Compat v9) & DOMPurify -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
 
     <style>
-        /* --- ZMIENNE CSS - PALETA PREMIUM --- */
-        :root {
-            --primary-dark: #0f172a; /* Głęboki granat/czerń prasowa */
-            --accent-red: #dc2626; /* Czerwień pilnych newsów */
-            --bg-site: #f8fafc;
-            --bg-paper: #ffffff;
-            --text-main: #334155;
-            --text-heading: #020617;
-            --border-light: #e2e8f0;
-            --border-dark: #cbd5e1;
-            --font-ui: 'Inter', sans-serif;
-            --font-serif: 'Merriweather', serif;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
-            --shadow-hover: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.03);
-        }
-
+        /* Prosty, gazetowy styl */
         * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            font-family: var(--font-ui);
-            background-color: var(--bg-site);
-            color: var(--text-main);
-            line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
+        body { font-family: 'Roboto', sans-serif; background: #f5f5f5; color: #222; line-height: 1.6; }
+        
+        /* Layout */
+        .wrapper { max-width: 1200px; margin: 20px auto; padding: 0 15px; display: flex; flex-direction: column; gap: 20px; }
+        main { background: #fff; border: 1px solid #ddd; padding: 20px; flex: 1; border-radius: 4px; }
+        aside { width: 100%; display: flex; flex-direction: column; gap: 20px; }
+        
+        @media (min-width: 900px) {
+            .wrapper { flex-direction: row; }
+            aside { width: 300px; flex-shrink: 0; }
         }
 
-        /* --- PASEK PILNE --- */
-        #breaking-news-bar {
-            background-color: var(--accent-red);
-            color: #fff;
-            font-size: 0.8rem;
-            font-weight: 700;
-            padding: 10px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: inset 0 -2px 0 rgba(0,0,0,0.1);
+        /* Pasek górny (Pilne) */
+        #top-bar { background: #d32f2f; color: #fff; padding: 10px; text-align: center; font-weight: bold; font-size: 14px; display: none; }
+        
+        /* Nagłówek */
+        header { background: #fff; border-bottom: 1px solid #ddd; padding: 15px 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-family: 'Playfair Display', serif; font-size: 24px; color: #111; cursor: pointer; text-decoration: none; }
+        .logo span { color: #d32f2f; }
+        .logo-img { max-height: 50px; display: none; cursor: pointer; }
+        .user-nav { display: flex; gap: 15px; align-items: center; font-size: 14px; }
+        .user-nav button { background: none; border: none; cursor: pointer; font-weight: bold; color: #555; }
+        .user-nav button:hover { color: #d32f2f; }
+        .admin-badge { background: #111; color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 11px; }
+
+        /* Nawigacja i Szukajka */
+        .toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; border-bottom: 2px solid #111; padding-bottom: 15px; margin-bottom: 20px; }
+        .tabs { display: flex; gap: 5px; flex-wrap: wrap; }
+        .tab-btn { padding: 8px 15px; background: #eee; border: none; cursor: pointer; font-weight: bold; border-radius: 3px; }
+        .tab-btn.active { background: #111; color: #fff; }
+        .search-box input { padding: 8px; border: 1px solid #ccc; border-radius: 3px; width: 100%; max-width: 250px; }
+
+        /* Lista Newsów */
+        .news-item { display: flex; flex-direction: column; gap: 15px; padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid #eee; cursor: pointer; }
+        .news-img { width: 100%; height: 200px; object-fit: cover; border-radius: 4px; background: #eee; }
+        .news-cat { color: #d32f2f; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+        .news-title { font-family: 'Playfair Display', serif; font-size: 20px; color: #111; margin: 5px 0; }
+        .news-meta { font-size: 12px; color: #777; }
+        
+        @media (min-width: 600px) {
+            .news-item { flex-direction: row; }
+            .news-img { width: 200px; height: 130px; }
         }
-        .blinking-dot { width: 8px; height: 8px; background-color: #fff; border-radius: 50%; animation: blink 1.5s infinite ease-in-out; }
-        @keyframes blink { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.8); } }
 
-        /* --- NAGŁÓWEK --- */
-        header {
-            background: var(--bg-paper);
-            border-bottom: 1px solid var(--border-light);
-            padding: 0 20px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: var(--shadow-sm);
-        }
-        .header-inner {
-            max-width: 1280px;
-            margin: 0 auto;
-            height: 80px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .logo-container { cursor: pointer; display: flex; align-items: center; height: 100%; }
-        .logo-container img { max-height: 50px; max-width: 280px; object-fit: contain; }
-        .logo-text { font-family: var(--font-serif); font-size: 2.4rem; font-weight: 900; color: var(--text-heading); letter-spacing: -1.5px; }
-        .logo-text span { color: var(--accent-red); }
-
-        .user-nav { display: flex; align-items: center; gap: 20px; font-size: 0.9rem; font-weight: 600; }
-        .user-nav button { background: none; border: none; cursor: pointer; font-family: var(--font-ui); font-weight: 600; color: var(--text-main); transition: 0.2s; display: flex; align-items: center; gap: 6px; }
-        .user-nav button:hover { color: var(--accent-red); }
-        .admin-badge { background: var(--primary-dark); color: #fff; padding: 4px 10px; font-size: 0.7rem; text-transform: uppercase; border-radius: 20px; letter-spacing: 0.5px; }
-
-        /* --- GŁÓWNY UKŁAD --- */
-        .layout-wrapper {
-            max-width: 1280px;
-            margin: 40px auto;
-            display: grid;
-            grid-template-columns: 1fr 320px; /* Szerszy kontent, sidebar 320px na reklamy z paddingiem */
-            gap: 40px;
-            padding: 0 20px;
-        }
-        main { min-height: 80vh; }
-        aside { display: flex; flex-direction: column; gap: 30px; }
-
-        /* --- WYSZUKIWARKA & TABY --- */
-        .toolbar { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary-dark); padding-bottom: 15px; margin-bottom: 30px; }
-        .tabs { display: flex; gap: 8px; }
-        .tab-btn { padding: 8px 16px; border: none; background: transparent; color: var(--text-main); cursor: pointer; font-weight: 700; text-transform: uppercase; font-size: 0.8rem; border-radius: 4px; transition: 0.2s; font-family: var(--font-ui); }
-        .tab-btn:hover { background: var(--border-light); color: var(--text-heading); }
-        .tab-btn.active { background: var(--primary-dark); color: #fff; }
+        /* Widok Artykułu */
+        .art-title { font-family: 'Playfair Display', serif; font-size: 32px; color: #111; margin-bottom: 10px; }
+        .art-info { font-size: 13px; color: #666; border-bottom: 1px solid #ddd; padding-bottom: 15px; margin-bottom: 20px; }
+        .art-body { font-size: 16px; color: #333; line-height: 1.8; white-space: pre-wrap; }
+        .art-body img { max-width: 100%; height: auto; margin: 15px 0; border-radius: 4px; }
         
-        .search-box { position: relative; }
-        .search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
-        .search-box input { padding: 10px 15px 10px 35px; border: 1px solid var(--border-dark); border-radius: 20px; width: 280px; font-family: var(--font-ui); font-size: 0.9rem; transition: all 0.3s; background: var(--bg-paper); }
-        .search-box input:focus { border-color: var(--primary-dark); outline: none; box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1); }
+        .btn { padding: 10px 15px; background: #eee; border: 1px solid #ccc; cursor: pointer; font-weight: bold; border-radius: 3px; display: inline-flex; align-items: center; gap: 5px; }
+        .btn:hover { background: #e0e0e0; }
+        .btn-red { background: #d32f2f; color: #fff; border: none; }
+        .btn-red:hover { background: #b71c1c; }
 
-        /* --- SIATKA NEWSÓW (HERO & GRID) --- */
-        .news-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px; }
+        /* Komentarze */
+        .comments-section { margin-top: 40px; border-top: 3px solid #111; padding-top: 20px; }
+        .comment { padding: 15px 0; border-bottom: 1px solid #eee; }
+        .comment-nick { font-weight: bold; color: #111; }
+        .comment-date { font-size: 12px; color: #888; margin-left: 10px; }
+        .comment-text { margin: 5px 0; color: #333; }
+        .comment-actions { font-size: 12px; color: #666; display: flex; gap: 15px; cursor: pointer; }
+        .comment-actions span:hover { color: #d32f2f; text-decoration: underline; }
+        .reply-box { margin-left: 30px; border-left: 2px solid #ccc; padding-left: 15px; margin-top: 10px; background: #fafafa; padding: 10px; }
         
-        .news-card { background: var(--bg-paper); border-radius: 8px; overflow: hidden; border: 1px solid var(--border-light); cursor: pointer; transition: var(--shadow-hover) 0.3s; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; }
-        .news-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-3px); }
-        
-        .img-wrapper { width: 100%; height: 200px; overflow: hidden; border-bottom: 1px solid var(--border-light); }
-        .img-wrapper img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
-        .news-card:hover .img-wrapper img { transform: scale(1.05); }
-        
-        .card-content { padding: 20px; display: flex; flex-direction: column; flex-grow: 1; }
-        .card-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #64748b; }
-        .cat-badge { color: var(--accent-red); }
-        .card-title { font-family: var(--font-serif); font-size: 1.3rem; color: var(--text-heading); line-height: 1.3; margin-bottom: 10px; font-weight: 700; }
-        
-        /* Specjalny układ dla Głównego Newsa (Hero) */
-        .news-card.hero-card { grid-column: 1 / -1; display: grid; grid-template-columns: 1.2fr 1fr; gap: 0; min-height: 350px; }
-        .news-card.hero-card .img-wrapper { height: 100%; border-bottom: none; border-right: 1px solid var(--border-light); }
-        .news-card.hero-card .card-content { padding: 40px; justify-content: center; }
-        .news-card.hero-card .card-title { font-size: 2.2rem; font-weight: 900; }
-        .card-excerpt { font-size: 1rem; color: var(--text-main); line-height: 1.6; margin-top: 15px; }
+        .add-comment { background: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin-top: 20px; border-radius: 4px; }
+        .input-full { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 3px; margin-bottom: 10px; font-family: inherit; }
 
-        /* --- REKLAMY SIDEBAR --- */
-        .ad-container { padding: 10px; background: var(--bg-paper); border: 1px solid var(--border-light); border-radius: 8px; text-align: center; }
-        .ad-label { display: block; font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
-        .ad-box { width: 300px; height: 250px; background: #f1f5f9; display: flex; justify-content: center; align-items: center; overflow: hidden; margin: 0 auto; }
-        .ad-box img { width: 100%; height: 100%; object-fit: cover; }
+        /* Panel Admina */
+        .admin-box { background: #f9f9f9; border: 1px solid #ddd; padding: 20px; margin-bottom: 20px; border-radius: 4px; }
+        .admin-box label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        .admin-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; background: #fff; }
+        .admin-table th, .admin-table td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        .admin-table th { background: #eee; }
 
-        /* --- WIDOK ARTYKUŁU --- */
-        .article-container { background: var(--bg-paper); padding: 50px; border-radius: 8px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); }
-        .article-header { margin-bottom: 40px; text-align: center; }
-        .article-cat { display: inline-block; background: var(--primary-dark); color: #fff; padding: 5px 12px; border-radius: 4px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; margin-bottom: 20px; }
-        .article-title { font-family: var(--font-serif); font-size: 3rem; line-height: 1.15; color: var(--text-heading); font-weight: 900; margin-bottom: 25px; }
-        .article-meta { display: flex; justify-content: center; gap: 20px; font-size: 0.9rem; color: #64748b; font-weight: 500; border-top: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light); padding: 15px 0; }
-        .article-meta strong { color: var(--text-heading); }
-        
-        .article-body { font-family: var(--font-serif); font-size: 1.15rem; line-height: 1.8; color: #1e293b; }
-        .article-body p { margin-bottom: 25px; }
-        .article-body h2 { font-family: var(--font-ui); font-size: 1.8rem; color: var(--text-heading); margin: 40px 0 20px; }
-        .article-body h3 { font-family: var(--font-ui); font-size: 1.4rem; color: var(--text-heading); margin: 30px 0 15px; }
-        .article-body img { width: 100%; border-radius: 8px; margin: 30px 0; box-shadow: var(--shadow-md); }
+        /* Reklamy */
+        .ad-container { background: #fff; border: 1px solid #ddd; padding: 10px; text-align: center; border-radius: 4px; }
+        .ad-label { display: block; font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 5px; }
+        .ad-box { width: 100%; max-width: 300px; height: auto; margin: 0 auto; display: block; }
+        .ad-box img { width: 100%; height: auto; display: block; }
 
-        .btn-action { padding: 12px 24px; border: 2px solid var(--border-light); background: transparent; cursor: pointer; font-family: var(--font-ui); font-weight: 700; border-radius: 30px; font-size: 0.95rem; color: var(--text-heading); transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
-        .btn-action:hover { border-color: var(--primary-dark); }
-        .btn-action.liked { border-color: var(--accent-red); color: var(--accent-red); background: #fef2f2; }
-
-        /* --- KOMENTARZE --- */
-        .comments-section { margin-top: 50px; }
-        .comments-title { font-family: var(--font-ui); font-size: 1.5rem; font-weight: 800; border-bottom: 2px solid var(--primary-dark); padding-bottom: 10px; margin-bottom: 30px; }
-        
-        .comment-item { padding: 20px 0; border-bottom: 1px solid var(--border-light); }
-        .comment-head { display: flex; justify-content: space-between; margin-bottom: 10px; }
-        .c-author { font-weight: 700; color: var(--primary-dark); display: flex; align-items: center; gap: 8px; }
-        .c-date { font-size: 0.8rem; color: #94a3b8; }
-        .c-body { font-size: 1rem; color: #334155; margin-bottom: 15px; line-height: 1.5; }
-        .c-actions { display: flex; gap: 20px; font-size: 0.85rem; font-weight: 600; }
-        .c-actions span { cursor: pointer; color: #64748b; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
-        .c-actions span:hover { color: var(--primary-dark); }
-        .c-actions .liked { color: var(--accent-red); }
-
-        .comment-form { background: var(--bg-site); padding: 25px; border-radius: 8px; margin-top: 40px; border: 1px solid var(--border-light); }
-        .form-label { display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-heading); margin-bottom: 8px; text-transform: uppercase; }
-        .form-input { width: 100%; padding: 12px 15px; border: 1px solid var(--border-dark); border-radius: 6px; font-family: var(--font-ui); font-size: 1rem; margin-bottom: 20px; transition: 0.2s; }
-        .form-input:focus { outline: none; border-color: var(--primary-dark); box-shadow: 0 0 0 3px rgba(15,23,42,0.1); }
-        .btn-primary { background: var(--primary-dark); color: #fff; border: none; padding: 14px 28px; font-family: var(--font-ui); font-weight: 700; font-size: 1rem; border-radius: 6px; cursor: pointer; transition: 0.2s; }
-        .btn-primary:hover { background: var(--accent-red); }
-
-        /* --- DASHBOARD CMS (Panel Admina) --- */
-        .admin-dashboard { background: var(--bg-paper); border-radius: 8px; box-shadow: var(--shadow-md); overflow: hidden; border: 1px solid var(--border-light); }
-        .admin-header { background: var(--primary-dark); color: #fff; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; }
-        .admin-header h2 { font-size: 1.5rem; font-weight: 700; }
-        .admin-content { padding: 30px; }
-        
-        .admin-panel-box { background: #fff; border: 1px solid var(--border-light); border-radius: 8px; padding: 25px; margin-bottom: 30px; box-shadow: var(--shadow-sm); }
-        .admin-panel-title { font-size: 1.2rem; font-weight: 700; color: var(--text-heading); margin-bottom: 20px; border-bottom: 1px solid var(--border-light); padding-bottom: 10px; }
-        
-        .data-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
-        .data-table th { background: var(--bg-site); padding: 15px; font-weight: 700; color: var(--text-main); border-bottom: 2px solid var(--border-dark); }
-        .data-table td { padding: 15px; border-bottom: 1px solid var(--border-light); vertical-align: middle; }
-        .data-table tr:hover { background: #f8fafc; }
-        .btn-sm { padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; cursor: pointer; border: 1px solid transparent; }
-        .btn-edit { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
-        .btn-delete { background: #fef2f2; color: var(--accent-red); border-color: #fecaca; }
-
-        /* --- STOPKA --- */
-        footer { background: var(--primary-dark); color: #94a3b8; padding: 60px 20px 30px; margin-top: 60px; font-family: var(--font-ui); }
-        .footer-inner { max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 50px; }
-        .footer-title { color: #fff; font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
-        .footer-link { color: #cbd5e1; text-decoration: none; display: block; margin-bottom: 10px; transition: 0.2s; }
-        .footer-link:hover { color: #fff; transform: translateX(5px); }
-        .social-links { display: flex; gap: 20px; font-size: 1.5rem; }
-        .social-links a { color: #fff; transition: 0.2s; }
-        .social-links a:hover { color: var(--accent-red); transform: translateY(-3px); }
-        .copyright { text-align: center; padding-top: 30px; margin-top: 40px; border-top: 1px solid #334155; font-size: 0.85rem; }
-
-        /* --- UTILS & RWD --- */
+        /* Utils */
         .hidden { display: none !important; }
-        #loader { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.95); z-index: 9999; justify-content: center; align-items: center; font-size: 3rem; color: var(--primary-dark); flex-direction: column; gap: 20px;}
-        #loader span { font-size: 1rem; font-weight: 700; font-family: var(--font-ui); color: var(--text-main); text-transform: uppercase; letter-spacing: 2px;}
-        
-        #toast-container { position: fixed; bottom: 30px; right: 30px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
-        .toast { background: var(--text-heading); color: #fff; padding: 15px 25px; font-size: 0.95rem; font-weight: 600; border-radius: 8px; box-shadow: var(--shadow-md); animation: slideIn 0.3s ease-out; }
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-
-        @media (max-width: 1024px) {
-            .news-card.hero-card { grid-template-columns: 1fr; min-height: auto; }
-            .news-card.hero-card .img-wrapper { height: 250px; border-right: none; border-bottom: 1px solid var(--border-light); }
-            .news-card.hero-card .card-content { padding: 25px; }
-            .news-card.hero-card .card-title { font-size: 1.8rem; }
-        }
-        @media (max-width: 850px) {
-            .layout-wrapper { grid-template-columns: 1fr; }
-            .news-grid { grid-template-columns: 1fr; }
-            aside { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
-            .article-container { padding: 25px; }
-            .article-title { font-size: 2.2rem; }
-            .toolbar { flex-direction: column; align-items: stretch; gap: 15px; }
-            .search-box input { width: 100%; }
-        }
+        #loader { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 9999; justify-content: center; align-items: center; font-size: 24px; font-weight: bold; }
+        #overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; }
+        .modal { background: #fff; padding: 30px; border-radius: 4px; text-align: center; max-width: 400px; width: 90%; }
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1000; }
+        .toast { background: #111; color: #fff; padding: 15px; margin-top: 10px; border-radius: 3px; font-size: 14px; }
     </style>
 </head>
 <body>
 
-    <!-- OVERLAY LOGOWANIA -->
-    <div id="auth-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(15,23,42,0.95); z-index:10000; display:flex; justify-content:center; align-items:center;">
-        <div style="background:#fff; padding:50px; border-radius:12px; text-align:center; max-width:400px; width:90%; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1);">
-            <div class="logo-text" style="margin-bottom: 10px;">EŁK <span>Wiadomości</span></div>
-            <p style="color:#64748b; margin-bottom:30px; font-size:0.95rem;">Dołącz do społeczności. Zaloguj się, aby komentować artykuły i brać udział w dyskusji.</p>
-            <button onclick="core.login()" style="background:#5865F2; color:#fff; border:none; padding:15px 0; width:100%; font-weight:700; font-size:1rem; border-radius:8px; cursor:pointer; display:flex; justify-content:center; align-items:center; gap:10px; transition:0.2s;">
-                <i class="fa-brands fa-discord" style="font-size:1.2rem;"></i> Autoryzacja Discord
-            </button>
-            <button onclick="core.hideLoginOverlay()" style="margin-top:20px; background:none; border:none; color:#94a3b8; font-weight:600; cursor:pointer; text-decoration:underline;">Wróć do czytania</button>
+    <!-- Overlay logowania -->
+    <div id="overlay">
+        <div class="modal">
+            <h2>Ełk Wiadomości</h2>
+            <p style="margin: 15px 0; color: #666; font-size: 14px;">Zaloguj się przez Discord, aby móc komentować i polecać artykuły.</p>
+            <button onclick="core.login()" class="btn btn-red" style="width: 100%; justify-content: center;"><i class="fa-brands fa-discord"></i> Zaloguj przez Discord</button>
+            <button onclick="core.hideLogin()" style="margin-top: 15px; background: none; border: none; cursor: pointer; color: #555; text-decoration: underline;">Anuluj</button>
         </div>
     </div>
 
+    <div id="loader">Ładowanie...</div>
     <div id="toast-container"></div>
-    <div id="loader"><i class="fa-solid fa-circle-notch fa-spin"></i><span>Przetwarzanie...</span></div>
 
-    <!-- PASEK PILNE -->
-    <div id="breaking-news-bar" class="hidden">
-        <div class="blinking-dot"></div>
-        <span>PILNE: <span id="breaking-news-text"></span></span>
+    <!-- Pasek Pilne -->
+    <div id="top-bar">
+        PILNE: <span id="top-bar-text"></span>
     </div>
 
-    <!-- NAGŁÓWEK -->
+    <!-- Nagłówek -->
     <header>
-        <div class="header-inner">
-            <div class="logo-container" onclick="core.goHome()">
-                <img id="site-logo" class="hidden" src="" alt="Logo Serwisu">
-                <div id="site-logo-text" class="logo-text">Ełk <span>Wiadomości</span></div>
-            </div>
-            <div class="user-nav">
-                <button id="btn-login" onclick="core.showLoginOverlay()"><i class="fa-regular fa-user"></i> Zaloguj się</button>
-                <span id="user-profile-name" class="hidden" style="color:var(--primary-dark);"></span>
-                <span id="admin-indicator" class="admin-badge hidden">Redakcja CMS</span>
-                <button id="btn-open-admin" class="hidden" onclick="core.openAdmin()"><i class="fa-solid fa-sliders"></i></button>
-                <button id="btn-logout" class="hidden" onclick="core.logout()"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
-            </div>
+        <div>
+            <img id="site-logo-img" class="logo-img" src="" onclick="core.goHome()">
+            <div id="site-logo-text" class="logo" onclick="core.goHome()">Ełk <span>Wiadomości</span></div>
+        </div>
+        <div class="user-nav">
+            <button id="btn-login" onclick="core.showLogin()">Zaloguj</button>
+            <span id="user-name" class="hidden"></span>
+            <span id="admin-badge" class="admin-badge hidden">Admin</span>
+            <button id="btn-admin" class="hidden" onclick="core.openAdmin()">Panel</button>
+            <button id="btn-logout" class="hidden" onclick="core.logout()">Wyloguj</button>
         </div>
     </header>
 
-    <div class="layout-wrapper">
-        
-        <!-- LEWA KOLUMNA: TREŚĆ -->
+    <div class="wrapper">
+        <!-- Lewa Strona - Treść -->
         <main>
-            <!-- WYSZUKIWARKA & FILTRY -->
+            <!-- Szukajka i Kategorie -->
             <div id="search-area" class="toolbar">
                 <div class="tabs">
                     <button onclick="core.switchTab('all', this)" class="tab-btn active">Wszystkie</button>
+                    <button onclick="core.switchTab('Wiadomości', this)" class="tab-btn">Wiadomości</button>
                     <button onclick="core.switchTab('Wydarzenia', this)" class="tab-btn">Wydarzenia</button>
                     <button onclick="core.switchTab('Aktualizacje', this)" class="tab-btn">Aktualizacje</button>
-                    <button onclick="core.switchTab('Informacje', this)" class="tab-btn">Informacje</button>
-                    <button onclick="core.switchTab('Sport', this)" class="tab-btn">Sport</button>
                 </div>
                 <div class="search-box">
-                    <i class="fa-solid fa-search"></i>
-                    <input type="text" id="search-input" oninput="core.filterPosts()" placeholder="Szukaj artykułów...">
+                    <input type="text" id="search-input" oninput="core.filterPosts()" placeholder="Szukaj...">
                 </div>
             </div>
 
-            <!-- STRONA GŁÓWNA (GRID) -->
+            <!-- Strona Główna -->
             <div id="view-home">
                 <div id="news-container">
-                    <div style="padding: 100px 0; text-align: center; color: #94a3b8;">
-                        <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 15px;"></i><br>Wczytywanie najnowszych wiadomości...
-                    </div>
+                    <p style="text-align: center; color: #888; padding: 40px 0;">Wczytywanie...</p>
                 </div>
-                <div id="more-container" class="hidden" style="text-align: center; margin-top: 40px;">
-                    <button onclick="core.showAllPosts()" class="btn-action">Załaduj starsze wpisy</button>
+                <div id="more-btn-box" class="hidden" style="text-align: center; margin-top: 20px;">
+                    <button onclick="core.loadMore()" class="btn">Pokaż starsze wpisy</button>
                 </div>
             </div>
 
-            <!-- WIDOK CZYTANIA ARTYKUŁU -->
+            <!-- Czytanie artykułu -->
             <div id="view-article" class="hidden">
-                <button onclick="core.goHome()" class="btn-action" style="margin-bottom: 30px; padding: 8px 16px; font-size:0.85rem;"><i class="fa-solid fa-arrow-left"></i> Wróć na stronę główną</button>
+                <button onclick="core.goHome()" class="btn" style="margin-bottom: 20px;"><i class="fa-solid fa-arrow-left"></i> Wróć</button>
+                <div class="news-cat" id="art-cat" style="margin-bottom: 5px;"></div>
+                <h1 class="art-title" id="art-title"></h1>
+                <div class="art-info">Autor: <strong id="art-author"></strong> | Dodano: <span id="art-date"></span></div>
                 
-                <article class="article-container">
-                    <div class="article-header">
-                        <span id="art-category" class="article-cat"></span>
-                        <h1 id="art-title" class="article-title"></h1>
-                        <div class="article-meta">
-                            <span>Tekst: <strong id="art-author"></strong></span>
-                            <span>Opublikowano: <strong id="art-date"></strong></span>
-                        </div>
-                    </div>
-                    
-                    <div id="art-content" class="article-body"></div>
-                    
-                    <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid var(--border-light);">
-                        <button id="main-like-btn" onclick="core.likePost()" class="btn-action"><i class="fa-regular fa-thumbs-up"></i> Warto przeczytać (<span id="like-count">0</span>)</button>
-                    </div>
-                </article>
+                <div id="art-content" class="art-body"></div>
+                
+                <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                    <button id="like-btn" onclick="core.likePost()" class="btn"><i class="fa-solid fa-thumbs-up"></i> Polecam (<span id="like-count">0</span>)</button>
+                </div>
 
+                <!-- System komentarzy -->
                 <div class="comments-section">
-                    <h3 class="comments-title">Dyskusja (<span id="comm-count">0</span>)</h3>
+                    <h3>Komentarze (<span id="comm-count">0</span>)</h3>
                     
-                    <div class="comment-form">
-                        <div style="display:flex; gap:20px;">
-                            <div style="flex:1;">
-                                <label class="form-label">Twój identyfikator</label>
-                                <input type="text" id="comm-nick" class="form-input" readonly placeholder="Zaloguj się..." style="background:#f1f5f9; color:#94a3b8; font-weight:600;">
-                            </div>
+                    <div class="add-comment">
+                        <div id="reply-info" class="hidden" style="background: #e3f2fd; padding: 10px; margin-bottom: 15px; border-radius: 3px; font-size: 13px;">
+                            Odpowiadasz użytkownikowi: <strong id="reply-nick"></strong>
+                            <button onclick="core.cancelReply()" style="float: right; border: none; background: none; color: #d32f2f; font-weight: bold; cursor: pointer;">Anuluj</button>
                         </div>
-                        <label class="form-label">Treść komentarza</label>
-                        <textarea id="comm-text" class="form-input" rows="4" placeholder="Co uważasz o tym materiale?"></textarea>
-                        <button onclick="core.addComment()" class="btn-primary">Opublikuj komentarz</button>
+                        <input type="text" id="comm-nick" class="input-full" readonly placeholder="Zaloguj się, aby komentować" style="background: #eee;">
+                        <textarea id="comm-text" class="input-full" rows="3" placeholder="Wpisz swój komentarz..."></textarea>
+                        <button onclick="core.addComment()" class="btn btn-red">Dodaj komentarz</button>
                     </div>
 
-                    <div id="comments-list" style="margin-top: 40px;"></div>
+                    <div id="comments-list" style="margin-top: 30px;"></div>
                 </div>
             </div>
 
-            <!-- PANEL ADMINISTRATORA (SaaS Style) -->
+            <!-- Panel Administratora -->
             <div id="view-admin" class="hidden">
-                <div class="admin-dashboard">
-                    <div class="admin-header">
-                        <h2>System Zarządzania Treścią (CMS)</h2>
-                        <button onclick="core.goHome()" class="btn-action" style="background:rgba(255,255,255,0.1); color:#fff; border:none;">Wyjdź z panelu</button>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2>Panel Administratora</h2>
+                    <button onclick="core.goHome()" class="btn">Wyjdź</button>
+                </div>
+
+                <div class="tabs" style="margin-bottom: 20px;">
+                    <button onclick="core.setAdminTab('new')" id="tab-adm-new" class="tab-btn active">Wpisy</button>
+                    <button onclick="core.setAdminTab('comms')" id="tab-adm-comms" class="tab-btn">Komentarze</button>
+                    <button onclick="core.setAdminTab('ads')" id="tab-adm-ads" class="tab-btn">Reklamy</button>
+                    <button onclick="core.setAdminTab('settings')" id="tab-adm-settings" class="tab-btn">Ustawienia</button>
+                </div>
+
+                <!-- Zakładka Wpisów -->
+                <div id="adm-new" class="admin-box">
+                    <h3 id="adm-title-label" style="margin-bottom: 15px;">Dodaj nowy wpis</h3>
+                    <button id="cancel-edit-btn" onclick="core.cancelEdit()" class="hidden btn" style="margin-bottom: 15px; color: red;">Anuluj edycję</button>
+                    
+                    <label>Tytuł</label><input type="text" id="in-title" class="input-full">
+                    
+                    <div style="display: flex; gap: 15px;">
+                        <div style="flex: 1;"><label>Autor</label><input type="text" id="in-author" class="input-full" value="Redakcja"></div>
+                        <div style="flex: 1;"><label>Kategoria</label>
+                            <select id="in-category" class="input-full">
+                                <option value="Wiadomości">Wiadomości</option>
+                                <option value="Wydarzenia">Wydarzenia</option>
+                                <option value="Aktualizacje">Aktualizacje</option>
+                            </select>
+                        </div>
                     </div>
                     
-                    <div style="background:#f8fafc; border-bottom:1px solid var(--border-light); padding:0 30px;">
-                        <div class="tabs" style="transform: translateY(1px);">
-                            <button onclick="core.setAdminTab('new')" id="btn-adm-new" class="tab-btn active" style="padding:15px 20px; border-radius:0; border-bottom:2px solid transparent;">Edytor Wpisów</button>
-                            <button onclick="core.setAdminTab('comms')" id="btn-adm-comms" class="tab-btn" style="padding:15px 20px; border-radius:0; border-bottom:2px solid transparent;">Moderacja</button>
-                            <button onclick="core.setAdminTab('ads')" id="btn-adm-ads" class="tab-btn" style="padding:15px 20px; border-radius:0; border-bottom:2px solid transparent;">Strefa Reklam</button>
-                            <button onclick="core.setAdminTab('settings')" id="btn-adm-settings" class="tab-btn" style="padding:15px 20px; border-radius:0; border-bottom:2px solid transparent;">Ustawienia Serwisu</button>
-                        </div>
-                    </div>
+                    <label>Treść</label><textarea id="in-content" class="input-full" rows="10"></textarea>
+                    
+                    <label>Zdjęcia (zostaną wgrane na ImgBB)</label>
+                    <input type="file" id="in-files" class="input-full" multiple accept="image/*" style="background: #fff;">
+                    <div id="edit-images-preview" style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;"></div>
+                    <button type="button" onclick="core.clearImages()" class="btn" style="font-size: 12px;">Wyczyść wybrane zdjęcia</button>
+                    
+                    <button onclick="core.savePost()" class="btn btn-red" style="width: 100%; margin-top: 15px;">Zapisz wpis</button>
+                    
+                    <h3 style="margin-top: 30px;">Lista wpisów</h3>
+                    <table class="admin-table">
+                        <thead><tr><th>Tytuł</th><th>Kategoria</th><th>Akcje</th></tr></thead>
+                        <tbody id="admin-posts-list"></tbody>
+                    </table>
+                </div>
 
-                    <div class="admin-content">
-                        <!-- CMS: Wpisy -->
-                        <div id="admin-new-section">
-                            <div class="admin-panel-box">
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                                    <h3 id="admin-mode-title" class="admin-panel-title" style="margin:0; border:none; padding:0;">Kreator Artykułu</h3>
-                                    <button onclick="core.cancelEdit()" id="cancel-edit-btn" class="hidden btn-sm btn-delete"><i class="fa-solid fa-xmark"></i> Przerwij edycję</button>
-                                </div>
-                                
-                                <label class="form-label">Tytuł publikacji</label>
-                                <input type="text" id="in-title" class="form-input">
-                                
-                                <div style="display: flex; gap: 20px;">
-                                    <div style="flex: 1;">
-                                        <label class="form-label">Podpis Autora</label>
-                                        <input type="text" id="in-author" class="form-input" value="Redakcja MZK">
-                                    </div>
-                                    <div style="flex: 1;">
-                                        <label class="form-label">Dział / Kategoria</label>
-                                        <select id="in-category" class="form-input">
-                                            <option value="Wydarzenia">Wydarzenia</option>
-                                            <option value="Aktualizacje">Aktualizacje</option>
-                                            <option value="Informacje">Informacje</option>
-                                            <option value="Sport">Sport</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                
-                                <label class="form-label">Treść (Wspiera Markdown: # Nagłówek, **pogrubienie**)</label>
-                                <textarea id="in-content" class="form-input" rows="12" style="font-family: monospace;"></textarea>
-                                
-                                <div style="background:#f8fafc; padding:20px; border-radius:6px; border:1px dashed var(--border-dark); margin-bottom:20px;">
-                                    <label class="form-label">Menedżer Mediów (Zdjęcia automatycznie trafią na serwer ImgBB)</label>
-                                    <input type="file" id="in-files" multiple accept="image/*" class="form-input" style="background:#fff; margin-bottom:10px;">
-                                    <div id="edit-images-preview" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
-                                    <button type="button" onclick="core.clearEditImages()" style="margin-top:10px; font-size:0.8rem; color:var(--accent-red); border:none; background:none; font-weight:700; cursor:pointer;"><i class="fa-solid fa-trash-can"></i> Zresetuj wybrane zdjęcia</button>
-                                </div>
-                                
-                                <button onclick="core.publish()" class="btn-primary" style="width:100%;"><i class="fa-solid fa-cloud-arrow-up"></i> Zapisz i Opublikuj</button>
-                            </div>
-                            
-                            <h3 class="admin-panel-title">Baza Artykułów</h3>
-                            <table class="data-table">
-                                <thead><tr><th>Tytuł artykułu</th><th>Data publikacji</th><th>Zarządzaj</th></tr></thead>
-                                <tbody id="admin-list"></tbody>
-                            </table>
-                        </div>
+                <!-- Zakładka Komentarzy -->
+                <div id="adm-comms" class="admin-box hidden">
+                    <h3 style="color: red; margin-bottom: 10px;">Zgłoszone komentarze</h3>
+                    <div id="admin-reports-list" style="margin-bottom: 30px;"></div>
+                    
+                    <h3>Wszystkie komentarze</h3>
+                    <table class="admin-table">
+                        <thead><tr><th>Autor</th><th>Treść</th><th>Akcja</th></tr></thead>
+                        <tbody id="admin-all-comms"></tbody>
+                    </table>
+                </div>
 
-                        <!-- CMS: Moderacja -->
-                        <div id="admin-comms-section" class="hidden">
-                            <h3 class="admin-panel-title" style="color:var(--accent-red);"><i class="fa-solid fa-triangle-exclamation"></i> Zgłoszenia od użytkowników</h3>
-                            <div id="reports-list" style="margin-bottom: 40px;"></div>
-                            
-                            <h3 class="admin-panel-title">Ostatnie Komentarze</h3>
-                            <table class="data-table">
-                                <thead><tr><th>Użytkownik</th><th>Treść komentarza</th><th>Akcja</th></tr></thead>
-                                <tbody id="all-comms-list"></tbody>
-                            </table>
-                        </div>
+                <!-- Zakładka Reklam -->
+                <div id="adm-ads" class="admin-box hidden">
+                    <h3 style="margin-bottom: 15px;">Dodaj reklamę do paska bocznego</h3>
+                    <label>Plik obrazka (Najlepiej 300x250px)</label><input type="file" id="ad-file" class="input-full" accept="image/*" style="background: #fff;">
+                    <label>Link docelowy</label><input type="text" id="ad-link" class="input-full" placeholder="https://...">
+                    <button onclick="core.saveAd()" class="btn btn-red">Zapisz reklamę</button>
+                    
+                    <h3 style="margin-top: 30px;">Aktywne reklamy</h3>
+                    <table class="admin-table">
+                        <thead><tr><th>Podgląd</th><th>Link</th><th>Akcja</th></tr></thead>
+                        <tbody id="admin-ads-list"></tbody>
+                    </table>
+                </div>
 
-                        <!-- CMS: Reklamy -->
-                        <div id="admin-ads-section" class="hidden">
-                            <div class="admin-panel-box">
-                                <h3 class="admin-panel-title">Dodaj Jednostkę Reklamową (300x250)</h3>
-                                <label class="form-label">Kreacja Graficzna</label>
-                                <input type="file" id="ad-file" accept="image/*" class="form-input" style="background:#fff;">
-                                <label class="form-label">Adres URL po kliknięciu</label>
-                                <input type="text" id="ad-target" class="form-input" placeholder="https://...">
-                                <button onclick="core.publishAd()" class="btn-primary">Aktywuj Reklamę</button>
-                            </div>
-                            
-                            <h3 class="admin-panel-title">Trwające Kampanie</h3>
-                            <table class="data-table">
-                                <thead><tr><th>Podgląd (Miniatura)</th><th>Link docelowy</th><th>Akcja</th></tr></thead>
-                                <tbody id="admin-ads-list"></tbody>
-                            </table>
-                        </div>
-
-                        <!-- CMS: Ustawienia -->
-                        <div id="admin-settings-section" class="hidden">
-                            <div class="admin-panel-box" style="border-left: 4px solid var(--accent-red);">
-                                <h3 class="admin-panel-title"><i class="fa-solid fa-bolt"></i> Alert Paska Głównego</h3>
-                                <label class="form-label">Treść "PILNE" (Wyczyść pole, aby ukryć czerwony pasek)</label>
-                                <input type="text" id="set-breaking" class="form-input" placeholder="Wpisz pilny komunikat...">
-                            </div>
-
-                            <div class="admin-panel-box">
-                                <h3 class="admin-panel-title">Identyfikacja Wizualna</h3>
-                                <label class="form-label">Logo Serwisu (Format PNG, przezroczyste tło. Max 280x50px)</label>
-                                <input type="file" id="set-logo-file" accept="image/png, image/jpeg" class="form-input" style="background:#fff;">
-                            </div>
-
-                            <div class="admin-panel-box">
-                                <h3 class="admin-panel-title">Informacje Prawne (Stopka)</h3>
-                                <label class="form-label">O Serwisie</label><textarea id="set-about" class="form-input" rows="3"></textarea>
-                                <label class="form-label">Redakcja (Adres, kontakt)</label><textarea id="set-redaction" class="form-input" rows="3"></textarea>
-                                <label class="form-label">Polityka Prywatności</label><textarea id="set-privacy" class="form-input" rows="3"></textarea>
-                                <label class="form-label">Oferta Reklamowa</label><textarea id="set-coop" class="form-input" rows="3"></textarea>
-                                
-                                <button onclick="core.saveSettings()" class="btn-primary" style="width:100%;"><i class="fa-solid fa-check"></i> Zastosuj Ustawienia Globalne</button>
-                            </div>
-                        </div>
-                    </div>
+                <!-- Zakładka Ustawień -->
+                <div id="adm-settings" class="admin-box hidden">
+                    <label>Pasek Pilne (zostaw puste aby ukryć)</label><input type="text" id="set-topbar" class="input-full">
+                    <label>Wgraj nowe Logo (zostaw puste aby użyć tekstu)</label><input type="file" id="set-logo" class="input-full" accept="image/*" style="background: #fff;">
+                    <label>O Serwisie (Stopka)</label><textarea id="set-about" class="input-full" rows="3"></textarea>
+                    <label>Kontakt / Redakcja</label><textarea id="set-redact" class="input-full" rows="3"></textarea>
+                    <label>Polityka Prywatności</label><textarea id="set-privacy" class="input-full" rows="3"></textarea>
+                    <button onclick="core.saveSettings()" class="btn btn-red">Zapisz ustawienia</button>
                 </div>
             </div>
 
-            <!-- WIDOK PODSTRON PRAWNYCH -->
+            <!-- Widok Podstron -->
             <div id="view-legal" class="hidden">
-                <button onclick="core.goHome()" class="btn-action" style="margin-bottom: 30px;"><i class="fa-solid fa-arrow-left"></i> Powrót</button>
-                <article class="article-container">
-                    <h1 id="legal-title" class="article-title" style="font-size:2.5rem; border-bottom:1px solid var(--border-light); padding-bottom:20px;"></h1>
-                    <div id="legal-body" class="article-body"></div>
-                </article>
+                <button onclick="core.goHome()" class="btn" style="margin-bottom: 20px;"><i class="fa-solid fa-arrow-left"></i> Wróć</button>
+                <h1 id="legal-title" class="art-title"></h1>
+                <div id="legal-body" class="art-body" style="margin-top: 20px;"></div>
             </div>
         </main>
 
-        <!-- PRAWA KOLUMNA: SIDEBAR (Reklamy) -->
+        <!-- Prawa Strona - Reklamy -->
         <aside id="sidebar-ads">
-            <!-- Miejsce na reklamy (Generowane przez JS) -->
+            <!-- Reklamy z JS -->
         </aside>
     </div>
 
-    <!-- STOPKA PREMIUM -->
-    <footer>
-        <div class="footer-inner">
-            <div>
-                <h4 class="footer-title">O Serwisie</h4>
-                <p id="txt-about" style="line-height:1.8;"></p>
+    <!-- Stopka -->
+    <footer style="background: #111; color: #ccc; padding: 40px 20px 20px; margin-top: 40px; font-size: 14px;">
+        <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 40px; justify-content: space-between;">
+            <div style="flex: 1; min-width: 250px;">
+                <h4 style="color: #fff; margin-bottom: 10px; font-family: 'Playfair Display', serif; font-size: 18px;">O Serwisie</h4>
+                <p id="txt-about"></p>
             </div>
-            <div>
-                <h4 class="footer-title">Informacje i Kontakt</h4>
-                <a href="#" onclick="core.showLegal('redaction'); return false;" class="footer-link">Zespół Redakcyjny</a>
-                <a href="#" onclick="core.showLegal('privacy'); return false;" class="footer-link">Polityka Prywatności</a>
-                <a href="#" onclick="core.showLegal('coop'); return false;" class="footer-link">Współpraca i Reklama</a>
-                <div class="hidden" id="legal-data-store"><span id="txt-redaction"></span><span id="txt-privacy"></span><span id="txt-coop"></span></div>
+            <div style="flex: 1; min-width: 250px;">
+                <h4 style="color: #fff; margin-bottom: 10px; font-family: 'Playfair Display', serif; font-size: 18px;">Informacje</h4>
+                <ul style="list-style: none;">
+                    <li style="margin-bottom: 5px;"><a href="#" onclick="core.showLegal('redact'); return false;" style="color: #ccc;">Kontakt i Redakcja</a></li>
+                    <li><a href="#" onclick="core.showLegal('privacy'); return false;" style="color: #ccc;">Polityka Prywatności</a></li>
+                </ul>
+                <div class="hidden"><span id="txt-redact"></span><span id="txt-privacy"></span></div>
             </div>
-            <div>
-                <h4 class="footer-title">Społeczność</h4>
-                <div class="social-links">
-                    <a href="https://www.tiktok.com/@diamentowy337" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
-                    <a href="http://www.youtube.com/@Diamentowy_337" target="_blank"><i class="fa-brands fa-youtube"></i></a>
+            <div style="flex: 1; min-width: 200px;">
+                <h4 style="color: #fff; margin-bottom: 10px; font-family: 'Playfair Display', serif; font-size: 18px;">Obserwuj nas</h4>
+                <div style="display: flex; gap: 15px; font-size: 24px;">
+                    <a href="https://www.tiktok.com/@diamentowy337" target="_blank" style="color: #fff;"><i class="fa-brands fa-tiktok"></i></a>
+                    <a href="http://www.youtube.com/@Diamentowy_337" target="_blank" style="color: #d32f2f;"><i class="fa-brands fa-youtube"></i></a>
                 </div>
             </div>
         </div>
-        <div class="copyright">
-            Ełk Wiadomości &copy; 2024. Wszelkie prawa zastrzeżone. Projekt i CMS dedykowany.
+        <div style="text-align: center; margin-top: 30px; padding-top: 15px; border-top: 1px solid #333; font-size: 12px;">
+            Ełk Wiadomości &copy; 2024
         </div>
     </footer>
 
-    <!-- SKRYPT LOGIKI (JS) -->
+    <!-- SKRYPT JS -->
     <script>
-        // --- KONFIGURACJA BAZOWA ---
         const firebaseConfig = {
             apiKey: "AIzaSyCb5QmZdwWwa9LafqqGZvGW-6vblkab32M",
             authDomain: "mzk-by-facio.firebaseapp.com",
@@ -528,103 +339,97 @@
         };
         const ADMIN_NICK = "Facio"; 
         const IMGBB_API_KEY = "19570ba1fa4dc27bd0ba974b4eb2e253";
-        const DISCORD_CLIENT_ID = "1498418325502558328";
+        const DC_CLIENT = "1498418325502558328";
 
-        // Inicjalizacja Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
         
-        // Refencje Bazy Danych
-        const postsRef = db.ref('elk/posts');
-        const reportsRef = db.ref('elk/reports');
-        const commentsRootRef = db.ref('elk/comments');
-        const adsRef = db.ref('elk/ads');
-        const settingsRef = db.ref('elk/settings');
+        const dbPosts = db.ref('elk/posts');
+        const dbComms = db.ref('elk/comments');
+        const dbAds = db.ref('elk/ads');
+        const dbSets = db.ref('elk/settings');
+        const dbReps = db.ref('elk/reports');
 
-        // Stan Lokalny
-        let allData = []; 
-        let showLimit = 7; // 1 Hero + 6 Grid
+        let allPosts = []; 
+        let limit = 6; 
         let editId = null; 
-        let currentOpenPostId = null;
-        let currentEditImages = []; 
-        let currentTab = 'all';
-        let appInitialized = false;
+        let currentPostId = null;
+        let replyToId = null; 
+        let editImages = []; 
+        let activeTab = 'all';
 
         const core = {
-            // --- UI HELPERS ---
-            showLoader: (text = "Przetwarzanie...") => {
-                document.querySelector('#loader span').innerText = text;
-                document.getElementById('loader').style.display = 'flex';
-            },
+            showLoader: () => document.getElementById('loader').style.display = 'flex',
             hideLoader: () => document.getElementById('loader').style.display = 'none',
-            showToast: (msg) => {
-                const t = document.createElement('div'); t.className = `toast`; t.innerText = msg;
+            toast: (msg) => {
+                const t = document.createElement('div'); t.className = 'toast'; t.innerText = msg;
                 document.getElementById('toast-container').appendChild(t);
-                setTimeout(() => t.remove(), 4000);
+                setTimeout(() => t.remove(), 3000);
             },
 
-            // --- AUTHENTICATION ---
-            login: () => window.location.href = `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&response_type=code&redirect_uri=https%3A%2F%2Felk-backend.vercel.app%2Fapi%2Fauth&scope=identify`,
+            // --- Logowanie ---
+            login: () => window.location.href = `https://discord.com/oauth2/authorize?client_id=${DC_CLIENT}&response_type=code&redirect_uri=https%3A%2F%2Felk-backend.vercel.app%2Fapi%2Fauth&scope=identify`,
             logout: () => { localStorage.clear(); auth.signOut().then(() => location.reload()); },
-            showLoginOverlay: () => {
-                document.getElementById('auth-overlay').classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
-            },
-            hideLoginOverlay: () => {
-                document.getElementById('auth-overlay').classList.add('hidden');
-                document.body.style.overflow = 'auto';
-            },
+            showLogin: () => document.getElementById('overlay').style.display = 'flex',
+            hideLogin: () => document.getElementById('overlay').style.display = 'none',
             
-            checkAuth: () => {
+            initAuth: () => {
                 const params = new URLSearchParams(window.location.search);
                 if (params.get('token')) {
                     localStorage.setItem('fb_token', params.get('token'));
                     localStorage.setItem('user_nick', params.get('nick'));
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }
-
-                const savedToken = localStorage.getItem('fb_token');
-                const savedNick = localStorage.getItem('user_nick');
-
-                if (!appInitialized) { core.initApp(); appInitialized = true; }
+                const token = localStorage.getItem('fb_token');
+                const nick = localStorage.getItem('user_nick');
 
                 auth.onAuthStateChanged(user => {
-                    if (user || savedToken) {
-                        core.hideLoginOverlay();
+                    if (user || token) {
+                        core.hideLogin();
                         document.getElementById('btn-login').classList.add('hidden');
-                        document.getElementById('user-profile-name').innerHTML = `<i class="fa-solid fa-circle-user"></i> ${savedNick || "Zalogowany"}`;
-                        document.getElementById('user-profile-name').classList.remove('hidden');
+                        document.getElementById('user-name').innerText = nick || "Użytkownik";
+                        document.getElementById('user-name').classList.remove('hidden');
                         document.getElementById('btn-logout').classList.remove('hidden');
-                        document.getElementById('comm-nick').value = savedNick || "Użytkownik";
+                        document.getElementById('comm-nick').value = nick || "Użytkownik";
 
-                        if(savedNick && savedNick.toLowerCase() === ADMIN_NICK.toLowerCase()) {
-                            document.getElementById('admin-indicator').classList.remove('hidden');
-                            document.getElementById('btn-open-admin').classList.remove('hidden');
+                        if(nick && nick.toLowerCase() === ADMIN_NICK.toLowerCase()) {
+                            document.getElementById('admin-badge').classList.remove('hidden');
+                            document.getElementById('btn-admin').classList.remove('hidden');
                         }
-                        if (!user && savedToken) auth.signInWithCustomToken(savedToken).catch(() => core.logout());
+                        if (!user && token) auth.signInWithCustomToken(token).catch(() => core.logout());
                     } else {
                         document.getElementById('btn-login').classList.remove('hidden');
                     }
                 });
+                core.loadData();
             },
 
-            // --- INICJALIZACJA DANYCH Z FIREBASE ---
-            initApp: () => {
-                // Odczyt Newsów
-                postsRef.on('value', snap => {
-                    const data = snap.val(); allData = [];
-                    const admList = document.getElementById('admin-list'); if(admList) admList.innerHTML = "";
-                    if(data) {
-                        Object.entries(data).sort((a,b) => b[1].ts - a[1].ts).forEach(([id, v]) => {
-                            allData.push({ id, ...v });
-                            if(admList) {
-                                admList.innerHTML += `<tr>
-                                    <td><strong>${v.title}</strong><br><span style="font-size:0.75rem; color:#94a3b8;">${v.category}</span></td>
-                                    <td>${v.date}</td>
+            // --- Wgrywanie ImgBB ---
+            uploadImg: async (file) => {
+                const fd = new FormData(); fd.append("image", file);
+                const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
+                const res = await r.json();
+                if(res.success) return res.data.url;
+                throw new Error("Błąd wgrywania zdjęcia");
+            },
+
+            // --- Pobieranie danych ---
+            loadData: () => {
+                // Newsy
+                dbPosts.on('value', snap => {
+                    allPosts = [];
+                    const adminList = document.getElementById('admin-posts-list');
+                    if(adminList) adminList.innerHTML = "";
+                    if(snap.val()) {
+                        Object.entries(snap.val()).sort((a,b) => b[1].ts - a[1].ts).forEach(([id, p]) => {
+                            allPosts.push({ id, ...p });
+                            if(adminList) {
+                                adminList.innerHTML += `<tr>
+                                    <td>${p.title}</td><td>${p.category}</td>
                                     <td>
-                                        <button onclick="core.editMode('${id}')" class="btn-sm btn-edit"><i class="fa-solid fa-pen"></i> Edytuj</button>
-                                        <button onclick="core.deletePost('${id}')" class="btn-sm btn-delete"><i class="fa-solid fa-trash"></i> Usuń</button>
+                                        <button onclick="core.editPost('${id}')" class="btn" style="padding:5px;">Edytuj</button>
+                                        <button onclick="core.deletePost('${id}')" class="btn btn-red" style="padding:5px;">Usuń</button>
                                     </td>
                                 </tr>`;
                             }
@@ -633,407 +438,339 @@
                     core.filterPosts();
                 });
 
-                // Odczyt Reklam
-                adsRef.on('value', snap => {
-                    const data = snap.val();
+                // Reklamy
+                dbAds.on('value', snap => {
                     const sidebar = document.getElementById('sidebar-ads');
-                    const adminAdsList = document.getElementById('admin-ads-list');
+                    const adminAds = document.getElementById('admin-ads-list');
                     if(sidebar) sidebar.innerHTML = "";
-                    if(adminAdsList) adminAdsList.innerHTML = "";
-
-                    let hasAds = false;
-                    if(data) {
-                        Object.entries(data).forEach(([id, ad]) => {
-                            hasAds = true;
-                            sidebar.innerHTML += `
-                                <div class="ad-container">
-                                    <span class="ad-label">Reklama</span>
-                                    <a href="${DOMPurify.sanitize(ad.link)}" target="_blank" class="ad-box">
-                                        <img src="${ad.img}" alt="Reklama sponsora" loading="lazy">
-                                    </a>
-                                </div>`;
-                            if(adminAdsList) {
-                                adminAdsList.innerHTML += `<tr>
-                                    <td><img src="${ad.img}" style="height:60px; border-radius:4px; border:1px solid #e2e8f0;"></td>
-                                    <td><a href="${ad.link}" target="_blank" style="color:var(--primary-dark); font-weight:600;">Otwórz Link</a></td>
-                                    <td><button onclick="core.deleteAd('${id}')" class="btn-sm btn-delete">Usuń jednostkę</button></td>
+                    if(adminAds) adminAds.innerHTML = "";
+                    
+                    if(snap.val()) {
+                        Object.entries(snap.val()).forEach(([id, ad]) => {
+                            sidebar.innerHTML += `<div class="ad-container"><span class="ad-label">Reklama</span><a href="${DOMPurify.sanitize(ad.link)}" target="_blank" class="ad-box"><img src="${ad.img}"></a></div>`;
+                            if(adminAds) {
+                                adminAds.innerHTML += `<tr>
+                                    <td><img src="${ad.img}" style="max-height:50px;"></td>
+                                    <td>${ad.link.substring(0,30)}...</td>
+                                    <td><button onclick="core.delAd('${id}')" class="btn btn-red" style="padding:5px;">Usuń</button></td>
                                 </tr>`;
                             }
                         });
+                    } else {
+                        sidebar.innerHTML = `<div class="ad-container"><span class="ad-label">Reklama</span><div style="height:250px; background:#eee; display:flex; align-items:center; justify-content:center; color:#999;">Miejsce na Twoją reklamę</div></div>`;
                     }
-                    if(!hasAds && sidebar) sidebar.innerHTML = `<div class="ad-container"><span class="ad-label">Miejsce Reklamowe</span><div class="ad-box" style="color:#94a3b8; font-weight:700;">Format 300x250 px</div></div>`;
                 });
 
-                // Odczyt Ustawień CMS
-                settingsRef.on('value', snap => {
+                // Ustawienia
+                dbSets.on('value', snap => {
                     const d = snap.val(); if(!d) return;
+                    document.getElementById('txt-about').innerText = d.about || "";
+                    document.getElementById('txt-redact').innerText = d.redact || "";
+                    document.getElementById('txt-privacy').innerText = d.privacy || "";
                     
-                    document.getElementById('txt-about').innerText = d.about || "Wiarygodne źródło informacji lokalnych.";
-                    document.getElementById('txt-redaction').innerText = d.redaction || "Brak danych redakcji.";
-                    document.getElementById('txt-privacy').innerText = d.privacy || "Brak danych.";
-                    document.getElementById('txt-coop').innerText = d.coop || "Brak danych.";
-                    
-                    const logoImg = document.getElementById('site-logo');
+                    const logoImg = document.getElementById('site-logo-img');
                     const logoTxt = document.getElementById('site-logo-text');
-                    if(d.logoUrl) {
-                        logoImg.src = d.logoUrl; logoImg.classList.remove('hidden'); logoTxt.classList.add('hidden');
-                    } else {
-                        logoImg.classList.add('hidden'); logoTxt.classList.remove('hidden');
-                    }
+                    if(d.logo) { logoImg.src = d.logo; logoImg.style.display = 'block'; logoTxt.style.display = 'none'; } 
+                    else { logoImg.style.display = 'none'; logoTxt.style.display = 'block'; }
 
-                    const breakBar = document.getElementById('breaking-news-bar');
-                    const breakTxt = document.getElementById('breaking-news-text');
-                    if(d.breakingNews && d.breakingNews.trim() !== "") {
-                        breakTxt.innerText = d.breakingNews; breakBar.classList.remove('hidden');
-                    } else {
-                        breakBar.classList.add('hidden');
-                    }
+                    const tb = document.getElementById('top-bar');
+                    if(d.topbar && d.topbar.trim() !== "") { document.getElementById('top-bar-text').innerText = d.topbar; tb.style.display = 'block'; } 
+                    else { tb.style.display = 'none'; }
                 });
             },
 
-            uploadToImgBB: async (file) => {
-                const fd = new FormData(); fd.append("image", file);
-                const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
-                const res = await r.json();
-                if(res.success) return res.data.url;
-                throw new Error("Błąd serwera zdjęć");
-            },
-
-            // --- RENDEROWANIE GŁÓWNE ---
-            parseMarkdown: (text) => {
-                if(!text) return "";
-                return DOMPurify.sanitize(text)
-                    .replace(/^#\s+(.*)$/gm, '<h2>$1</h2>')
-                    .replace(/^###\s+(.*)$/gm, '<h3>$1</h3>')
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                    .split('\n').map(p => p.trim() ? `<p>${p}</p>` : '').join('');
-            },
-            switchTab: (tabId, btn) => {
-                currentTab = tabId;
-                document.querySelectorAll('.toolbar .tab-btn').forEach(b => b.classList.remove('active'));
+            // --- Renderowanie Newsów ---
+            switchTab: (tab, btn) => {
+                activeTab = tab;
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active'); core.filterPosts();
             },
             filterPosts: () => {
                 const term = document.getElementById('search-input').value.toLowerCase();
-                let f = allData;
-                if(currentTab !== 'all') f = f.filter(p => p.category === currentTab);
+                let f = allPosts;
+                if(activeTab !== 'all') f = f.filter(p => p.category === activeTab);
                 f = f.filter(p => p.title.toLowerCase().includes(term));
-                core.renderPosts(f, term !== "" || currentTab !== 'all');
-            },
-            renderPosts: (items, isSearch) => {
-                const container = document.getElementById('news-container');
                 
-                if(items.length === 0) {
-                    container.innerHTML = "<div style='text-align:center; padding:80px 0; color:#94a3b8; font-size:1.2rem;'><i class='fa-regular fa-folder-open' style='font-size:3rem; margin-bottom:15px; display:block;'></i>Brak artykułów w tej kategorii.</div>";
-                    document.getElementById('more-container').classList.add('hidden');
-                    return;
-                }
-
-                let html = '<div class="news-grid">';
-                const toShow = isSearch ? items : items.slice(0, showLimit);
-
-                toShow.forEach((v, index) => {
-                    // Magia profesjonalnego wyglądu: pierwszy news (jeśli nie szukamy) jest wielkim "Hero"
-                    const isHero = (index === 0 && !isSearch && currentTab === 'all');
-                    const imgHtml = v.images?.[0] ? `<div class="img-wrapper"><img src="${v.images[0]}" alt="Fotografia" loading="lazy"></div>` : '';
-                    
-                    html += `
-                        <article class="news-card ${isHero ? 'hero-card' : ''}" onclick="core.showFull('${v.id}')">
-                            ${imgHtml}
-                            <div class="card-content">
-                                <div class="card-meta">
-                                    <span class="cat-badge">${v.category}</span>
-                                    <span>${v.date}</span>
-                                </div>
-                                <h2 class="card-title">${v.title}</h2>
-                                ${isHero ? `<p class="card-excerpt">${v.content.substring(0, 220).replace(/#/g, '')}...</p>` : ''}
+                const box = document.getElementById('news-container'); box.innerHTML = "";
+                if(f.length === 0) box.innerHTML = "<p style='text-align:center; padding:30px; color:#666;'>Brak artykułów w tej kategorii.</p>";
+                
+                const toShow = (term !== "" || activeTab !== 'all') ? f : f.slice(0, limit);
+                toShow.forEach(p => {
+                    const img = p.images?.[0] ? `<img src="${p.images[0]}" class="news-img">` : '';
+                    box.innerHTML += `
+                        <div class="news-item" onclick="core.openPost('${p.id}')">
+                            ${img}
+                            <div>
+                                <div class="news-cat">${p.category}</div>
+                                <h2 class="news-title">${p.title}</h2>
+                                <p style="font-size:14px; color:#444; margin-bottom:10px;">${DOMPurify.sanitize(p.content).substring(0, 150).replace(/#/g, '')}...</p>
+                                <div class="news-meta">Dodano: ${p.date} | Polecenia: ${p.likes || 0}</div>
                             </div>
-                        </article>
-                    `;
+                        </div>`;
                 });
-                
-                html += '</div>';
-                container.innerHTML = html;
-                document.getElementById('more-container').classList.toggle('hidden', isSearch || items.length <= showLimit);
+                document.getElementById('more-btn-box').classList.toggle('hidden', (term !== "" || activeTab !== 'all') || f.length <= limit);
             },
-            showAllPosts: () => { showLimit += 6; core.filterPosts(); },
+            loadMore: () => { limit += 6; core.filterPosts(); },
 
-            showFull: (id) => {
-                const data = allData.find(x => x.id === id);
-                if(!data) return;
-                currentOpenPostId = data.id; core.loadComments(data.id);
+            // --- Otwieranie artykułu ---
+            parseMD: (text) => DOMPurify.sanitize(text).replace(/^#\s+(.*)$/gm, '<h2>$1</h2>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'),
+            openPost: (id) => {
+                const p = allPosts.find(x => x.id === id); if(!p) return;
+                currentPostId = id; core.loadComms(id);
                 
-                document.getElementById('view-home').classList.add('hidden'); 
+                document.getElementById('view-home').classList.add('hidden');
                 document.getElementById('search-area').classList.add('hidden');
                 document.getElementById('view-article').classList.remove('hidden');
                 
-                document.getElementById('art-category').innerText = data.category;
-                document.getElementById('art-title').innerText = data.title;
-                document.getElementById('art-author').innerText = data.author;
-                document.getElementById('art-date').innerText = data.date;
+                document.getElementById('art-cat').innerText = p.category;
+                document.getElementById('art-title').innerText = p.title;
+                document.getElementById('art-author').innerText = p.author;
+                document.getElementById('art-date').innerText = p.date;
                 
-                let contentHtml = core.parseMarkdown(data.content);
-                if(data.images && data.images.length > 0) {
-                    contentHtml += `<div style="margin-top:40px;">${data.images.map(i=>`<img src="${i}" alt="Zdjęcie reportażowe" loading="lazy">`).join('')}</div>`;
-                }
-                document.getElementById('art-content').innerHTML = contentHtml;
-                    
-                const isLiked = localStorage.getItem(`liked_post_${data.id}`) ? 'liked' : '';
-                const btn = document.getElementById('main-like-btn');
-                btn.className = `btn-action ${isLiked}`;
-                btn.innerHTML = isLiked ? `<i class="fa-solid fa-thumbs-up"></i> Polecono (<span id="like-count">${data.likes||0}</span>)` : `<i class="fa-regular fa-thumbs-up"></i> Warto przeczytać (<span id="like-count">${data.likes||0}</span>)`;
+                let html = core.parseMD(p.content);
+                if(p.images) p.images.forEach(i => html += `<img src="${i}">`);
+                document.getElementById('art-content').innerHTML = html;
                 
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            },
-
-            likePost: () => {
-                if (!localStorage.getItem('fb_token')) return core.showLoginOverlay();
-                if(localStorage.getItem(`liked_post_${currentOpenPostId}`)) return;
-                
-                postsRef.child(currentOpenPostId).child('likes').transaction(l => (l || 0) + 1).then(() => {
-                    localStorage.setItem(`liked_post_${currentOpenPostId}`, "1");
-                    const btn = document.getElementById('main-like-btn');
-                    btn.classList.add('liked');
-                    const currentCount = parseInt(document.getElementById('like-count').innerText) + 1;
-                    btn.innerHTML = `<i class="fa-solid fa-thumbs-up"></i> Polecono (<span id="like-count">${currentCount}</span>)`;
-                });
-            },
-
-            // --- SYSTEM DYSKUSJI ---
-            loadComments: (pid) => {
-                db.ref(`elk/comments/${pid}`).on('value', snap => {
-                    const list = document.getElementById('comments-list'); list.innerHTML = "";
-                    const countEl = document.getElementById('comm-count');
-                    
-                    if(!snap.val()) { 
-                        list.innerHTML = "<p style='color:#94a3b8; font-style:italic;'>Bądź pierwszą osobą, która skomentuje ten materiał.</p>"; 
-                        countEl.innerText = "0";
-                        return; 
-                    }
-                    
-                    const entries = Object.entries(snap.val());
-                    countEl.innerText = entries.length;
-
-                    entries.forEach(([cid, c]) => {
-                        const isLiked = localStorage.getItem(`liked_comm_${cid}`) ? 'liked' : '';
-                        const likeIcon = isLiked ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
-                        
-                        list.innerHTML += `
-                        <div class="comment-item">
-                            <div class="comment-head">
-                                <span class="c-author"><i class="fa-solid fa-circle-user"></i> ${DOMPurify.sanitize(c.nick)}</span>
-                                <span class="c-date">${c.date || ''}</span>
-                            </div>
-                            <div class="c-body">${DOMPurify.sanitize(c.text)}</div>
-                            <div class="c-actions">
-                                <span onclick="core.likeComment('${cid}')" class="${isLiked}"><i class="${likeIcon}"></i> ${c.likes || 0}</span>
-                                <span onclick="core.reportComment('${cid}', '${DOMPurify.sanitize(c.text)}', '${DOMPurify.sanitize(c.nick)}')"><i class="fa-regular fa-flag"></i> Zgłoś do moderacji</span>
-                            </div>
-                        </div>`;
-                    });
-                });
-            },
-            addComment: () => {
-                if (!localStorage.getItem('fb_token')) return core.showLoginOverlay();
-                const n = document.getElementById('comm-nick').value || localStorage.getItem('user_nick');
-                const t = document.getElementById('comm-text').value;
-                if(!t) return core.showToast("Wpisz treść komentarza!");
-                
-                const data = { nick: n, text: t, ts: Date.now(), date: new Date().toLocaleString(), likes: 0 };
-                db.ref(`elk/comments/${currentOpenPostId}`).push(data).then(() => { 
-                    document.getElementById('comm-text').value = ""; 
-                    core.showToast("Komentarz dodany pomyślnie.");
-                }).catch(e => alert("Błąd: " + e.message));
-            },
-            likeComment: (cid) => {
-                if (!localStorage.getItem('fb_token')) return core.showLoginOverlay();
-                if(localStorage.getItem(`liked_comm_${cid}`)) return; 
-                db.ref(`elk/comments/${currentOpenPostId}/${cid}/likes`).transaction(l => (l || 0) + 1).then(() => {
-                    localStorage.setItem(`liked_comm_${cid}`, "1");
-                });
-            },
-            reportComment: (cid, text, nick) => {
-                if (!localStorage.getItem('fb_token')) return core.showLoginOverlay();
-                if (confirm("Chcesz zgłosić ten komentarz moderacji z powodu naruszenia regulaminu?")) {
-                    reportsRef.push({ postId: currentOpenPostId, commentId: cid, text, nick, ts: Date.now() });
-                    core.showToast("Dziękujemy. Redakcja sprawdzi to zgłoszenie.");
-                }
-            },
-
-            // --- PANEL ADMINISTRATORA (DASHBOARD) ---
-            openAdmin: () => {
-                if(localStorage.getItem('user_nick')?.toLowerCase() !== ADMIN_NICK.toLowerCase()) return alert("Brak autoryzacji redakcyjnej.");
-                ['view-home', 'search-area', 'view-article', 'view-legal'].forEach(id => document.getElementById(id).classList.add('hidden'));
-                document.getElementById('view-admin').classList.remove('hidden');
-                core.setAdminTab('new');
+                const liked = localStorage.getItem(`like_${id}`);
+                const btn = document.getElementById('like-btn');
+                btn.style.color = liked ? '#d32f2f' : '#222';
+                document.getElementById('like-count').innerText = p.likes || 0;
                 window.scrollTo(0,0);
             },
-            setAdminTab: (tab) => {
-                ['new', 'comms', 'ads', 'settings'].forEach(s => document.getElementById(`admin-${s}-section`).classList.toggle('hidden', s !== tab));
-                
-                document.querySelectorAll('#view-admin .tab-btn').forEach(b => {
-                    b.classList.remove('active');
-                    b.style.borderBottomColor = 'transparent';
-                    if(b.id === `btn-adm-${tab}`) {
-                        b.classList.add('active');
-                        b.style.borderBottomColor = 'var(--primary-dark)';
-                    }
+            likePost: () => {
+                if(!localStorage.getItem('fb_token')) return core.showLogin();
+                if(localStorage.getItem(`like_${currentPostId}`)) return;
+                dbPosts.child(currentPostId).child('likes').transaction(l => (l||0)+1).then(() => {
+                    localStorage.setItem(`like_${currentPostId}`, '1');
+                    document.getElementById('like-btn').style.color = '#d32f2f';
+                    document.getElementById('like-count').innerText = parseInt(document.getElementById('like-count').innerText)+1;
                 });
-                
-                if(tab === 'comms') core.loadAdminComms();
-                if(tab === 'settings') core.loadSettingsInAdmin();
             },
 
-            // Operacje Wpisów
-            publish: async () => {
+            // --- Komentarze i Odpowiedzi ---
+            loadComms: (pid) => {
+                dbComms.child(pid).on('value', snap => {
+                    const list = document.getElementById('comments-list'); list.innerHTML = "";
+                    if(!snap.val()) { document.getElementById('comm-count').innerText = 0; return; }
+                    
+                    let count = 0;
+                    Object.entries(snap.val()).forEach(([cid, c]) => {
+                        count++;
+                        let reps = "";
+                        if(c.replies) {
+                            Object.entries(c.replies).forEach(([rid, r]) => {
+                                count++;
+                                reps += `<div class="reply-box">
+                                    <span class="comment-nick">${DOMPurify.sanitize(r.nick)}</span><span class="comment-date">${r.date||''}</span>
+                                    <p class="comment-text">${DOMPurify.sanitize(r.text)}</p>
+                                </div>`;
+                            });
+                        }
+                        
+                        list.innerHTML += `<div class="comment">
+                            <span class="comment-nick">${DOMPurify.sanitize(c.nick)}</span><span class="comment-date">${c.date||''}</span>
+                            <p class="comment-text">${DOMPurify.sanitize(c.text)}</p>
+                            <div class="comment-actions">
+                                <span onclick="core.replyTo('${cid}', '${DOMPurify.sanitize(c.nick)}')">Odpowiedz</span>
+                                <span onclick="core.reportComm('${cid}', '${DOMPurify.sanitize(c.text)}', '${DOMPurify.sanitize(c.nick)}')">Zgłoś naruszenie</span>
+                            </div>
+                            ${reps}
+                        </div>`;
+                    });
+                    document.getElementById('comm-count').innerText = count;
+                });
+            },
+            replyTo: (cid, nick) => {
+                replyToId = cid;
+                document.getElementById('reply-info').classList.remove('hidden');
+                document.getElementById('reply-nick').innerText = nick;
+                document.getElementById('comm-text').focus();
+            },
+            cancelReply: () => {
+                replyToId = null;
+                document.getElementById('reply-info').classList.add('hidden');
+            },
+            addComment: () => {
+                if(!localStorage.getItem('fb_token')) return core.showLogin();
+                const nick = document.getElementById('comm-nick').value;
+                const text = document.getElementById('comm-text').value;
+                if(!text) return core.toast("Wpisz treść!");
+                
+                const data = { nick, text, ts: Date.now(), date: new Date().toLocaleString() };
+                const ref = replyToId ? dbComms.child(currentPostId).child(replyToId).child('replies') : dbComms.child(currentPostId);
+                
+                ref.push(data).then(() => {
+                    document.getElementById('comm-text').value = "";
+                    core.cancelReply();
+                    core.toast("Dodano komentarz.");
+                });
+            },
+            reportComm: (cid, txt, nick) => {
+                if(!localStorage.getItem('fb_token')) return core.showLogin();
+                if(confirm("Zgłosić do usunięcia?")) {
+                    dbReps.push({ post: currentPostId, comm: cid, text: txt, nick: nick, ts: Date.now() });
+                    core.toast("Zgłoszono.");
+                }
+            },
+
+            // --- Panel Admina ---
+            openAdmin: () => {
+                if(localStorage.getItem('user_nick')?.toLowerCase() !== ADMIN_NICK.toLowerCase()) return;
+                ['view-home', 'search-area', 'view-article', 'view-legal'].forEach(i => document.getElementById(i).classList.add('hidden'));
+                document.getElementById('view-admin').classList.remove('hidden');
+                core.setAdminTab('new');
+                core.loadAdminTools();
+            },
+            setAdminTab: (tab) => {
+                ['new', 'comms', 'ads', 'settings'].forEach(t => {
+                    document.getElementById(`adm-${t}`).classList.toggle('hidden', t !== tab);
+                    document.getElementById(`tab-adm-${t}`).classList.toggle('active', t === tab);
+                });
+            },
+            loadAdminTools: () => {
+                // Zgłoszenia
+                dbReps.on('value', snap => {
+                    const box = document.getElementById('admin-reports-list'); box.innerHTML = "";
+                    if(snap.val()) {
+                        Object.entries(snap.val()).forEach(([rid, r]) => {
+                            box.innerHTML += `<div style="border-left:3px solid red; background:#fff; padding:10px; margin-bottom:10px;">
+                                <strong>Zgłoszony:</strong> ${DOMPurify.sanitize(r.nick)}<br><em>"${DOMPurify.sanitize(r.text)}"</em><br>
+                                <button onclick="dbReps.child('${rid}').remove()" class="btn" style="margin-top:5px;">Ignoruj</button>
+                                <button onclick="dbComms.child('${r.post}').child('${r.comm}').remove().then(()=>dbReps.child('${rid}').remove())" class="btn btn-red" style="margin-top:5px;">Usuń komentarz</button>
+                            </div>`;
+                        });
+                    } else box.innerHTML = "<p>Brak zgłoszeń.</p>";
+                });
+                
+                // Wszystkie komentarze
+                dbComms.once('value', snap => {
+                    const list = document.getElementById('admin-all-comms'); list.innerHTML = "";
+                    if(snap.val()) {
+                        Object.entries(snap.val()).forEach(([pid, comms]) => {
+                            Object.entries(comms).forEach(([cid, c]) => {
+                                list.innerHTML += `<tr><td>${DOMPurify.sanitize(c.nick)}</td><td>${DOMPurify.sanitize(c.text)}</td>
+                                <td><button onclick="if(confirm('Na pewno?')) dbComms.child('${pid}').child('${cid}').remove().then(()=>core.loadAdminTools())" class="btn btn-red" style="padding:5px;">Usuń</button></td></tr>`;
+                            });
+                        });
+                    }
+                });
+
+                // Ustawienia formularz
+                dbSets.once('value', s => {
+                    const d = s.val(); if(!d) return;
+                    document.getElementById('set-topbar').value = d.topbar || "";
+                    document.getElementById('set-about').value = d.about || "";
+                    document.getElementById('set-redact').value = d.redact || "";
+                    document.getElementById('set-privacy').value = d.privacy || "";
+                });
+            },
+
+            // --- Zapis wpisu ---
+            savePost: async () => {
                 const t = document.getElementById('in-title').value;
                 const c = document.getElementById('in-content').value;
                 const cat = document.getElementById('in-category').value;
-                const a = document.getElementById('in-author').value || "Redakcja";
+                const a = document.getElementById('in-author').value;
                 const files = document.getElementById('in-files').files;
                 
-                if(!t || !c) return core.showToast("Tytuł i treść są wymagane.");
-                core.showLoader("Zapisywanie artykułu...");
-                
+                if(!t || !c) return core.toast("Wypełnij tytuł i treść!");
+                core.showLoader();
                 try {
-                    let newUrls = [];
-                    for(let f of files) newUrls.push(await core.uploadToImgBB(f));
+                    let urls = [];
+                    for(let f of files) urls.push(await core.uploadImg(f));
                     
-                    const data = { 
-                        title: t, content: c, author: a, category: cat, 
-                        images: [...currentEditImages, ...newUrls], 
-                        ts: editId ? allData.find(x => x.id === editId).ts : Date.now(), 
-                        date: editId ? allData.find(x => x.id === editId).date : new Date().toLocaleString(), 
-                        likes: editId ? allData.find(x => x.id === editId).likes : 0 
+                    const data = {
+                        title: t, content: c, category: cat, author: a,
+                        images: [...editImages, ...urls],
+                        ts: editId ? allPosts.find(x=>x.id===editId).ts : Date.now(),
+                        date: editId ? allPosts.find(x=>x.id===editId).date : new Date().toLocaleString(),
+                        likes: editId ? allPosts.find(x=>x.id===editId).likes : 0
                     };
                     
-                    const act = editId ? postsRef.child(editId).update(data) : postsRef.push(data);
-                    act.then(() => {
-                        core.hideLoader();
-                        core.showToast("Zapisano pomyślnie!");
-                        core.cancelEdit();
-                        window.scrollTo(0,0);
-                    }).catch(err => { throw err; });
-                } catch (err) { core.hideLoader(); alert(err.message); }
+                    const task = editId ? dbPosts.child(editId).update(data) : dbPosts.push(data);
+                    task.then(() => {
+                        core.hideLoader(); core.toast("Zapisano wpis!"); core.cancelEdit();
+                    });
+                } catch(e) { core.hideLoader(); alert(e.message); }
             },
-            deletePost: (id) => confirm("Cofnięcie tej operacji jest niemożliwe. Usunąć?") && postsRef.child(id).remove(),
-            editMode: (id) => {
-                const p = allData.find(x => x.id === id); editId = id;
+            editPost: (id) => {
+                const p = allPosts.find(x=>x.id===id); editId = id;
                 document.getElementById('in-title').value = p.title;
                 document.getElementById('in-author').value = p.author;
                 document.getElementById('in-content').value = p.content;
                 document.getElementById('in-category').value = p.category;
-                document.getElementById('admin-mode-title').innerText = "Tryb Edycji Artykułu";
+                document.getElementById('adm-title-label').innerText = "Edytuj wpis";
                 document.getElementById('cancel-edit-btn').classList.remove('hidden');
-                currentEditImages = p.images || []; core.renderEditImages();
-                window.scrollTo(0, 0);
+                editImages = p.images || []; core.renderImages();
+                window.scrollTo(0,0);
             },
-            cancelEdit: () => { editId = null; currentEditImages = []; document.getElementById('in-title').value = ""; document.getElementById('in-content').value = ""; document.getElementById('admin-mode-title').innerText = "Kreator Artykułu"; document.getElementById('cancel-edit-btn').classList.add('hidden'); core.renderEditImages(); },
-            clearEditImages: () => { currentEditImages = []; core.renderEditImages(); },
-            renderEditImages: () => {
-                const cont = document.getElementById('edit-images-preview'); cont.innerHTML = "";
-                currentEditImages.forEach(url => cont.innerHTML += `<img src="${url}" style="height:80px; border-radius:6px; border:1px solid var(--border-light); box-shadow:var(--shadow-sm);">`);
+            cancelEdit: () => {
+                editId = null; editImages = [];
+                document.getElementById('in-title').value = "";
+                document.getElementById('in-content').value = "";
+                document.getElementById('adm-title-label').innerText = "Dodaj nowy wpis";
+                document.getElementById('cancel-edit-btn').classList.add('hidden');
+                core.renderImages();
+            },
+            clearImages: () => { editImages = []; core.renderImages(); },
+            renderImages: () => {
+                const box = document.getElementById('edit-images-preview'); box.innerHTML = "";
+                editImages.forEach(u => box.innerHTML += `<img src="${u}" style="height:50px; border:1px solid #ccc;">`);
             },
 
-            // Operacje Reklam
-            publishAd: async () => {
-                const file = document.getElementById('ad-file').files[0];
-                const target = document.getElementById('ad-target').value;
-                if(!file || !target) return core.showToast("Wymagana grafika i link url.");
-                core.showLoader("Wysyłanie na serwer...");
+            // --- Zapis Reklamy ---
+            saveAd: async () => {
+                const f = document.getElementById('ad-file').files[0];
+                const l = document.getElementById('ad-link').value;
+                if(!f || !l) return core.toast("Wymagany obrazek i link!");
+                core.showLoader();
                 try {
-                    const imgUrl = await core.uploadToImgBB(file);
-                    adsRef.push({ img: imgUrl, link: target, ts: Date.now() }).then(() => {
-                        core.hideLoader(); core.showToast("Jednostka reklamowa dodana.");
-                        document.getElementById('ad-target').value = "";
+                    const img = await core.uploadImg(f);
+                    dbAds.push({ img, link: l }).then(() => {
+                        core.hideLoader(); core.toast("Dodano reklamę!");
+                        document.getElementById('ad-link').value = "";
                     });
-                } catch (err) { core.hideLoader(); alert(err.message); }
+                } catch(e) { core.hideLoader(); alert(e.message); }
             },
-            deleteAd: (id) => confirm("Zatrzymać tę kampanię reklamową?") && adsRef.child(id).remove(),
+            delAd: (id) => confirm("Usunąć reklamę?") && dbAds.child(id).remove(),
 
-            // Operacje Moderacji
-            loadAdminComms: () => {
-                reportsRef.on('value', snap => {
-                    const container = document.getElementById('reports-list'); container.innerHTML = "";
-                    if(!snap.val()) { container.innerHTML = "<div style='padding:15px; background:#f0fdf4; color:#166534; border-radius:6px; font-weight:600;'><i class='fa-solid fa-circle-check'></i> Super! Brak zgłoszeń naruszeń.</div>"; }
-                    else {
-                        Object.entries(snap.val()).forEach(([rid, r]) => {
-                            container.innerHTML += `<div style="border-left: 4px solid var(--accent-red); background:#fff; padding:20px; border-radius:4px; margin-bottom:15px; box-shadow:var(--shadow-sm);">
-                                <div style="font-size:0.8rem; color:var(--accent-red); font-weight:700; margin-bottom:8px; text-transform:uppercase;">RAPORT UŻYTKOWNIKÓW</div>
-                                <span style="font-weight:600; color:var(--text-heading);">${DOMPurify.sanitize(r.nick)}</span>: 
-                                <span style="color:var(--text-main); font-style:italic;">"${DOMPurify.sanitize(r.text)}"</span><br><br>
-                                <div style="display:flex; gap:10px;">
-                                    <button onclick="reportsRef.child('${rid}').remove()" class="btn-sm" style="background:#f1f5f9; color:#475569;">Zignoruj zgłoszenie</button>
-                                    <button onclick="db.ref('elk/comments/${r.postId}/${r.commentId}').remove().then(()=>reportsRef.child('${rid}').remove())" class="btn-sm btn-delete">Usuń toksyczny komentarz</button>
-                                </div>
-                            </div>`;
-                        });
-                    }
-                });
-                commentsRootRef.once('value', snap => {
-                    const list = document.getElementById('all-comms-list'); list.innerHTML = "";
-                    if(!snap.val()) return;
-                    Object.entries(snap.val()).forEach(([postId, postComms]) => {
-                        Object.entries(postComms).forEach(([cid, c]) => {
-                            list.innerHTML += `<tr>
-                                <td><strong>${DOMPurify.sanitize(c.nick)}</strong></td>
-                                <td style="max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${DOMPurify.sanitize(c.text)}</td>
-                                <td><button onclick="if(confirm('Wykonać?')) db.ref('elk/comments/${postId}/${cid}').remove().then(()=>core.loadAdminComms())" class="btn-sm btn-delete">Usuń wpis</button></td>
-                            </tr>`;
-                        });
-                    });
-                });
-            },
-
-            // Operacje Ustawień
-            loadSettingsInAdmin: () => {
-                settingsRef.once('value', s => {
-                    const d = s.val(); if(!d) return;
-                    ['about', 'redaction', 'privacy', 'coop', 'breakingNews'].forEach(k => {
-                        const el = document.getElementById(k === 'breakingNews' ? 'set-breaking' : `set-${k}`);
-                        if(el) el.value = d[k] || "";
-                    });
-                });
-            },
+            // --- Zapis Ustawień ---
             saveSettings: async () => {
-                core.showLoader("Aktualizacja konfiguracji serwisu...");
+                core.showLoader();
                 try {
-                    let updateData = { 
-                        about: document.getElementById('set-about').value, 
-                        redaction: document.getElementById('set-redaction').value, 
-                        privacy: document.getElementById('set-privacy').value, 
-                        coop: document.getElementById('set-coop').value,
-                        breakingNews: document.getElementById('set-breaking').value
+                    let data = {
+                        topbar: document.getElementById('set-topbar').value,
+                        about: document.getElementById('set-about').value,
+                        redact: document.getElementById('set-redact').value,
+                        privacy: document.getElementById('set-privacy').value
                     };
-                    const logoFile = document.getElementById('set-logo-file').files[0];
-                    if (logoFile) updateData.logoUrl = await core.uploadToImgBB(logoFile);
-
-                    await settingsRef.update(updateData);
-                    core.hideLoader(); core.showToast("Ustawienia serwisu zostały zaaplikowane.");
+                    const file = document.getElementById('set-logo').files[0];
+                    if(file) data.logo = await core.uploadImg(file);
+                    
+                    await dbSets.update(data);
+                    core.hideLoader(); core.toast("Ustawienia zapisane.");
                 } catch(e) { core.hideLoader(); alert(e.message); }
             },
 
-            // Nawigacja Główna
+            // --- Nawigacja ---
             goHome: () => {
-                ['view-home', 'search-area'].forEach(id => document.getElementById(id)?.classList.remove('hidden'));
-                ['view-article', 'view-admin', 'view-legal'].forEach(id => document.getElementById(id)?.classList.add('hidden'));
+                ['view-home', 'search-area'].forEach(i => document.getElementById(i).classList.remove('hidden'));
+                ['view-article', 'view-admin', 'view-legal'].forEach(i => document.getElementById(i).classList.add('hidden'));
                 window.scrollTo(0,0);
             },
             showLegal: (t) => {
-                core.goHome(); 
-                ['view-home', 'search-area'].forEach(id => document.getElementById(id).classList.add('hidden'));
+                core.goHome();
+                ['view-home', 'search-area'].forEach(i => document.getElementById(i).classList.add('hidden'));
                 document.getElementById('view-legal').classList.remove('hidden');
                 
-                const titles = { 'redaction': 'Informacje Redakcyjne', 'privacy': 'Zasady Prywatności', 'coop': 'Strefa Biznesowa (Reklama)' };
-                document.getElementById('legal-title').innerText = titles[t];
+                const names = { 'redact': 'Kontakt i Redakcja', 'privacy': 'Polityka Prywatności' };
+                document.getElementById('legal-title').innerText = names[t];
                 document.getElementById('legal-body').innerText = document.getElementById(`txt-${t}`).innerText;
                 window.scrollTo(0,0);
             }
         };
 
-        // BOOTSTRAP
-        window.addEventListener('DOMContentLoaded', () => core.checkAuth());
+        window.addEventListener('DOMContentLoaded', () => core.initAuth());
     </script>
 </body>
 </html>
