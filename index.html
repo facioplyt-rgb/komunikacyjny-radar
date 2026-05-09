@@ -3,300 +3,403 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ełk Nasze Wiadomości - Serwis Informacyjny</title>
+    <title>Ełk Wiadomości - Serwis Informacyjny</title>
     
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Ikony -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     
+    <!-- Firebase (Compat v9) & DOMPurify -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
 
     <style>
-        /* KLASYCZNY JASNY MOTYW */
-        body { 
-            background: #f4f6f8; 
-            color: #1a1a1a; 
-            font-family: Arial, Helvetica, sans-serif; 
-            scroll-behavior: smooth; 
+        /* --- SUROWY, REDAKCYJNY STYL (Brak sztucznych zaokrągleń i cieni) --- */
+        :root {
+            --bg-body: #f4f4f4;
+            --bg-paper: #ffffff;
+            --text-main: #111111;
+            --text-muted: #555555;
+            --border-color: #cccccc;
+            --accent-color: #b91c1c; /* Klasyczna czerwień prasowa */
+            --link-color: #1d4ed8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
             line-height: 1.6;
-            overflow-x: hidden; /* NAPRAWA: Zablokowanie przycinania i bocznego scrollowania na telefonach */
+            overflow-x: hidden;
         }
 
-        /* Wymuszenie jasnych kolorów z oryginalnego skryptu JS */
-        #main-content .text-white { color: #1a1a1a !important; }
-        .text-slate-200, .text-slate-300, .text-slate-400, .text-slate-500, .text-slate-600 { color: #4a4a4a !important; }
-        .bg-white\/5, .bg-\[\#161c2d\], .bg-\[\#0b0f1a\] { background-color: #ffffff !important; }
-        .border-white\/5, .border-white\/10 { border-color: #e0e0e0 !important; }
-        
-        .glass, .card { 
-            background: #ffffff !important; 
-            border: 1px solid #d1d5db !important; 
-            border-radius: 4px !important; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important; 
-            backdrop-filter: none !important; 
-            transition: none !important;
+        /* Nagłówek i Nawigacja */
+        header {
+            background: var(--bg-paper);
+            border-bottom: 4px solid var(--text-main);
+            padding: 15px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .card:hover { border-color: #3b82f6 !important; transform: none !important; }
-        
-        .input-dark { 
-            background: #ffffff !important; 
-            border: 1px solid #ccc !important; 
-            border-radius: 4px !important; 
-            padding: 10px 12px; 
-            width: 100%; 
-            color: #000 !important; 
-            font-size: 14px;
-            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05) !important;
-        }
-        .input-dark:focus { border-color: #3b82f6 !important; outline: none !important; }
-        
-        h1, h2, h3, h4 { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important; font-style: normal !important; color: #111 !important; font-weight: bold !important; text-transform: none !important; }
-        .author-badge { font-weight: bold; color: #555 !important; background: #eee !important; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
-        .category-tag { font-size: 11px; font-weight: bold; padding: 3px 6px; border-radius: 3px; background: #e0f2fe !important; color: #0284c7 !important; border: 1px solid #bae6fd; text-transform: uppercase; }
-        
-        button { border-radius: 4px !important; text-transform: none !important; font-weight: normal !important; }
-        .bg-blue-600 { background-color: #2563eb !important; color: white !important; }
-        .bg-blue-600:hover { background-color: #1d4ed8 !important; }
-        
-        .like-btn { background: #f9fafb !important; border: 1px solid #ddd !important; color: #333 !important; border-radius: 4px !important; box-shadow: none !important; padding: 8px 16px !important; font-weight: bold;}
-        .like-btn.liked { color: #dc2626 !important; background: #fef2f2 !important; border-color: #fecaca !important; }
-        
-        .comment-item { border-left: 4px solid #3b82f6 !important; background: #f8fafc !important; padding: 12px 15px; border-radius: 4px !important; border: 1px solid #e2e8f0; margin-bottom: 15px; }
-        .reply-item { border-left: 2px solid #cbd5e1 !important; background: #ffffff !important; padding-left: 10px; margin-top: 8px; }
-        .del-comm-btn { position: absolute; right: 10px; top: 10px; color: #ef4444; font-size: 10px; font-weight: bold; cursor: pointer; display: none; }
-        body.admin-active .del-comm-btn { display: block; }
-        
-        .tab-btn { padding: 8px 16px; font-size: 13px; font-weight: bold; border-radius: 4px; cursor: pointer; background: #f1f5f9 !important; border: 1px solid #ccc !important; color: #333 !important; margin-right: 4px;}
-        .tab-btn.active { background: #2563eb !important; color: white !important; border-color: #2563eb !important; }
-        
-        .toast { position: fixed; top: 20px; right: 20px; background: #fff; border: 1px solid #ccc; border-left: 4px solid #2563eb; color: #333; padding: 15px 20px; border-radius: 4px; transform: translateX(120%); transition: 0.3s; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .toast.show { transform: translateX(0); }
-        
-        .md-h1 { font-size: 1.5rem; font-weight: bold; display: block; margin: 1rem 0; color: #111; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-        .md-h3 { font-size: 1.25rem; font-weight: bold; display: block; margin: 0.75rem 0; color: #333; }
-        
-        #loader { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 9999; align-items: center; justify-content: center; }
-        #auth-overlay { background: rgba(255,255,255,0.95) !important; }
-        #auth-overlay h1 { color: #111 !important; }
-        #auth-overlay p { color: #555 !important; }
 
-        /* --- ZAAWANSOWANY SYSTEM REKLAM (MOBILE VS PC) --- */
-        .ad-box { width: 100%; background: #fff; border: 1px solid #ccc; display: none; margin-bottom: 15px; border-radius: 4px; padding: 4px; }
+        .logo {
+            font-family: 'Georgia', serif;
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--text-main);
+            text-transform: uppercase;
+            cursor: pointer;
+            letter-spacing: -1px;
+        }
+        .logo span { color: var(--accent-color); }
+
+        .user-nav { display: flex; align-items: center; gap: 15px; font-size: 0.9rem; }
+        .user-nav button { background: none; border: none; cursor: pointer; font-weight: bold; }
+        .user-nav button:hover { text-decoration: underline; }
+        .btn-login { color: var(--link-color); }
+        .btn-logout { color: var(--accent-color); }
+        .admin-badge { background: var(--text-main); color: #fff; padding: 2px 6px; font-size: 0.7rem; text-transform: uppercase; font-weight: bold; }
+
+        /* Układ Główny */
+        .layout-wrapper {
+            max-width: 1200px;
+            margin: 20px auto;
+            display: grid;
+            grid-template-columns: 160px 1fr 160px;
+            gap: 20px;
+            padding: 0 10px;
+        }
+
+        /* Reklamy */
+        .ad-zone { display: flex; flex-direction: column; gap: 15px; }
+        .ad-box { width: 100%; border: 1px solid var(--border-color); background: var(--bg-paper); padding: 4px; display: none; }
         .ad-box.active { display: block; }
-        .ad-box img { width: 100%; height: auto; max-height: 400px; object-fit: cover; display: block; }
-        .no-ad-placeholder { font-size: 11px; color: #666; border: 1px dashed #ccc; padding: 20px 10px; text-align: center; background: #fafafa; margin-bottom: 15px; }
+        .ad-box img { width: 100%; height: auto; display: block; }
+        .no-ad { font-size: 0.7rem; color: var(--text-muted); text-align: center; padding: 20px 0; border: 1px dashed var(--border-color); }
+
+        /* Główny Kontent */
+        main { background: var(--bg-paper); border: 1px solid var(--border-color); min-height: 80vh; padding: 20px; }
+
+        /* Wyszukiwarka i Taby */
+        .toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; border-bottom: 2px solid var(--text-main); padding-bottom: 15px; margin-bottom: 20px; }
+        .search-box input { padding: 8px; border: 1px solid var(--border-color); width: 250px; font-family: inherit; }
+        .tabs { display: flex; gap: 5px; }
+        .tab-btn { padding: 8px 12px; border: 1px solid var(--border-color); background: var(--bg-body); cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 0.8rem; }
+        .tab-btn.active { background: var(--text-main); color: #fff; border-color: var(--text-main); }
+
+        /* Karta Newsów */
+        .news-item { border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 15px; display: flex; gap: 15px; cursor: pointer; }
+        .news-item:hover .news-title { color: var(--link-color); }
+        .news-img { width: 150px; height: 100px; object-fit: cover; border: 1px solid var(--border-color); flex-shrink: 0; }
+        .news-content-preview { flex-grow: 1; }
+        .news-meta { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; display: flex; gap: 10px; }
+        .news-category { color: var(--accent-color); font-weight: bold; }
+        .news-title { font-family: 'Georgia', serif; font-size: 1.4rem; margin-bottom: 5px; line-height: 1.2; }
         
-        /* Domyślnie dla PC (Przyklejone po bokach) */
-        .ad-container { position: fixed; top: 100px; width: 160px; z-index: 40; }
-        .ad-left { left: 10px; } 
-        .ad-right { right: 10px; }
+        /* Artykuł (Widok Pełny) */
+        .article-header { border-bottom: 4px solid var(--text-main); padding-bottom: 15px; margin-bottom: 20px; }
+        .article-title { font-family: 'Georgia', serif; font-size: 2.5rem; line-height: 1.1; margin-bottom: 10px; }
+        .article-body { font-family: 'Georgia', serif; font-size: 1.1rem; line-height: 1.8; margin-bottom: 30px; white-space: pre-wrap; }
+        .article-body img { max-width: 100%; border: 1px solid var(--border-color); margin: 15px 0; }
         
-        /* DLA TELEFONÓW I TABLETÓW (< 1280px) */
-        @media (max-width: 1279px) { 
-            /* Reklamy wskakują w treść strony (nad i pod), znikają z boków */
-            .ad-container { 
-                position: relative; 
-                top: 0; left: 0; right: 0; 
-                width: 100%; 
-                max-width: 100%; 
-                margin: 0 auto; 
-                display: block;
-            }
-            .ad-box img { max-height: 180px; } /* Niższe reklamy na telefonie, żeby nie zajmowały pół ekranu */
-            
-            /* Struktura pozwalająca wrzucić ad-left na górę, a ad-right na dół głównego contentu */
-            #main-content-wrapper { display: flex; flex-direction: column; }
-            #ad-l-zone { order: 1; margin-bottom: 20px; } /* Górna reklama */
-            #search-area { order: 2; }
-            #view-home { order: 3; }
-            #view-article { order: 4; }
-            #view-admin { order: 5; }
-            #ad-r-zone { order: 6; margin-top: 20px; } /* Dolna reklama */
+        /* Interakcje (Przyciski, Komentarze) */
+        .action-btn { padding: 10px 15px; border: 1px solid var(--border-color); background: var(--bg-body); cursor: pointer; font-weight: bold; display: inline-flex; align-items: center; gap: 5px; }
+        .action-btn:hover { background: #e0e0e0; }
+        .action-btn.liked { color: var(--accent-color); border-color: var(--accent-color); background: #fff0f0; }
+        
+        .comments-section { border-top: 2px solid var(--text-main); padding-top: 20px; margin-top: 30px; }
+        .comment { border: 1px solid var(--border-color); padding: 15px; margin-bottom: 10px; background: var(--bg-body); }
+        .reply { margin-left: 30px; border-left: 3px solid var(--border-color); padding-left: 15px; margin-top: 10px; }
+        .comment-meta { font-size: 0.8rem; font-weight: bold; margin-bottom: 5px; color: var(--link-color); }
+        .comment-actions { font-size: 0.75rem; display: flex; gap: 15px; margin-top: 10px; }
+        .comment-actions span { cursor: pointer; color: var(--text-muted); text-transform: uppercase; font-weight: bold; }
+        .comment-actions span:hover { color: var(--text-main); }
+        
+        /* Formularze i Panel Admina */
+        .input-block { margin-bottom: 15px; }
+        .input-block label { display: block; font-weight: bold; font-size: 0.85rem; margin-bottom: 5px; text-transform: uppercase; }
+        .input-block input, .input-block select, .input-block textarea { width: 100%; padding: 10px; border: 1px solid var(--border-color); font-family: inherit; }
+        .btn-submit { background: var(--text-main); color: #fff; border: none; padding: 12px 20px; font-weight: bold; text-transform: uppercase; cursor: pointer; width: 100%; }
+        .btn-submit:hover { background: var(--accent-color); }
+        .admin-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
+        .admin-table th, .admin-table td { border: 1px solid var(--border-color); padding: 8px; text-align: left; }
+        .admin-table th { background: var(--bg-body); }
+
+        /* Powiadomienia (Toast i Dropdown) */
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1000; }
+        .toast { background: var(--text-main); color: #fff; padding: 15px; margin-top: 10px; font-size: 0.9rem; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        
+        #notif-bell { position: relative; cursor: pointer; padding: 5px; font-size: 1.2rem; }
+        .badge { position: absolute; top: -5px; right: -5px; background: var(--accent-color); color: #fff; font-size: 0.6rem; padding: 2px 5px; border-radius: 50%; font-weight: bold; }
+        #notif-dropdown { display: none; position: absolute; top: 100%; right: 0; background: var(--bg-paper); border: 1px solid var(--text-main); width: 300px; max-height: 400px; overflow-y: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .notif-item { padding: 10px; border-bottom: 1px solid var(--border-color); font-size: 0.8rem; cursor: pointer; }
+        .notif-item:hover { background: var(--bg-body); }
+
+        /* Loader i Overlay */
+        #loader { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 9999; justify-content: center; align-items: center; font-size: 3rem; color: var(--text-main); }
+        #auth-overlay { display: none; position: fixed; inset: 0; background: rgba(244,244,244,0.95); z-index: 10000; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+
+        .hidden { display: none !important; }
+
+        /* RWD (Urządzenia Mobilne) */
+        @media (max-width: 900px) {
+            .layout-wrapper { grid-template-columns: 1fr; }
+            .ad-zone { flex-direction: row; overflow-x: auto; margin-bottom: 20px; }
+            .ad-box { width: 300px; flex-shrink: 0; }
+            #ad-left { order: 1; }
+            main { order: 2; border: none; padding: 10px; }
+            #ad-right { order: 3; }
+            .news-item { flex-direction: column; }
+            .news-img { width: 100%; height: 200px; }
+            .toolbar { flex-direction: column; }
+            .search-box input { width: 100%; }
         }
     </style>
 </head>
-<body id="main-body">
+<body>
 
-    <div id="auth-overlay" class="hidden fixed inset-0 z-[100] flex flex-col items-center justify-center text-center p-6 transition-opacity">
-        <button onclick="core.hideLoginOverlay()" class="absolute top-8 right-8 text-gray-500 hover:text-black text-2xl"><i class="fa-solid fa-xmark"></i></button>
-        <h1 class="text-3xl font-bold mb-2 text-black">EŁK Wiadomości</h1>
-        <p class="text-gray-600 mb-6 text-sm">Zaloguj się, aby zyskać dostęp do komentowania i oceniania wpisów.</p>
-        <button onclick="core.login()" class="bg-[#5865F2] text-white px-6 py-3 rounded text-sm font-bold flex items-center gap-2 hover:bg-[#4752C4]">
+    <!-- Overlay Logowania -->
+    <div id="auth-overlay">
+        <h1 class="logo mb-4">EŁK <span>Wiadomości</span></h1>
+        <p style="margin-bottom: 20px; color: var(--text-muted);">Zaloguj się, aby zyskać dostęp do komentowania i oceniania.</p>
+        <button onclick="core.login()" class="action-btn" style="background: #5865F2; color: #fff; border:none; padding: 15px 30px;">
             <i class="fa-brands fa-discord"></i> Zaloguj przez Discord
         </button>
+        <button onclick="core.hideLoginOverlay()" style="margin-top:20px; background:none; border:none; text-decoration:underline; cursor:pointer;">Anuluj</button>
     </div>
 
+    <!-- Tosty i Loader -->
     <div id="toast-container"></div>
-    <div id="loader"><div class="animate-spin text-3xl text-blue-600"><i class="fa-solid fa-circle-notch"></i></div></div>
+    <div id="loader"><i class="fa-solid fa-spinner fa-spin"></i></div>
 
-    <header class="bg-white border-b border-gray-300 sticky top-0 z-50 mb-6 shadow-sm" id="main-header">
-        <div class="max-w-5xl mx-auto px-4 h-16 flex justify-between items-center">
-            <h1 onclick="core.goHome()" class="text-2xl font-bold cursor-pointer text-blue-700">EŁK <span class="text-gray-800">Wiadomości</span></h1>
-            
-            <div class="flex items-center gap-4">
-                <div class="relative">
-                    <div id="notif-bell" onclick="core.toggleNotifMenu()" class="cursor-pointer text-gray-600 hover:text-black transition relative p-2">
-                        <i class="fa-solid fa-bell text-lg"></i>
-                        <span id="global-notif-count" class="hidden absolute top-0 right-0 bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full font-bold">0</span>
+    <!-- Nagłówek -->
+    <header>
+        <div class="logo" onclick="core.goHome()">Ełk <span>Wiadomości</span></div>
+        <div class="user-nav">
+            <div id="notif-bell" onclick="core.toggleNotifMenu()">
+                <i class="fa-solid fa-bell"></i>
+                <span id="global-notif-count" class="badge hidden">0</span>
+                <div id="notif-dropdown">
+                    <div style="padding: 10px; border-bottom: 1px solid #ccc; font-weight: bold; display: flex; justify-content: space-between;">
+                        Powiadomienia <span onclick="core.clearNotifs(); event.stopPropagation();" style="color:var(--link-color); cursor:pointer; font-size:0.8rem;">Wyczyść</span>
                     </div>
-                    <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-72 bg-white border border-gray-300 rounded shadow-lg z-50 flex flex-col max-h-80 overflow-y-auto">
-                        <div class="p-3 border-b border-gray-200 text-xs font-bold text-gray-700 flex justify-between items-center bg-gray-50">
-                            <span>Powiadomienia</span><span onclick="core.clearNotifs()" class="cursor-pointer text-blue-600 hover:underline">Wyczyść</span>
-                        </div>
-                        <div id="notif-list" class="flex flex-col"></div>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-3 ml-2 border-l border-gray-300 pl-4" id="profile-section">
-                    <button id="btn-login" onclick="core.login()" class="text-sm font-bold text-blue-600 hover:underline hidden">Zaloguj się</button>
-                    <span id="user-profile-name" class="hidden text-sm font-bold text-gray-800"></span>
-                    <button id="btn-logout" onclick="core.logout()" class="hidden text-xs text-gray-500 hover:text-red-500 hover:underline">Wyloguj</button>
-                    <span id="admin-indicator" class="hidden text-[10px] bg-red-100 text-red-700 px-2 py-1 rounded font-bold border border-red-200">Admin</span>
-                    <button id="btn-open-admin" onclick="core.openAdmin()" class="hidden text-sm font-bold text-blue-600 hover:underline">Panel</button>
+                    <div id="notif-list"></div>
                 </div>
             </div>
+            <button id="btn-login" class="btn-login" onclick="core.showLoginOverlay()">Zaloguj</button>
+            <span id="user-profile-name" class="hidden" style="font-weight: bold;"></span>
+            <span id="admin-indicator" class="admin-badge hidden">Admin</span>
+            <button id="btn-open-admin" class="hidden" onclick="core.openAdmin()">Panel</button>
+            <button id="btn-logout" class="btn-logout hidden" onclick="core.logout()">Wyloguj</button>
         </div>
     </header>
 
-    <main class="max-w-4xl mx-auto px-4 min-h-screen" id="main-content">
+    <!-- Główny Układ (Lewa reklama, Środek, Prawa reklama) -->
+    <div class="layout-wrapper">
         
-        <!-- Dodany wrapper do poprawnego ułożenia reklam na mobile -->
-        <div id="main-content-wrapper">
-            
-            <!-- STREFA LEWA (Na PC z lewej, na Mobile NA GÓRZE strony) -->
-            <div class="ad-container ad-left" id="ad-l-zone"></div>
+        <!-- Lewa Strefa Reklam -->
+        <aside class="ad-zone" id="ad-left"></aside>
 
-            <div id="search-area" class="mb-6 bg-white p-4 border border-gray-300 rounded">
-                <div class="relative mb-4">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
-                    <input type="text" id="search-input" oninput="core.filterPosts()" placeholder="Szukaj wiadomości..." class="input-dark pl-10">
-                </div>
-                <div class="flex flex-wrap gap-2 items-center">
+        <!-- Środkowy Kontent -->
+        <main>
+            <!-- Wyszukiwarka i Filtry -->
+            <div id="search-area" class="toolbar">
+                <div class="tabs">
                     <button onclick="core.switchTab('all', this)" class="tab-btn active">Wszystkie</button>
                     <button onclick="core.switchTab('Wydarzenia', this)" class="tab-btn">Wydarzenia</button>
                     <button onclick="core.switchTab('Aktualizacje', this)" class="tab-btn">Aktualizacje</button>
                     <button onclick="core.switchTab('Informacje', this)" class="tab-btn">Informacje</button>
                 </div>
-            </div>
-
-            <div id="view-home" class="pb-5">
-                <div id="news-container" class="space-y-4">
-                    <div class="text-center py-10 text-gray-500 text-sm">Wczytywanie wiadomości...</div>
-                </div>
-                <div id="more-container" class="mt-6 hidden flex justify-center pb-10">
-                    <button onclick="core.showAllPosts()" class="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 rounded font-bold text-sm">Pokaż starsze wpisy</button>
+                <div class="search-box">
+                    <input type="text" id="search-input" oninput="core.filterPosts()" placeholder="Szukaj wiadomości...">
                 </div>
             </div>
 
-            <div id="view-article" class="hidden pb-10">
-                <button onclick="core.goHome()" class="mb-4 text-blue-600 font-bold hover:underline flex items-center gap-2 text-sm"><i class="fa-solid fa-arrow-left"></i> Wstecz</button>
-                <div class="bg-white border border-gray-300 p-6 rounded mb-6"><div id="article-content"></div></div>
-                <div id="article-interaction" class="mt-6">
-                    <div class="flex items-center gap-4 mb-6"><div id="main-like-btn" onclick="core.likePost()" class="like-btn cursor-pointer flex items-center gap-2"><i class="fa-solid fa-thumbs-up"></i> Polecam (<span id="like-count">0</span>)</div></div>
-                    <h3 class="text-xl font-bold mb-4 text-gray-800 border-b border-gray-200 pb-2">Komentarze</h3>
-                    <div id="comments-list" class="space-y-3 mb-6"></div>
-                    <div id="comment-box-anchor" class="bg-gray-50 p-4 border border-gray-300 rounded space-y-3">
-                        <div id="replying-to-info" class="hidden flex justify-between items-center bg-blue-50 p-2 border border-blue-200 rounded text-sm text-blue-800"><span>Odpowiadasz użytkownikowi: <strong id="target-nick"></strong></span><button onclick="core.cancelReply()" class="text-red-600 font-bold hover:underline">Anuluj</button></div>
-                        <input type="text" id="comm-nick" readonly class="input-dark bg-gray-100 text-gray-500" placeholder="Musisz być zalogowany">
-                        <textarea id="comm-text" rows="3" placeholder="Dodaj swój komentarz..." class="input-dark"></textarea>
-                        <button onclick="core.addComment()" class="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700">Dodaj komentarz</button>
+            <!-- Widok Główny (Lista Newsów) -->
+            <div id="view-home">
+                <div id="news-container">
+                    <p style="text-align: center; color: #888;">Wczytywanie wiadomości...</p>
+                </div>
+                <div id="more-container" class="hidden" style="text-align: center; margin-top: 20px;">
+                    <button onclick="core.showAllPosts()" class="action-btn">Pokaż starsze wpisy</button>
+                </div>
+            </div>
+
+            <!-- Widok Czytania Artykułu -->
+            <div id="view-article" class="hidden">
+                <button onclick="core.goHome()" class="action-btn" style="margin-bottom: 20px;"><i class="fa-solid fa-arrow-left"></i> Wróć</button>
+                <div id="article-content"></div>
+                
+                <div style="margin: 20px 0;">
+                    <button id="main-like-btn" onclick="core.likePost()" class="action-btn"><i class="fa-solid fa-thumbs-up"></i> Polecam (<span id="like-count">0</span>)</button>
+                </div>
+
+                <div class="comments-section">
+                    <h3 style="font-family: 'Georgia'; margin-bottom: 15px; font-size: 1.5rem;">Komentarze</h3>
+                    <div id="comments-list"></div>
+                    
+                    <div style="background: var(--bg-body); padding: 15px; border: 1px solid var(--border-color); margin-top: 20px;">
+                        <div id="replying-to-info" class="hidden" style="font-size: 0.8rem; font-weight: bold; color: var(--accent-color); margin-bottom: 10px;">
+                            Odpowiadasz użytkownikowi: <span id="target-nick"></span> 
+                            <span onclick="core.cancelReply()" style="cursor: pointer; text-decoration: underline; margin-left: 10px; color: var(--text-main);">Anuluj</span>
+                        </div>
+                        <div class="input-block">
+                            <input type="text" id="comm-nick" readonly placeholder="Zaloguj się, aby komentować" style="background: #e9e9e9; color: #666;">
+                        </div>
+                        <div class="input-block">
+                            <textarea id="comm-text" rows="3" placeholder="Twój komentarz..."></textarea>
+                        </div>
+                        <button onclick="core.addComment()" class="btn-submit">Dodaj komentarz</button>
                     </div>
                 </div>
             </div>
 
-            <div id="view-admin" class="hidden pb-10">
-                <div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold text-gray-800">Panel Administratora</h2><button onclick="core.goHome()" class="text-blue-600 font-bold hover:underline text-sm">Powrót</button></div>
-                
-                <div class="flex flex-wrap gap-2 mb-6">
+            <!-- Widok Panelu Administratora -->
+            <div id="view-admin" class="hidden">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2>Panel Redakcyjny</h2>
+                    <button onclick="core.goHome()" class="action-btn">Zamknij panel</button>
+                </div>
+
+                <div class="tabs" style="margin-bottom: 20px;">
                     <button onclick="core.setAdminTab('new')" id="btn-adm-new" class="tab-btn active">Wpisy</button>
                     <button onclick="core.setAdminTab('comms')" id="btn-adm-comms" class="tab-btn">Komentarze</button>
-                    <button onclick="core.setAdminTab('notifs')" id="btn-adm-notifs" class="tab-btn">Zgłoszenia <span id="notif-count" class="hidden text-white bg-red-500 rounded px-1 ml-1 text-xs">0</span></button>
+                    <button onclick="core.setAdminTab('notifs')" id="btn-adm-notifs" class="tab-btn">Zgłoszenia <span id="notif-count" class="badge hidden" style="position:static; margin-left:5px;">0</span></button>
                     <button onclick="core.setAdminTab('ads')" id="btn-adm-ads" class="tab-btn">Reklamy</button>
                     <button onclick="core.setAdminTab('settings')" id="btn-adm-settings" class="tab-btn">Ustawienia</button>
                 </div>
 
-                <div id="admin-new-section" class="bg-white border border-gray-300 p-6 rounded">
-                    <div class="flex justify-between items-center mb-4"><h3 id="admin-mode-title" class="text-lg font-bold">Nowy Wpis</h3><button onclick="core.cancelEdit()" id="cancel-edit-btn" class="hidden text-red-600 font-bold hover:underline text-sm">Anuluj edycję</button></div>
-                    <div class="space-y-4">
-                        <div><label class="block text-sm font-bold text-gray-700 mb-1">Tytuł</label><input type="text" id="in-title" class="input-dark"></div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div><label class="block text-sm font-bold text-gray-700 mb-1">Autor</label><input type="text" id="in-author" class="input-dark"></div>
-                            <div><label class="block text-sm font-bold text-gray-700 mb-1">Kategoria</label><select id="in-category" class="input-dark"><option value="Wydarzenia">Wydarzenia</option><option value="Aktualizacje">Aktualizacje</option><option value="Informacje">Informacje</option></select></div>
+                <!-- Sekcja Wpisów -->
+                <div id="admin-new-section">
+                    <div style="background: var(--bg-body); padding: 20px; border: 1px solid var(--border-color);">
+                        <h3 id="admin-mode-title" style="margin-bottom: 15px;">Nowy Wpis</h3>
+                        <button onclick="core.cancelEdit()" id="cancel-edit-btn" class="hidden" style="color: red; margin-bottom: 15px; font-weight:bold; cursor:pointer; background:none; border:none;">Anuluj edycję</button>
+                        
+                        <div class="input-block"><label>Tytuł</label><input type="text" id="in-title"></div>
+                        <div style="display: flex; gap: 15px;">
+                            <div class="input-block" style="flex: 1;"><label>Autor</label><input type="text" id="in-author" value="Redakcja"></div>
+                            <div class="input-block" style="flex: 1;"><label>Kategoria</label>
+                                <select id="in-category">
+                                    <option value="Wydarzenia">Wydarzenia</option>
+                                    <option value="Aktualizacje">Aktualizacje</option>
+                                    <option value="Informacje">Informacje</option>
+                                </select>
+                            </div>
                         </div>
-                        <div><label class="block text-sm font-bold text-gray-700 mb-1">Data</label><input type="text" id="in-date" class="input-dark"></div>
-                        <div><label class="block text-sm font-bold text-gray-700 mb-1">Treść</label><textarea id="in-content" rows="10" class="input-dark"></textarea></div>
-                        <div class="p-3 border border-gray-300 bg-gray-50 rounded"><label class="block text-sm font-bold text-gray-700 mb-2">Zdjęcia</label><input type="file" id="in-files" onchange="core.previewNewFiles()" multiple accept="image/*" class="text-sm"><div id="edit-images-preview" class="flex flex-wrap gap-2 mt-2"></div></div>
-                        <button onclick="core.publish()" id="publish-btn" class="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700 w-full">Zapisz</button>
-                        <div class="mt-8 pt-4 border-t border-gray-200"><h4 class="font-bold text-gray-700 mb-3">Lista wpisów</h4><div id="admin-list" class="space-y-2"></div></div>
+                        <div class="input-block"><label>Treść (Markdown obsługiwany)</label><textarea id="in-content" rows="10"></textarea></div>
+                        <div class="input-block">
+                            <label>Zdjęcia (Zostaną wysłane na ImgBB)</label>
+                            <input type="file" id="in-files" multiple accept="image/*">
+                            <div id="edit-images-preview" style="display: flex; gap: 10px; margin-top: 10px;"></div>
+                            <button type="button" onclick="core.clearEditImages()" style="margin-top:5px; font-size:0.8rem; cursor:pointer;">Wyczyść obecne zdjęcia</button>
+                        </div>
+                        <button onclick="core.publish()" class="btn-submit">Publikuj</button>
                     </div>
+                    
+                    <h3 style="margin-top: 30px; margin-bottom: 10px;">Lista wszystkich wpisów</h3>
+                    <table class="admin-table">
+                        <thead><tr><th>Tytuł</th><th>Data</th><th>Akcje</th></tr></thead>
+                        <tbody id="admin-list"></tbody>
+                    </table>
                 </div>
-                
-                <div id="admin-comms-section" class="hidden bg-white border border-gray-300 p-6 rounded"><h3 class="text-lg font-bold mb-4">Wszystkie Komentarze</h3><div id="all-comms-list"></div></div>
-                <div id="admin-notifs-section" class="hidden bg-white border border-gray-300 p-6 rounded"><h3 class="text-lg font-bold mb-4 text-red-600">Raporty i Zgłoszenia</h3><div id="reports-list"></div></div>
-                
-                <div id="admin-ads-section" class="hidden bg-white border border-gray-300 p-6 rounded space-y-6">
-                    <div class="flex justify-between items-center"><h3 id="ad-mode-title" class="text-lg font-bold">Zarządzanie Reklamami</h3><button onclick="core.cancelAdEdit()" id="cancel-ad-edit-btn" class="hidden text-red-600 font-bold hover:underline text-sm">Anuluj</button></div>
-                    <div class="p-4 border border-gray-200 bg-gray-50 rounded space-y-3">
-                        <label class="block text-sm font-bold text-gray-700">Strona</label><select id="ad-side" class="input-dark"><option value="left">Lewa</option><option value="right">Prawa</option></select>
-                        <label class="block text-sm font-bold text-gray-700 mt-2">Plik Graficzny</label><input type="file" id="ad-file" accept="image/*" class="text-sm block">
-                        <label class="block text-sm font-bold text-gray-700 mt-2">Link Przekierowania</label><input type="text" id="ad-target" class="input-dark">
-                        <button onclick="core.publishAd()" id="ad-publish-btn" class="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700 mt-2 w-full">Dodaj Nową Reklamę</button>
+
+                <!-- Sekcja Komentarzy -->
+                <div id="admin-comms-section" class="hidden">
+                    <h3>Wszystkie Komentarze w systemie</h3>
+                    <table class="admin-table">
+                        <thead><tr><th>Autor</th><th>Treść</th><th>Akcja</th></tr></thead>
+                        <tbody id="all-comms-list"></tbody>
+                    </table>
+                </div>
+
+                <!-- Sekcja Zgłoszeń -->
+                <div id="admin-notifs-section" class="hidden">
+                    <h3 style="color: var(--accent-color);">Zgłoszone komentarze</h3>
+                    <div id="reports-list"></div>
+                </div>
+
+                <!-- Sekcja Reklam -->
+                <div id="admin-ads-section" class="hidden">
+                    <div style="background: var(--bg-body); padding: 20px; border: 1px solid var(--border-color); margin-bottom: 20px;">
+                        <h3>Dodaj Reklamę</h3>
+                        <div class="input-block">
+                            <label>Pozycja</label>
+                            <select id="ad-side"><option value="left">Lewa strona</option><option value="right">Prawa strona</option></select>
+                        </div>
+                        <div class="input-block"><label>Plik Graficzny</label><input type="file" id="ad-file" accept="image/*"></div>
+                        <div class="input-block"><label>Link Przekierowania</label><input type="text" id="ad-target"></div>
+                        <button onclick="core.publishAd()" class="btn-submit">Zapisz Reklamę</button>
                     </div>
-                    <div><h4 class="font-bold text-gray-700 mb-3 mt-4">Aktywne Reklamy</h4><div id="admin-ads-list" class="space-y-2"></div></div>
+                    <h3>Aktywne Reklamy</h3>
+                    <table class="admin-table">
+                        <thead><tr><th>Pozycja</th><th>Link</th><th>Akcja</th></tr></thead>
+                        <tbody id="admin-ads-list"></tbody>
+                    </table>
                 </div>
-                
-                <div id="admin-settings-section" class="hidden bg-white border border-gray-300 p-6 rounded space-y-4">
-                    <h3 class="text-lg font-bold mb-2">Ustawienia strony</h3>
-                    <div><label class="block text-sm font-bold text-gray-700 mb-1">O Serwisie (Stopka)</label><textarea id="set-about" rows="3" class="input-dark"></textarea></div>
-                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Redakcja</label><textarea id="set-redaction" rows="3" class="input-dark"></textarea></div>
-                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Polityka Prywatności</label><textarea id="set-privacy" rows="3" class="input-dark"></textarea></div>
-                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Współpraca</label><textarea id="set-coop" rows="3" class="input-dark"></textarea></div>
-                    <button onclick="core.saveSettings()" class="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700 w-full">Zapisz ustawienia</button>
+
+                <!-- Sekcja Ustawień -->
+                <div id="admin-settings-section" class="hidden">
+                    <div class="input-block"><label>O Serwisie (Stopka)</label><textarea id="set-about" rows="3"></textarea></div>
+                    <div class="input-block"><label>Redakcja</label><textarea id="set-redaction" rows="3"></textarea></div>
+                    <div class="input-block"><label>Polityka Prywatności</label><textarea id="set-privacy" rows="3"></textarea></div>
+                    <div class="input-block"><label>Współpraca</label><textarea id="set-coop" rows="3"></textarea></div>
+                    <button onclick="core.saveSettings()" class="btn-submit">Zapisz ustawienia</button>
                 </div>
             </div>
 
-            <div id="view-legal" class="hidden pb-10">
-                <button onclick="core.goHome()" class="mb-4 text-blue-600 font-bold hover:underline flex items-center gap-2 text-sm"><i class="fa-solid fa-arrow-left"></i> Wróć</button>
-                <div class="bg-white border border-gray-300 p-8 rounded">
-                    <h2 id="legal-title" class="text-2xl font-bold mb-6 text-gray-800 border-b border-gray-200 pb-2"></h2>
-                    <div id="legal-body" class="text-gray-700 leading-relaxed white-pre"></div>
-                </div>
+            <!-- Widok Prawny (Stopka Info) -->
+            <div id="view-legal" class="hidden">
+                <button onclick="core.goHome()" class="action-btn" style="margin-bottom: 20px;"><i class="fa-solid fa-arrow-left"></i> Wróć</button>
+                <h2 id="legal-title" style="margin-bottom: 20px; border-bottom: 2px solid var(--text-main); padding-bottom: 10px; font-family: 'Georgia';"></h2>
+                <div id="legal-body" style="white-space: pre-wrap;"></div>
             </div>
 
-            <!-- STREFA PRAWA (Na PC z prawej, na Mobile NA DOLE strony) -->
-            <div class="ad-container ad-right" id="ad-r-zone"></div>
-        </div>
-    </main>
+        </main>
 
-    <footer id="main-footer" class="bg-white border-t border-gray-300 py-8 mt-10 relative z-50">
-        <div class="max-w-4xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
-            <div><h4 class="font-bold text-gray-800 mb-3">O Serwisie</h4><p id="txt-about" class="text-gray-600"></p></div>
+        <!-- Prawa Strefa Reklam -->
+        <aside class="ad-zone" id="ad-right"></aside>
+
+    </div>
+
+    <!-- Stopka -->
+    <footer style="background: var(--bg-paper); border-top: 4px solid var(--text-main); padding: 40px 20px; margin-top: 40px;">
+        <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px;">
             <div>
-                <h4 class="font-bold text-gray-800 mb-3">Informacje</h4>
-                <ul class="space-y-2 text-blue-600">
-                    <li><a href="javascript:void(0)" onclick="core.showLegal('redaction')" class="hover:underline">Redakcja</a></li>
-                    <li><a href="javascript:void(0)" onclick="core.showLegal('privacy')" class="hover:underline">Polityka Prywatności</a></li>
-                    <li><a href="javascript:void(0)" onclick="core.showLegal('coop')" class="hover:underline">Współpraca</a></li>
+                <h4 style="margin-bottom: 10px; font-family:'Georgia'; font-size:1.2rem;">O Serwisie</h4>
+                <p id="txt-about" style="font-size: 0.85rem; color: var(--text-muted);"></p>
+            </div>
+            <div>
+                <h4 style="margin-bottom: 10px; font-family:'Georgia'; font-size:1.2rem;">Informacje</h4>
+                <ul style="list-style: none; font-size: 0.85rem;">
+                    <li style="margin-bottom: 5px;"><a href="#" onclick="core.showLegal('redaction'); return false;" style="color: var(--link-color);">Redakcja</a></li>
+                    <li style="margin-bottom: 5px;"><a href="#" onclick="core.showLegal('privacy'); return false;" style="color: var(--link-color);">Polityka Prywatności</a></li>
+                    <li><a href="#" onclick="core.showLegal('coop'); return false;" style="color: var(--link-color);">Współpraca</a></li>
                 </ul>
                 <div class="hidden" id="legal-data-store"><span id="txt-redaction"></span><span id="txt-privacy"></span><span id="txt-coop"></span></div>
             </div>
             <div>
-                <h4 class="font-bold text-gray-800 mb-3">Społeczność</h4>
-                <div class="flex gap-4 text-gray-600 text-xl">
-                    <a href="https://www.tiktok.com/@diamentowy337" target="_blank" class="hover:text-black transition"><i class="fa-brands fa-tiktok"></i></a>
-                    <a href="http://www.youtube.com/@Diamentowy_337" target="_blank" class="hover:text-red-600 transition"><i class="fa-brands fa-youtube"></i></a>
+                <h4 style="margin-bottom: 10px; font-family:'Georgia'; font-size:1.2rem;">Społeczność</h4>
+                <div style="display: flex; gap: 15px; font-size: 1.5rem;">
+                    <a href="https://www.tiktok.com/@diamentowy337" target="_blank" style="color: var(--text-main);"><i class="fa-brands fa-tiktok"></i></a>
+                    <a href="http://www.youtube.com/@Diamentowy_337" target="_blank" style="color: var(--accent-color);"><i class="fa-brands fa-youtube"></i></a>
                 </div>
             </div>
         </div>
-        <div class="text-center pt-8 text-xs text-gray-500 mt-4 border-t border-gray-100">
-            Ełk Nasze Wiadomości &copy; 2024
+        <div style="text-align: center; margin-top: 30px; font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 15px;">
+            Ełk Wiadomości &copy; 2024
         </div>
     </footer>
 
-    <!-- TWÓJ ORYGINALNY SKRYPT JS + NAPRAWY DLA PANELU ADMINA -->
+    <!-- SKRYPT LOGIKI (JS) -->
     <script>
+        // Konfiguracja API
         const firebaseConfig = {
             apiKey: "AIzaSyCb5QmZdwWwa9LafqqGZvGW-6vblkab32M",
             authDomain: "mzk-by-facio.firebaseapp.com",
@@ -306,45 +409,41 @@
             messagingSenderId: "676970411647",
             appId: "1:676970411647:web:26137e7242c0db7c83714a"
         };
-
-        const ADMIN_NICK = "Facio";
+        const ADMIN_NICK = "Facio"; // Pamiętaj: prawdziwe bezpieczeństwo wymaga reguł po stronie Firebase!
         const IMGBB_API_KEY = "19570ba1fa4dc27bd0ba974b4eb2e253";
         const DISCORD_CLIENT_ID = "1498418325502558328";
 
+        // Inicjalizacja Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
         
+        // Referencje do bazy
         const postsRef = db.ref('elk/posts');
         const reportsRef = db.ref('elk/reports');
         const commentsRootRef = db.ref('elk/comments');
         const adsRef = db.ref('elk/ads');
         const settingsRef = db.ref('elk/settings');
 
+        // Stan aplikacji
         let allData = []; let allAds = []; let adIndices = { left: 0, right: 0 };
-        let showLimit = 4; let editId = null; let adEditId = null;
+        let showLimit = 6; let editId = null; 
         let currentOpenPostId = null; let currentReplyToId = null;
         let currentEditImages = []; let currentTab = 'all';
         let appInitialized = false;
 
-        window.core = {
+        const core = {
+            // --- AUTORYZACJA ---
             login: () => {
                 window.location.href = `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&response_type=code&redirect_uri=https%3A%2F%2Felk-backend.vercel.app%2Fapi%2Fauth&scope=identify`;
             },
-
             logout: () => {
                 localStorage.clear();
                 auth.signOut().then(() => location.reload());
             },
-
-            showLoginOverlay: () => {
-                document.getElementById('auth-overlay').classList.remove('hidden');
-            },
-
-            hideLoginOverlay: () => {
-                document.getElementById('auth-overlay').classList.add('hidden');
-            },
-
+            showLoginOverlay: () => document.getElementById('auth-overlay').style.display = 'flex',
+            hideLoginOverlay: () => document.getElementById('auth-overlay').style.display = 'none',
+            
             checkAuth: () => {
                 const params = new URLSearchParams(window.location.search);
                 const token = params.get('token');
@@ -363,33 +462,27 @@
 
                 auth.onAuthStateChanged(user => {
                     if (user || savedToken) {
-                        document.getElementById('auth-overlay').classList.add('hidden');
+                        core.hideLoginOverlay();
                         document.getElementById('btn-login').classList.add('hidden');
-                        
-                        document.getElementById('user-profile-name').innerText = savedNick || "Użytkownik";
+                        document.getElementById('user-profile-name').innerText = savedNick || "Zalogowany";
                         document.getElementById('user-profile-name').classList.remove('hidden');
                         document.getElementById('btn-logout').classList.remove('hidden');
-                        
                         document.getElementById('comm-nick').value = savedNick || "Użytkownik";
 
                         if(savedNick && savedNick.toLowerCase() === ADMIN_NICK.toLowerCase()) {
                             document.getElementById('admin-indicator').classList.remove('hidden');
                             document.getElementById('btn-open-admin').classList.remove('hidden');
-                            document.getElementById('main-body').classList.add('admin-active');
                         }
-                        
                         if (!user && savedToken) {
                             auth.signInWithCustomToken(savedToken).catch(() => core.logout());
                         }
                     } else {
                         document.getElementById('btn-login').classList.remove('hidden');
-                        document.getElementById('user-profile-name').classList.add('hidden');
-                        document.getElementById('btn-logout').classList.add('hidden');
-                        document.getElementById('comm-nick').value = ""; 
                     }
                 });
             },
 
+            // --- INICJALIZACJA DANYCH ---
             initApp: () => {
                 postsRef.on('value', snap => {
                     const data = snap.val(); allData = [];
@@ -397,7 +490,15 @@
                     if(data) {
                         Object.entries(data).sort((a,b) => b[1].ts - a[1].ts).forEach(([id, v]) => {
                             allData.push({ id, ...v });
-                            if(admList) admList.innerHTML += `<div class="flex justify-between bg-white/5 p-2 rounded-xl text-[10px]"><span>${v.title}</span><div class="flex gap-2"><button onclick="core.editMode('${id}')" class="text-amber-500">EDYTUJ</button><button onclick="core.deletePost('${id}')" class="text-red-500">USUŃ</button></div></div>`;
+                            if(admList) {
+                                const tr = document.createElement('tr');
+                                tr.innerHTML = `<td>${v.title}</td><td>${v.date}</td>
+                                <td>
+                                    <button onclick="core.editMode('${id}')" style="cursor:pointer; color:blue; background:none; border:none; margin-right:10px;">Edytuj</button>
+                                    <button onclick="core.deletePost('${id}')" style="cursor:pointer; color:red; background:none; border:none;">Usuń</button>
+                                </td>`;
+                                admList.appendChild(tr);
+                            }
                         });
                     }
                     core.filterPosts();
@@ -405,10 +506,11 @@
 
                 adsRef.on('value', snap => {
                     const data = snap.val(); allAds = [];
-                    const zones = { left: document.getElementById('ad-l-zone'), right: document.getElementById('ad-r-zone') };
-                    const adminAdsList = document.getElementById('admin-ads-list'); // DODANO: Wyłapanie z HTML
+                    const zones = { left: document.getElementById('ad-left'), right: document.getElementById('ad-right') };
+                    const adminAdsList = document.getElementById('admin-ads-list');
+                    
                     if(zones.left) zones.left.innerHTML = ""; if(zones.right) zones.right.innerHTML = "";
-                    if(adminAdsList) adminAdsList.innerHTML = ""; // DODANO: Czyszczenie listy admina
+                    if(adminAdsList) adminAdsList.innerHTML = "";
 
                     if(data) {
                         Object.entries(data).forEach(([id, ad]) => {
@@ -416,18 +518,15 @@
                             const html = `<a href="${DOMPurify.sanitize(ad.link)}" target="_blank" class="ad-box"><img src="${ad.img}"></a>`;
                             if (zones[ad.side]) zones[ad.side].innerHTML += html;
                             
-                            // NAPRAWA: Zapewnia renderowanie usunięcia reklam w panelu admina
                             if(adminAdsList) {
-                                adminAdsList.innerHTML += `<div class="flex justify-between items-center p-3 bg-gray-100 border border-gray-300 rounded">
-                                    <span class="text-sm font-bold text-gray-700">${ad.side.toUpperCase()} - Link: ${ad.link.substring(0,20)}...</span>
-                                    <button onclick="core.deleteAd('${id}')" class="text-red-600 font-bold hover:underline text-xs">USUŃ</button>
-                                </div>`;
+                                adminAdsList.innerHTML += `<tr><td>${ad.side}</td><td>${ad.link.substring(0,25)}...</td>
+                                <td><button onclick="core.deleteAd('${id}')" style="color:red; cursor:pointer; background:none; border:none;">Usuń</button></td></tr>`;
                             }
                         });
                         ['left', 'right'].forEach(s => {
                             const first = zones[s]?.querySelector('.ad-box');
                             if(first) first.classList.add('active');
-                            else if(zones[s]) zones[s].innerHTML = `<div class="no-ad-placeholder">BRAK REKLAMY (${s})</div>`;
+                            else if(zones[s]) zones[s].innerHTML = `<div class="no-ad">Miejsce na reklamę (${s})</div>`;
                         });
                     }
                 });
@@ -447,66 +546,68 @@
                 });
 
                 core.initNotifications();
-                setInterval(core.rotateAds, 5000);
+                setInterval(core.rotateAds, 6000);
             },
 
-            toggleNotifMenu: () => document.getElementById('notif-dropdown').classList.toggle('hidden'),
+            // --- POWIADOMIENIA (Lokalne) ---
+            toggleNotifMenu: () => {
+                const drop = document.getElementById('notif-dropdown');
+                drop.style.display = drop.style.display === 'block' ? 'none' : 'block';
+            },
             loadNotifications: () => {
                 const notifs = JSON.parse(localStorage.getItem('my_notifs') || "[]");
                 const list = document.getElementById('notif-list'); if(!list) return;
-                list.innerHTML = notifs.length === 0 ? '<div class="p-6 text-center text-[10px] uppercase font-bold text-slate-500">Brak powiadomień</div>' : "";
+                list.innerHTML = notifs.length === 0 ? '<div style="padding:15px; text-align:center; color:#888;">Brak nowych wiadomości</div>' : "";
                 let unread = 0;
                 notifs.forEach(n => {
                     if (!n.read) unread++;
-                    list.innerHTML += `<div onclick="core.clickNotif(${n.id}, '${n.postId}')" class="flex items-center gap-3 p-4 border-b border-white/5 cursor-pointer hover:bg-white/10 transition ${n.read ? 'opacity-50' : 'bg-white/5'}">
-                        <div class="flex-1 text-[11px] text-slate-200 leading-tight">${DOMPurify.sanitize(n.msg)}</div>
-                        ${n.read ? '' : '<div class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></div>'}
+                    list.innerHTML += `<div class="notif-item" style="${n.read?'opacity:0.5;':''}" onclick="core.clickNotif(${n.id}, '${n.postId}')">
+                        <strong>Nowość:</strong> ${DOMPurify.sanitize(n.msg)}
                     </div>`;
                 });
                 const badge = document.getElementById('global-notif-count');
                 if(badge) { badge.innerText = unread; badge.classList.toggle('hidden', unread === 0); }
             },
-            addNotification: (msg, type, postId) => {
+            addNotification: (msg, postId) => {
                 const notifs = JSON.parse(localStorage.getItem('my_notifs') || "[]");
-                notifs.unshift({ id: Date.now(), msg, type, postId, read: false, ts: Date.now() });
-                localStorage.setItem('my_notifs', JSON.stringify(notifs.slice(0, 30)));
-                core.showToast(msg, type); core.loadNotifications();
+                notifs.unshift({ id: Date.now(), msg, postId, read: false, ts: Date.now() });
+                localStorage.setItem('my_notifs', JSON.stringify(notifs.slice(0, 20)));
+                core.showToast(msg); core.loadNotifications();
             },
             clickNotif: (id, postId) => {
                 const notifs = JSON.parse(localStorage.getItem('my_notifs') || "[]");
                 const n = notifs.find(x => x.id === id); if(n) n.read = true;
                 localStorage.setItem('my_notifs', JSON.stringify(notifs));
-                core.loadNotifications(); document.getElementById('notif-dropdown').classList.add('hidden');
+                core.loadNotifications(); document.getElementById('notif-dropdown').style.display = 'none';
                 if(postId) { const p = allData.find(x => x.id === postId); if(p) core.showFull(p); }
             },
             clearNotifs: () => { localStorage.setItem('my_notifs', "[]"); core.loadNotifications(); },
-            showToast: (msg, type) => {
-                const t = document.createElement('div'); t.className = `toast toast-${type} show`;
-                t.innerText = msg; document.getElementById('toast-container').appendChild(t);
-                setTimeout(() => t.remove(), 5000);
+            showToast: (msg) => {
+                const t = document.createElement('div'); t.className = `toast`; t.innerText = msg;
+                document.getElementById('toast-container').appendChild(t);
+                setTimeout(() => t.remove(), 4000);
             },
             initNotifications: () => {
                 const lastExit = parseInt(localStorage.getItem('user_last_exit') || Date.now());
                 postsRef.on('child_added', snap => {
-                    if(snap.val().ts > lastExit) core.addNotification(`Nowa wiadomość: ${snap.val().title}`, 'info', snap.key);
+                    if(snap.val().ts > lastExit) core.addNotification(`Opublikowano: ${snap.val().title}`, snap.key);
                 });
                 window.addEventListener('beforeunload', () => localStorage.setItem('user_last_exit', Date.now().toString()));
                 core.loadNotifications();
             },
 
+            // --- GŁÓWNA LOGIKA WYŚWIETLANIA ---
             parseMarkdown: (text) => {
                 if(!text) return "";
-                let html = DOMPurify.sanitize(text);
-                return html.replace(/^#\s+(.*)$/gm, '<span class="md-h1">$1</span>')
-                           .replace(/^###\s+(.*)$/gm, '<span class="md-h3">$1</span>')
-                           .replace(/^-#\s+(.*)$/gm, '<span class="md-small">$1</span>')
-                           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                           .replace(/__(.*?)__/g, '<span class="md-u">$1</span>')
-                           .replace(/\*(.*?)\*/g, '<em>$1</em>');
+                return DOMPurify.sanitize(text)
+                    .replace(/^#\s+(.*)$/gm, '<h2 style="font-size:1.8rem; margin:20px 0 10px;">$1</h2>')
+                    .replace(/^###\s+(.*)$/gm, '<h3 style="font-size:1.4rem; margin:15px 0 10px;">$1</h3>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>');
             },
             switchTab: (tabId, btn) => {
                 currentTab = tabId;
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.toolbar .tab-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active'); core.filterPosts();
             },
             filterPosts: () => {
@@ -520,25 +621,46 @@
                 const container = document.getElementById('news-container'); container.innerHTML = "";
                 const toShow = isSearch ? items : items.slice(0, showLimit);
                 toShow.forEach(v => {
-                    const card = document.createElement('div'); card.className = "card glass p-6 rounded-2xl cursor-pointer mb-4 post-anim";
-                    card.innerHTML = `<div class="flex gap-5 flex-col md:flex-row">${v.images?.[0] ? `<img src="${v.images[0]}" class="w-full md:w-32 h-40 md:h-32 object-cover rounded shadow-sm">` : ''}<div class="flex-1"><span class="category-tag">${v.category}</span><h2 class="font-black text-xl text-gray-800 mt-2">${v.title}</h2><div class="flex gap-3 mt-4 items-center justify-between"><div class="flex items-center gap-3"><span class="author-badge">${v.author}</span><span class="text-xs text-gray-500">${v.date}</span></div><span class="text-xs text-blue-600 font-bold"><i class="fa-solid fa-thumbs-up"></i> ${v.likes || 0}</span></div></div></div>`;
-                    card.onclick = () => core.showFull(v); container.appendChild(card);
+                    const div = document.createElement('article'); div.className = "news-item";
+                    div.innerHTML = `
+                        ${v.images?.[0] ? `<img src="${v.images[0]}" class="news-img">` : ''}
+                        <div class="news-content-preview">
+                            <div class="news-meta"><span class="news-category">${v.category}</span> <span>${v.date}</span></div>
+                            <h2 class="news-title">${v.title}</h2>
+                            <div style="font-size: 0.85rem; color: var(--text-muted);">Autor: <strong>${v.author}</strong> | Polecenia: ${v.likes || 0}</div>
+                        </div>`;
+                    div.onclick = () => core.showFull(v); container.appendChild(div);
                 });
                 document.getElementById('more-container').classList.toggle('hidden', isSearch || items.length <= showLimit);
             },
-            showAllPosts: () => { showLimit = 999; core.filterPosts(); document.getElementById('more-container').classList.add('hidden'); },
+            showAllPosts: () => { showLimit = 999; core.filterPosts(); },
 
             showFull: (data) => {
                 currentOpenPostId = data.id; core.loadComments(data.id);
                 document.getElementById('view-home').classList.add('hidden'); document.getElementById('search-area').classList.add('hidden');
                 document.getElementById('view-article').classList.remove('hidden');
-                document.getElementById('article-content').innerHTML = `<h1 class="text-3xl md:text-4xl font-bold mb-4 text-gray-900">${data.title}</h1><div class="flex gap-4 mb-6 border-b border-gray-200 pb-4"><span class="author-badge">${data.author}</span><span class="text-sm text-gray-500">${data.date}</span></div><div class="text-gray-800 text-lg white-pre leading-relaxed mb-8">${core.parseMarkdown(data.content)}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">${(data.images||[]).map(i=>`<img src="${i}" class="w-full rounded shadow-sm">`).join('')}</div>`;
+                
+                document.getElementById('article-content').innerHTML = `
+                    <div class="article-header">
+                        <h1 class="article-title">${data.title}</h1>
+                        <div style="color:var(--text-muted); font-size:0.9rem; text-transform:uppercase; letter-spacing:1px;">
+                            <strong style="color:var(--text-main);">${data.author}</strong> | ${data.date} | ${data.category}
+                        </div>
+                    </div>
+                    <div class="article-body">
+                        ${core.parseMarkdown(data.content)}
+                        <div style="display:flex; flex-direction:column; gap:10px; margin-top:20px;">
+                            ${(data.images||[]).map(i=>`<img src="${i}" alt="Zdjęcie artykułu">`).join('')}
+                        </div>
+                    </div>`;
+                    
                 const isLiked = localStorage.getItem(`liked_${data.id}`) ? 'liked' : '';
-                document.getElementById('main-like-btn').className = `like-btn cursor-pointer flex items-center gap-2 ${isLiked}`;
+                document.getElementById('main-like-btn').className = `action-btn ${isLiked}`;
                 document.getElementById('like-count').innerText = data.likes || 0;
                 window.scrollTo(0,0);
             },
 
+            // --- PANEL ADMINA ---
             openAdmin: () => {
                 if(localStorage.getItem('user_nick')?.toLowerCase() !== ADMIN_NICK.toLowerCase()) return alert("Błąd uprawnień!");
                 ['view-home', 'search-area', 'view-article', 'view-legal'].forEach(id => document.getElementById(id).classList.add('hidden'));
@@ -548,26 +670,9 @@
                 ['new', 'comms', 'notifs', 'ads', 'settings'].forEach(s => document.getElementById(`admin-${s}-section`).classList.toggle('hidden', s !== tab));
                 document.querySelectorAll('#view-admin .tab-btn').forEach(b => b.classList.toggle('active', b.id === `btn-adm-${tab}`));
                 
-                // NAPRAWA: Te funkcje w końcu są prawidłowo wywoływane dla Panelu
-                if(tab === 'comms') { if(core.loadAllCommentsAdmin) core.loadAllCommentsAdmin(); }
+                if(tab === 'comms') core.loadAllCommentsAdmin();
                 if(tab === 'settings') core.loadSettingsInAdmin();
                 if(tab === 'notifs') core.loadReports(); 
-            },
-            
-            // NAPRAWA: Dodana brakująca funkcja pobierania WSZYSTKICH komentarzy dla zakładki "Komentarze"
-            loadAllCommentsAdmin: () => {
-                commentsRootRef.once('value', snap => {
-                    const list = document.getElementById('all-comms-list'); list.innerHTML = "";
-                    if(!snap.val()) { list.innerHTML = "<p class='text-sm text-gray-500'>Brak komentarzy w systemie.</p>"; return; }
-                    Object.entries(snap.val()).forEach(([postId, postComms]) => {
-                        Object.entries(postComms).forEach(([cid, c]) => {
-                            list.innerHTML += `<div class="p-3 bg-gray-50 border border-gray-200 rounded mb-2 flex justify-between items-center">
-                                <div><strong class="text-sm text-blue-600">${c.nick}</strong>: <span class="text-sm text-gray-700">${DOMPurify.sanitize(c.text)}</span></div>
-                                <button onclick="if(confirm('Usunąć komentarz?')) db.ref('elk/comments/${postId}/${cid}').remove().then(()=>core.loadAllCommentsAdmin())" class="text-red-600 font-bold hover:underline text-xs">USUŃ</button>
-                            </div>`;
-                        });
-                    });
-                });
             },
 
             publish: async () => {
@@ -577,8 +682,7 @@
                 const a = document.getElementById('in-author').value || "Redakcja";
                 const files = document.getElementById('in-files').files;
                 
-                if(!t || !c) return alert("Wypełnij pola!");
-                
+                if(!t || !c) return alert("Wypełnij tytuł i treść!");
                 document.getElementById('loader').style.display = 'flex';
                 
                 try {
@@ -587,70 +691,61 @@
                         const fd = new FormData(); fd.append("image", f);
                         const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
                         const res = await r.json(); 
-                        if(res.success) {
-                            newUrls.push(res.data.url);
-                        } else {
-                            alert("Błąd serwera zdjęć ImgBB: " + (res.error?.message || "Nieznany błąd"));
-                            document.getElementById('loader').style.display = 'none';
-                            return;
-                        }
+                        if(res.success) newUrls.push(res.data.url);
+                        else throw new Error("Błąd ImgBB");
                     }
                     
-                    const data = { title: t, content: c, author: a, category: cat, images: [...currentEditImages, ...newUrls], ts: editId ? allData.find(x => x.id === editId).ts : Date.now(), date: document.getElementById('in-date').value || new Date().toLocaleString(), likes: editId ? allData.find(x => x.id === editId).likes : 0 };
+                    const data = { 
+                        title: t, content: c, author: a, category: cat, 
+                        images: [...currentEditImages, ...newUrls], 
+                        ts: editId ? allData.find(x => x.id === editId).ts : Date.now(), 
+                        date: new Date().toLocaleString(), 
+                        likes: editId ? allData.find(x => x.id === editId).likes : 0 
+                    };
                     
                     const act = editId ? postsRef.child(editId).update(data) : postsRef.push(data);
-                    
-                    act.then(() => location.reload()).catch(err => {
-                        alert("Błąd Firebase: " + err.message);
-                        document.getElementById('loader').style.display = 'none';
-                    });
-                    
-                } catch (err) {
-                    alert("Wystąpił błąd skryptu/internetu: " + err.message);
-                    document.getElementById('loader').style.display = 'none';
-                }
+                    act.then(() => location.reload()).catch(err => { alert("Błąd Firebase: " + err.message); document.getElementById('loader').style.display = 'none'; });
+                } catch (err) { alert("Błąd: " + err.message); document.getElementById('loader').style.display = 'none'; }
             },
             
-            deletePost: (id) => confirm("Usunąć?") && postsRef.child(id).remove().catch(e => alert("Błąd bazy: " + e.message)),
+            deletePost: (id) => confirm("Na pewno usunąć?") && postsRef.child(id).remove(),
             editMode: (id) => {
                 const p = allData.find(x => x.id === id); editId = id;
                 document.getElementById('in-title').value = p.title;
                 document.getElementById('in-author').value = p.author;
                 document.getElementById('in-content').value = p.content;
-                document.getElementById('admin-mode-title').innerText = "EDYTUJ WPIS";
+                document.getElementById('in-category').value = p.category;
+                document.getElementById('admin-mode-title').innerText = "Edycja Wpisu";
                 document.getElementById('cancel-edit-btn').classList.remove('hidden');
                 currentEditImages = p.images || []; core.renderEditImages();
             },
-            cancelEdit: () => { editId = null; currentEditImages = []; document.getElementById('in-title').value = ""; document.getElementById('in-content').value = ""; document.getElementById('admin-mode-title').innerText = "NOWY WPIS"; document.getElementById('cancel-edit-btn').classList.add('hidden'); document.getElementById('edit-images-preview').innerHTML = ""; },
+            cancelEdit: () => { editId = null; currentEditImages = []; document.getElementById('in-title').value = ""; document.getElementById('in-content').value = ""; document.getElementById('admin-mode-title').innerText = "Nowy Wpis"; document.getElementById('cancel-edit-btn').classList.add('hidden'); core.renderEditImages(); },
+            clearEditImages: () => { currentEditImages = []; core.renderEditImages(); alert("Obecne zdjęcia usunięte z kolejki (zapisz aby potwierdzić)"); },
+            renderEditImages: () => {
+                const cont = document.getElementById('edit-images-preview'); cont.innerHTML = "";
+                currentEditImages.forEach(url => cont.innerHTML += `<img src="${url}" style="height:60px; border:1px solid #ccc;">`);
+            },
 
+            // --- REKLAMY ---
             publishAd: async () => {
                 const side = document.getElementById('ad-side').value;
                 const file = document.getElementById('ad-file').files[0];
                 const target = document.getElementById('ad-target').value;
-                if(!file || !target) return alert("Podaj link i plik!");
+                if(!file || !target) return alert("Podaj link i wybierz plik!");
                 document.getElementById('loader').style.display = 'flex';
-                
                 try {
                     const fd = new FormData(); fd.append("image", file);
                     const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
                     const res = await r.json();
                     if(res.success) {
-                        adsRef.push({ side, img: res.data.url, link: target, ts: Date.now() })
-                            .then(() => location.reload())
-                            .catch(e => { alert("Błąd bazy Firebase: " + e.message); document.getElementById('loader').style.display = 'none'; });
-                    } else {
-                        alert("Błąd wgrywania zdjęcia reklamy!");
-                        document.getElementById('loader').style.display = 'none';
-                    }
-                } catch (err) {
-                    alert("Błąd: " + err.message);
-                    document.getElementById('loader').style.display = 'none';
-                }
+                        adsRef.push({ side, img: res.data.url, link: target, ts: Date.now() }).then(() => location.reload());
+                    } else throw new Error("Błąd wgrywania.");
+                } catch (err) { alert("Błąd: " + err.message); document.getElementById('loader').style.display = 'none'; }
             },
-            deleteAd: (id) => confirm("Usunąć?") && adsRef.child(id).remove(),
+            deleteAd: (id) => confirm("Usunąć reklamę?") && adsRef.child(id).remove(),
             rotateAds: () => {
                 ['left', 'right'].forEach(s => {
-                    const boxes = document.getElementById(`ad-${s[0]}-zone`)?.querySelectorAll('.ad-box');
+                    const boxes = document.getElementById(`ad-${s}`)?.querySelectorAll('.ad-box');
                     if(boxes?.length > 1) {
                         boxes.forEach(b => b.classList.remove('active'));
                         adIndices[s] = (adIndices[s] + 1) % boxes.length;
@@ -659,138 +754,116 @@
                 });
             },
 
+            // --- KOMENTARZE I ZGŁOSZENIA ---
             loadComments: (pid) => {
                 db.ref(`elk/comments/${pid}`).on('value', snap => {
                     const list = document.getElementById('comments-list'); list.innerHTML = "";
-                    if(!snap.val()) return;
+                    if(!snap.val()) { list.innerHTML = "<p style='color:#666;'>Brak komentarzy. Bądź pierwszy!</p>"; return; }
                     Object.entries(snap.val()).forEach(([cid, c]) => {
                         let reps = "";
                         if(c.replies) {
                             Object.entries(c.replies).forEach(([rid, r]) => {
-                                const rLikes = r.likes || 0;
-                                const rLikedClass = localStorage.getItem(`liked_comm_${rid}`) ? "text-red-500" : "text-slate-500 hover:text-red-400";
-                                reps += `<div class="reply-item pl-4 mt-2 border-l-2 border-white/5"><span class="font-black text-blue-400 text-[11px] uppercase">${r.nick}</span><p class="text-xs my-1">${DOMPurify.sanitize(r.text)}</p>
-                                <div class="flex gap-4 mt-1"><span onclick="core.likeComment('${cid}', '${rid}')" class="text-[9px] font-bold cursor-pointer uppercase transition flex items-center gap-1 ${rLikedClass}"><i class="fa-solid fa-heart"></i> ${rLikes}</span></div>
+                                reps += `<div class="reply">
+                                    <div class="comment-meta">${DOMPurify.sanitize(r.nick)}</div>
+                                    <p>${DOMPurify.sanitize(r.text)}</p>
                                 </div>`;
                             });
                         }
-                        const cLikes = c.likes || 0;
-                        const cLikedClass = localStorage.getItem(`liked_comm_${cid}`) ? "text-red-500" : "text-slate-400 hover:text-red-400";
-                        list.innerHTML += `<div class="comment-item">
-                            <span class="font-black text-blue-400 text-xs uppercase">${c.nick}</span>
-                            <p class="text-sm my-1">${DOMPurify.sanitize(c.text)}</p>
-                            <div class="flex gap-4 mt-2 items-center">
-                                <span onclick="core.likeComment('${cid}')" class="text-[10px] font-bold cursor-pointer uppercase transition flex items-center gap-1 ${cLikedClass}"><i class="fa-solid fa-heart"></i> ${cLikes}</span>
-                                <span onclick="core.setReply('${cid}', '${c.nick}')" class="text-[10px] font-bold text-slate-400 cursor-pointer hover:text-blue-400 uppercase">Odpowiedz</span>
-                                <span onclick="core.reportComment('${cid}', '${c.text}', '${c.nick}')" class="text-[10px] font-bold text-slate-400 cursor-pointer hover:text-red-400 uppercase">Zgłoś</span>
+                        list.innerHTML += `<div class="comment">
+                            <div class="comment-meta">${DOMPurify.sanitize(c.nick)}</div>
+                            <p>${DOMPurify.sanitize(c.text)}</p>
+                            <div class="comment-actions">
+                                <span onclick="core.setReply('${cid}', '${DOMPurify.sanitize(c.nick)}')">Odpowiedz</span>
+                                <span onclick="core.reportComment('${cid}', '${DOMPurify.sanitize(c.text)}', '${DOMPurify.sanitize(c.nick)}')">Zgłoś</span>
                             </div>
-                            <div class="replies-container mt-2" style="display:block">${reps}</div>
+                            ${reps}
                         </div>`;
                     });
                 });
             },
-            
-            likeComment: (cid, rid = null) => {
-                if (!localStorage.getItem('fb_token')) return core.showLoginOverlay();
-                
-                const likeKey = rid ? `liked_comm_${rid}` : `liked_comm_${cid}`;
-                if(localStorage.getItem(likeKey)) return;
-                
-                const refPath = rid ? `elk/comments/${currentOpenPostId}/${cid}/replies/${rid}/likes` : `elk/comments/${currentOpenPostId}/${cid}/likes`;
-                
-                db.ref(refPath).transaction(l => (l || 0) + 1)
-                    .then(() => {
-                        localStorage.setItem(likeKey, "1");
-                    })
-                    .catch(e => alert("Błąd zapisu polubienia komentarza: " + e.message));
-            },
-            
             addComment: () => {
                 if (!localStorage.getItem('fb_token')) return core.showLoginOverlay();
-                
                 const n = document.getElementById('comm-nick').value || localStorage.getItem('user_nick');
                 const t = document.getElementById('comm-text').value;
-                if(!t) return;
-                const data = { nick: n, text: t, ts: Date.now(), date: new Date().toLocaleString() };
+                if(!t) return alert("Wpisz treść!");
+                const data = { nick: n, text: t, ts: Date.now() };
                 let ref = currentReplyToId ? db.ref(`elk/comments/${currentOpenPostId}/${currentReplyToId}/replies`) : db.ref(`elk/comments/${currentOpenPostId}`);
                 
-                ref.push(data)
-                   .then(() => { document.getElementById('comm-text').value = ""; core.cancelReply(); })
-                   .catch(e => alert("Błąd podczas wysyłania komentarza: " + e.message));
+                ref.push(data).then(() => { document.getElementById('comm-text').value = ""; core.cancelReply(); })
+                   .catch(e => alert("Błąd: " + e.message));
             },
+            setReply: (cid, nick) => { currentReplyToId = cid; document.getElementById('replying-to-info').classList.remove('hidden'); document.getElementById('target-nick').innerText = nick; document.getElementById('comm-text').focus(); window.scrollTo(0, document.body.scrollHeight);},
+            cancelReply: () => { currentReplyToId = null; document.getElementById('replying-to-info').classList.add('hidden'); },
             
             reportComment: (cid, text, nick) => {
                 if (!localStorage.getItem('fb_token')) return core.showLoginOverlay();
-                if (confirm("Zgłosić ten komentarz do sprawdzenia?")) {
-                    reportsRef.push({ postId: currentOpenPostId, commentId: cid, text, nick, ts: Date.now() })
-                        .catch(e => alert("Błąd bazy podczas zgłoszenia: " + e.message));
+                if (confirm("Zgłosić ten komentarz moderacji?")) {
+                    reportsRef.push({ postId: currentOpenPostId, commentId: cid, text, nick, ts: Date.now() });
+                    alert("Zgłoszono.");
                 }
             },
-
+            loadAllCommentsAdmin: () => {
+                commentsRootRef.once('value', snap => {
+                    const list = document.getElementById('all-comms-list'); list.innerHTML = "";
+                    if(!snap.val()) return;
+                    Object.entries(snap.val()).forEach(([postId, postComms]) => {
+                        Object.entries(postComms).forEach(([cid, c]) => {
+                            list.innerHTML += `<tr><td>${DOMPurify.sanitize(c.nick)}</td><td>${DOMPurify.sanitize(c.text)}</td>
+                            <td><button onclick="if(confirm('Usunąć?')) db.ref('elk/comments/${postId}/${cid}').remove().then(()=>core.loadAllCommentsAdmin())" style="color:red; background:none; border:none; cursor:pointer;">Usuń</button></td></tr>`;
+                        });
+                    });
+                });
+            },
             loadReports: () => {
                 reportsRef.on('value', snap => {
                     const container = document.getElementById('reports-list'); container.innerHTML = "";
-                    if(!snap.val()) { container.innerHTML = "<p class='text-sm text-gray-500'>Brak zgłoszeń.</p>"; return; }
+                    if(!snap.val()) return;
                     Object.entries(snap.val()).forEach(([rid, r]) => {
-                        // NAPRAWA: Zaktualizowany ładny wygląd w panelu admina
-                        container.innerHTML += `<div class="p-4 bg-red-50 border border-red-200 rounded mb-2">
-                            <p class="text-xs text-red-600 font-bold uppercase mb-1">Zgłoszenie na: ${r.nick}</p>
-                            <p class="text-sm text-gray-800 italic mb-2">"${r.text}"</p>
-                            <button onclick="core.dismissReport('${rid}')" class="bg-red-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-700">USUŃ ZGŁOSZENIE (Zakończ)</button>
+                        container.innerHTML += `<div style="border:1px solid red; background:#fff0f0; padding:15px; margin-bottom:10px;">
+                            <strong>Zgłoszono:</strong> ${DOMPurify.sanitize(r.nick)}<br>
+                            <em>"${DOMPurify.sanitize(r.text)}"</em><br><br>
+                            <button onclick="reportsRef.child('${rid}').remove()" class="action-btn" style="border-color:red; color:red;">Usuń zgłoszenie</button>
                         </div>`;
                     });
                 });
             },
-            dismissReport: (rid) => reportsRef.child(rid).remove(),
 
+            // --- INNE FUNKCJE ---
+            likePost: () => {
+                if (!localStorage.getItem('fb_token')) return core.showLoginOverlay();
+                if(localStorage.getItem(`liked_${currentOpenPostId}`)) return;
+                postsRef.child(currentOpenPostId).child('likes').transaction(l => (l || 0) + 1).then(() => {
+                    localStorage.setItem(`liked_${currentOpenPostId}`, "1");
+                    document.getElementById('main-like-btn').classList.add('liked');
+                    document.getElementById('like-count').innerText = parseInt(document.getElementById('like-count').innerText) + 1;
+                });
+            },
             saveSettings: () => {
                 settingsRef.set({ about: document.getElementById('set-about').value, redaction: document.getElementById('set-redaction').value, privacy: document.getElementById('set-privacy').value, coop: document.getElementById('set-coop').value })
-                    .then(() => alert("Zapisano!"))
-                    .catch(e => alert("Błąd zapisu ustawień: " + e.message));
+                    .then(() => alert("Zapisano!"));
             },
             loadSettingsInAdmin: () => settingsRef.once('value', s => {
                 const d = s.val(); if(!d) return;
-                document.getElementById('set-about').value = d.about || "";
-                document.getElementById('set-redaction').value = d.redaction || "";
-                document.getElementById('set-privacy').value = d.privacy || "";
-                document.getElementById('set-coop').value = d.coop || "";
+                ['about', 'redaction', 'privacy', 'coop'].forEach(k => document.getElementById(`set-${k}`).value = d[k] || "");
             }),
-
             goHome: () => {
-                ['view-home', 'search-area', 'main-header', 'main-footer', 'main-content'].forEach(id => document.getElementById(id)?.classList.remove('hidden'));
-                ['view-article', 'view-admin', 'view-legal', 'auth-overlay'].forEach(id => document.getElementById(id)?.classList.add('hidden'));
+                ['view-home', 'search-area'].forEach(id => document.getElementById(id)?.classList.remove('hidden'));
+                ['view-article', 'view-admin', 'view-legal'].forEach(id => document.getElementById(id)?.classList.add('hidden'));
                 window.scrollTo(0,0);
             },
             showLegal: (t) => {
                 core.goHome(); ['view-home', 'search-area'].forEach(id => document.getElementById(id).classList.add('hidden'));
                 document.getElementById('view-legal').classList.remove('hidden');
-                document.getElementById('legal-title').innerText = t;
-                document.getElementById('legal-body').innerText = document.getElementById(`txt-${t}`).innerText;
-            },
-            cancelReply: () => { currentReplyToId = null; document.getElementById('replying-to-info').classList.add('hidden'); },
-            setReply: (cid, nick) => { currentReplyToId = cid; document.getElementById('replying-to-info').classList.remove('hidden'); document.getElementById('target-nick').innerText = nick; document.getElementById('comm-text').focus(); },
-            previewNewFiles: () => core.renderEditImages(document.getElementById('in-files').files),
-            renderEditImages: (files = []) => {
-                const cont = document.getElementById('edit-images-preview'); cont.innerHTML = "";
-                currentEditImages.forEach(url => cont.innerHTML += `<div class="preview-wrapper"><img src="${url}" width="60" class="border border-gray-300 rounded"></div>`);
-            },
-
-            likePost: () => {
-                if (!localStorage.getItem('fb_token')) return core.showLoginOverlay();
-                if(localStorage.getItem(`liked_${currentOpenPostId}`)) return;
                 
-                postsRef.child(currentOpenPostId).child('likes').transaction(l => (l || 0) + 1)
-                    .then(() => {
-                        localStorage.setItem(`liked_${currentOpenPostId}`, "1");
-                        document.getElementById('main-like-btn').classList.add('liked');
-                        let countElem = document.getElementById('like-count');
-                        countElem.innerText = parseInt(countElem.innerText) + 1;
-                    })
-                    .catch(e => alert("Błąd zapisu polubienia: " + e.message));
+                const titles = { 'redaction': 'Redakcja', 'privacy': 'Polityka Prywatności', 'coop': 'Współpraca' };
+                document.getElementById('legal-title').innerText = titles[t];
+                document.getElementById('legal-body').innerText = document.getElementById(`txt-${t}`).innerText;
+                window.scrollTo(0,0);
             }
         };
 
-        core.checkAuth();
+        // Start
+        window.addEventListener('DOMContentLoaded', () => core.checkAuth());
     </script>
 </body>
 </html>
